@@ -71,3 +71,11 @@ GLB 파일은 `public/models/`에 두고 `Loader`의 `manager`를 GLTFLoader에 
 2. `style.css`의 `--font-hand`와 `src/utils/fonts.ts`의 `HAND_FONT`를 같은 이름으로 바꿔요.
 
 3D 바닥 글씨는 캔버스에 그리기 때문에, `loadHandFont()`가 실제로 그릴 한글을 넘겨서 폰트를 미리 받아온 뒤에 그려요.
+
+## 배포 (GitHub Pages)
+
+`main` 브랜치에 push하면 GitHub Actions(`.github/workflows/deploy.yml`)가 빌드해서 배포해요.
+
+- 주소: https://rlaaadh.github.io/three.js/
+- 처음 한 번만: 저장소 **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 설정해요.
+- 배포 진행 상황은 저장소의 **Actions** 탭에서 볼 수 있어요.
