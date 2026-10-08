@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 벽 -->
+  <rect x="12" y="28" width="40" height="31" rx="2.5" fill="#fff1c2" stroke="#7a5640" stroke-width="2.2" stroke-linejoin="round"/>
+  <!-- 문 -->
+  <path d="M26 59V48a6 6 0 0 1 12 0V59Z" fill="#e3b07c" stroke="#7a5640" stroke-width="2" stroke-linejoin="round"/>
+  <!-- 지붕 -->
+  <path d="M5 31L32 7L59 31Z" fill="#ec6a52" stroke="#a8432f" stroke-width="2.2" stroke-linejoin="round"/>
+</svg>

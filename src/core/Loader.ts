@@ -1,25 +1,40 @@
 import * as THREE from 'three'
 
+/** 각 부분 선이 다 그려진 뒤 색이 채워지는 데 걸리는 진행률 구간 */
+const FILL_SPAN = 0.12
+
+interface SketchPart {
+  el: SVGPathElement
+  length: number
+  /** 이 부분을 그리기 시작하는 진행률 (0~1) */
+  from: number
+  /** 이 부분 선이 다 그려지는 진행률 (0~1) */
+  to: number
+}
+
 /**
  * 로딩 인트로 화면.
- * 연필로 방 윤곽을 그리듯 진행률을 보여주고, 끝나면 페이드아웃해요.
+ * 진행률에 맞춰 파비콘의 집을 연필로 그리듯 벽 → 문 → 지붕 순서로 그리고, 색을 채운 뒤 페이드아웃해요.
  * 나중에 GLB 모델을 불러올 때는 `manager`를 GLTFLoader에 넘기면 진행률에 반영돼요.
  */
 export class Loader {
   readonly manager = new THREE.LoadingManager()
   private readonly el = document.getElementById('loader')!
   private readonly percentEl = document.getElementById('loader-percent')!
-  private readonly path = document.getElementById('loader-path') as unknown as SVGPathElement
-  private readonly length: number
+  private readonly sketch = document.getElementById('loader-sketch')!
+  private readonly parts: SketchPart[]
 
   constructor() {
-    this.length = this.path.getTotalLength()
-    this.path.style.strokeDasharray = `${this.length}`
-    this.path.style.strokeDashoffset = `${this.length}`
+    this.parts = [...this.sketch.querySelectorAll<SVGPathElement>('.loader__part')].map((el) => {
+      const length = el.getTotalLength()
+      el.style.strokeDasharray = `${length}`
+      el.style.strokeDashoffset = `${length}`
+      return { el, length, from: Number(el.dataset.from), to: Number(el.dataset.to) }
+    })
   }
 
   /** 모든 작업이 끝나고, 최소 연출 시간이 지나면 resolve 돼요 */
-  start(tasks: Promise<unknown>[], minDuration = 1800): Promise<void> {
+  start(tasks: Promise<unknown>[], minDuration = 2000): Promise<void> {
     let done = 0
     const total = tasks.length
     tasks.forEach((task) =>
@@ -38,10 +53,11 @@ export class Loader {
         this.render(progress)
 
         if (progress >= 1) {
+          this.sketch.classList.add('is-drawn')
           setTimeout(() => {
             this.el.classList.add('is-done')
             resolve()
-          }, 300)
+          }, 450)
         } else {
           requestAnimationFrame(tick)
         }
@@ -51,7 +67,12 @@ export class Loader {
   }
 
   private render(progress: number) {
-    this.path.style.strokeDashoffset = `${this.length * (1 - progress)}`
+    for (const part of this.parts) {
+      const drawn = THREE.MathUtils.clamp((progress - part.from) / (part.to - part.from), 0, 1)
+      const filled = THREE.MathUtils.clamp((progress - part.to) / FILL_SPAN, 0, 1)
+      part.el.style.strokeDashoffset = `${part.length * (1 - drawn)}`
+      part.el.style.fillOpacity = `${progress >= 1 ? 1 : filled}`
+    }
     this.percentEl.textContent = String(Math.round(progress * 100))
   }
 }

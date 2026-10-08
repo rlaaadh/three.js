@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
     <title>My Tiny Room</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- 손글씨 폰트: 나눔손글씨 힘내라는 말보단 (네이버 한글한글 아름답게) -->
+    <link rel="preconnect" href="https://hangeul.pstatic.net" crossorigin />
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/NanumHimNaeRaNeunMarBoDan.css" rel="stylesheet" />
   </head>
   <body>
     <!-- 3D 화면 -->
@@ -14,8 +15,11 @@
 
     <!-- 로딩 인트로 -->
     <div id="loader" class="loader">
-      <svg class="loader__sketch" viewBox="0 0 200 150" aria-hidden="true">
-        <path id="loader-path" d="M20 105 L100 65 L180 105 L100 145 Z M20 105 L20 45 L100 5 L100 65 M100 5 L180 45 L180 105" />
+      <!-- 파비콘과 같은 집: 진행률에 맞춰 벽 → 문 → 지붕 순서로 그려지고 색이 채워져요 -->
+      <svg class="loader__sketch" id="loader-sketch" viewBox="0 0 64 64" aria-hidden="true">
+        <path class="loader__part" data-from="0" data-to="0.45" d="M14.5 28H49.5A2.5 2.5 0 0 1 52 30.5V56.5A2.5 2.5 0 0 1 49.5 59H14.5A2.5 2.5 0 0 1 12 56.5V30.5A2.5 2.5 0 0 1 14.5 28Z" fill="#fff1c2" stroke="#7a5640" stroke-width="2.2" />
+        <path class="loader__part" data-from="0.45" data-to="0.65" d="M26 59V48a6 6 0 0 1 12 0V59Z" fill="#e3b07c" stroke="#7a5640" stroke-width="2" />
+        <path class="loader__part" data-from="0.65" data-to="0.9" d="M5 31L32 7L59 31Z" fill="#ec6a52" stroke="#a8432f" stroke-width="2.2" />
       </svg>
       <p class="loader__text">방 그리는 중... <span id="loader-percent">0</span>%</p>
     </div>

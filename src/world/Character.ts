@@ -534,11 +534,11 @@ function createZzz() {
   canvas.height = 128
   const ctx = canvas.getContext('2d')!
   ctx.fillStyle = '#6b6b6b'
-  ctx.font = handFont(700, 64)
+  ctx.font = handFont(64)
   ctx.fillText('z', 30, 110)
-  ctx.font = handFont(700, 80)
+  ctx.font = handFont(80)
   ctx.fillText('Z', 90, 85)
-  ctx.font = handFont(700, 56)
+  ctx.font = handFont(56)
   ctx.fillText('z', 170, 50)
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace

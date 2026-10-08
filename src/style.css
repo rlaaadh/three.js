@@ -4,7 +4,7 @@
   --ink: #3a2e2e;
   --pencil: #6b6b6b;
   --accent: #e8604c;
-  --font-hand: 'Gaegu', 'Apple SD Gothic Neo', sans-serif;
+  --font-hand: 'NanumHimNaeRaNeunMarBoDan', 'Apple SD Gothic Neo', sans-serif;
 }
 
 * {
@@ -62,16 +62,25 @@ button {
 }
 
 .loader__sketch {
-  width: min(220px, 50vw);
+  width: min(140px, 36vw);
   overflow: visible;
 }
 
-.loader__sketch path {
-  fill: none;
-  stroke: var(--pencil);
-  stroke-width: 2.5;
+.loader__part {
   stroke-linecap: round;
   stroke-linejoin: round;
+  fill-opacity: 0;
+}
+
+/* 다 그려지면 폴짝 */
+.loader__sketch.is-drawn {
+  animation: loader-pop 0.35s ease-out;
+}
+
+@keyframes loader-pop {
+  50% {
+    transform: translateY(-10px) scale(1.06);
+  }
 }
 
 .loader__text {
