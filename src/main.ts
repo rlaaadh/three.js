@@ -10,6 +10,7 @@ import { ClickMarker } from './world/ClickMarker'
 import { Footprints } from './world/Footprints'
 import { createNature } from './world/Nature'
 import { Pointer } from './interaction/Pointer'
+import { CameraControls } from './interaction/CameraControls'
 import { SpeechBubble } from './ui/SpeechBubble'
 import { burstHearts } from './ui/HeartBurst'
 import { toScreen } from './ui/screen'
@@ -20,6 +21,10 @@ const canvas = document.getElementById('webgl') as HTMLCanvasElement
 const hintEl = document.getElementById('hint')!
 
 const stage = new Stage(canvas)
+const controls = new CameraControls(stage)
+
+// iOS Safari는 touch-action만으로는 핀치 페이지 확대가 안 막혀서 제스처 이벤트도 막아요
+document.addEventListener('gesturestart', (e) => e.preventDefault())
 const loader = new Loader()
 
 // 손글씨 폰트가 준비돼야 캔버스(3D 바닥 글씨 · Zzz)가 제대로 그려져요
@@ -74,7 +79,7 @@ loader.start([fontsReady]).then(() => {
   stage.scene.add(character.root, character.zzz, createLabels())
 
   character.onStep = (x, y, z, yaw) => footprints.stamp(x, y, z, yaw)
-  pointer = new Pointer(stage, room, paper.ground, character, marker, hintEl)
+  pointer = new Pointer(stage, room, paper.ground, character, marker, hintEl, controls)
   stage.zoomTarget = 1
   intro.t = 0
 })

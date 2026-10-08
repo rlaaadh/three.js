@@ -1,11 +1,12 @@
 import * as THREE from 'three'
 import type { Stage } from '../core/Stage'
+import type { CameraControls } from './CameraControls'
 import type { Room, Spot } from '../world/Room'
 import type { Character } from '../world/Character'
 import type { ClickMarker } from '../world/ClickMarker'
 import { clampTarget } from '../world/Navigation'
 
-const DEFAULT_HINT = '바닥을 클릭하면 걸어가요'
+export const DEFAULT_HINT = '바닥을 누르면 걸어가요 · 드래그로 둘러보기'
 
 /**
  * 마우스 클릭 · 호버 처리.
@@ -15,7 +16,6 @@ export class Pointer {
   enabled = false
   private readonly raycaster = new THREE.Raycaster()
   private readonly ndc = new THREE.Vector2()
-  private readonly downAt = new THREE.Vector2()
   private hovered: THREE.Object3D | null = null
 
   constructor(
@@ -25,14 +25,11 @@ export class Pointer {
     private readonly character: Character,
     private readonly marker: ClickMarker,
     private readonly hintEl: HTMLElement,
+    controls: CameraControls,
   ) {
-    const canvas = stage.renderer.domElement
-    canvas.addEventListener('pointerdown', (e) => this.downAt.set(e.clientX, e.clientY))
-    canvas.addEventListener('pointerup', (e) => {
-      // 드래그가 아닌 짧은 클릭만 처리
-      if (this.downAt.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) < 6) this.onClick(e)
-    })
-    canvas.addEventListener('pointermove', (e) => this.onHover(e))
+    // 드래그 · 핀치가 아닌 짧은 탭(클릭)만 이동 · 동작으로 처리해요
+    controls.onTap = (e) => this.onClick(e)
+    stage.renderer.domElement.addEventListener('pointermove', (e) => this.onHover(e))
   }
 
   private pick(e: PointerEvent) {
@@ -68,10 +65,11 @@ export class Pointer {
   }
 
   private onHover(e: PointerEvent) {
-    if (!this.enabled) return
+    // 터치에는 호버가 없어요. 마우스 버튼을 누른 채 끄는 중(드래그)에도 건너뛰어요
+    if (!this.enabled || e.pointerType !== 'mouse' || e.buttons !== 0) return
     const hit = this.pick(e)
     const group = hit?.group ?? null
-    this.stage.renderer.domElement.style.cursor = hit ? 'pointer' : 'default'
+    this.stage.renderer.domElement.style.cursor = hit ? 'pointer' : 'grab'
     if (group === this.hovered) return
 
     if (this.hovered) setGlow(this.hovered, false)

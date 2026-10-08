@@ -16,6 +16,8 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-hand);
@@ -28,6 +30,12 @@ body {
   height: 100%;
   display: block;
   outline: none;
+  cursor: grab;
+}
+
+/* 버튼 연타 시 화면이 확대되지 않게 (모바일 더블탭 확대 방지) */
+button {
+  touch-action: manipulation;
 }
 
 /* ---------- 로딩 인트로 ---------- */
@@ -268,9 +276,19 @@ body {
 }
 
 @media (max-width: 640px) {
+  .hud {
+    top: calc(12px + env(safe-area-inset-top));
+    left: 16px;
+  }
+
+  .hud__hint {
+    font-size: 17px;
+  }
+
   .chat {
     left: 16px;
     right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
     width: auto;
     transform: none;
   }
@@ -282,6 +300,7 @@ body {
   }
 
   .zoom {
-    bottom: 92px;
+    right: 16px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
   }
 }

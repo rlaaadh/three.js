@@ -2,7 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
     <title>My Tiny Room</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,7 +22,7 @@
 
     <!-- 화면 위 UI -->
     <div class="hud">
-      <p class="hud__hint" id="hint">바닥을 클릭하면 걸어가요</p>
+      <p class="hud__hint" id="hint">바닥을 누르면 걸어가요 · 드래그로 둘러보기</p>
     </div>
     <!-- 캐릭터 말풍선 (위치는 매 프레임 캐릭터 머리 위로 맞춰요) -->
     <div class="bubble" id="bubble" aria-live="polite"></div>
@@ -33,7 +33,7 @@
       <button id="heart" class="chat__icon chat__icon--heart" type="button" aria-label="하트 날리기" title="하트 날리기">❤️</button>
       <!-- onsubmit: 어떤 경우에도 폼 전송(새로고침)이 일어나지 않게 -->
       <form id="chat-form" class="chat__form" autocomplete="off" onsubmit="event.preventDefault()">
-        <input id="chat-input" type="text" maxlength="60" placeholder="하고 싶은 말을 입력해 보세요" aria-label="말풍선 메시지" />
+        <input id="chat-input" type="text" maxlength="60" placeholder="하고 싶은 말" aria-label="말풍선 메시지" />
         <button type="submit" class="chat__send" aria-label="보내기">↑</button>
       </form>
     </div>
