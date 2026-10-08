@@ -126,7 +126,8 @@ export class Room {
     place(box(2.3, 0.4, 1.5, '#e3b98a', 0.06), 0, 0.2, 0, bed)
     place(box(2.2, 0.26, 1.42, '#ffffff', 0.1), 0, 0.53, 0, bed)
     place(box(1.3, 0.1, 1.48, '#f7b6c8', 0.04), 0.45, 0.66, 0, bed)
-    place(box(0.45, 0.18, 0.9, '#ffe08a', 0.08), -0.8, 0.72, 0, bed)
+    // 베개: 누웠을 때 머리가 닿는 자리에 납작하게
+    place(box(0.55, 0.12, 0.95, '#ffe08a', 0.06), -0.5, 0.69, 0, bed)
     place(box(0.14, 1.1, 1.5, '#d9a877', 0.05), -1.08, 0.55, 0, bed)
     place(bed, -1.85, 0, -2.0, g)
 
@@ -141,7 +142,7 @@ export class Room {
     this.bedSpot = {
       action: 'lie',
       approach: new THREE.Vector3(-0.3, 0, -1.6),
-      position: new THREE.Vector3(-0.95, 0.92, -2.0),
+      position: new THREE.Vector3(-0.95, 0.96, -2.0),
       quaternion: lieQuat,
       hint: '침대에서 뒹굴기',
     }

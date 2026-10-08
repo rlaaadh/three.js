@@ -256,8 +256,6 @@ export class Character {
     // 숨쉬기 · 고개 까딱
     this.model.scale.y = 1 + Math.sin(this.time * 2.4) * 0.015
     this.head.rotation.z = Math.sin(this.time * 1.4) * (this.state === 'lie' ? 0.02 : 0.06)
-    // 누웠을 때 큰 머리가 매트리스에 파묻히지 않도록 살짝 들어올려요 (누운 자세에서 local z = 위쪽)
-    this.head.position.z = damp(this.head.position.z, this.state === 'lie' ? 0.2 : 0, 10, dt)
   }
 
   private updateZzz() {
