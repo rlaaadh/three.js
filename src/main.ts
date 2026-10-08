@@ -84,6 +84,18 @@ loader.start([fontsReady]).then(() => {
   intro.t = 0
 })
 
+// ---------- 모바일 키보드 ----------
+// iOS는 키보드가 올라와도 fixed 요소가 그대로 가려져서, 가려진 높이만큼 입력창을 올려요
+const viewport = window.visualViewport
+if (viewport) {
+  const syncKeyboard = () => {
+    const covered = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+    document.documentElement.style.setProperty('--keyboard', `${covered}px`)
+  }
+  viewport.addEventListener('resize', syncKeyboard)
+  viewport.addEventListener('scroll', syncKeyboard)
+}
+
 // ---------- 말풍선 · 채팅 · 손 흔들기 ----------
 const bubble = new SpeechBubble()
 const chatForm = document.getElementById('chat-form') as HTMLFormElement

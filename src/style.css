@@ -170,6 +170,7 @@ button {
 }
 
 /* ---------- 하단 채팅 ---------- */
+/* PC: 화면 아래 가운데에 [👋][❤️][입력창]이 한 줄로 */
 .chat {
   position: fixed;
   left: 50%;
@@ -179,6 +180,11 @@ button {
   gap: 8px;
   width: min(600px, calc(100% - 160px));
   transform: translateX(-50%);
+}
+
+.chat__actions {
+  display: flex;
+  gap: 8px;
 }
 
 .chat__icon {
@@ -208,6 +214,111 @@ button {
 
 .chat__icon--heart:hover {
   background: #ffcfdb;
+}
+
+.chat__form {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 6px 6px 20px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.chat__form:focus-within {
+  box-shadow: 0 0 0 4px rgba(232, 96, 76, 0.18);
+}
+
+.chat__form input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 21px;
+}
+
+.chat__send {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* 모바일: 입력창은 맨 아래 전체 너비 받침 위에, 👋 ❤️는 그 위 오른쪽에 세로로 */
+@media (max-width: 640px) {
+  .hud {
+    top: calc(12px + env(safe-area-inset-top));
+    left: 16px;
+  }
+
+  .hud__hint {
+    font-size: 17px;
+  }
+
+  .chat {
+    left: 0;
+    right: 0;
+    /* 키보드가 올라오면 --keyboard 만큼 같이 올라가요 (main.ts에서 계산) */
+    bottom: var(--keyboard, 0px);
+    width: auto;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--grid);
+    background: rgba(250, 250, 247, 0.9);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    transform: none;
+  }
+
+  .chat__actions {
+    position: absolute;
+    right: 12px;
+    bottom: calc(100% + 12px);
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .chat__icon {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    box-shadow: 0 2px 0 var(--ink);
+  }
+
+  .chat__form {
+    padding: 4px 4px 4px 16px;
+  }
+
+  .chat__form input {
+    font-size: 19px;
+  }
+
+  .chat__send {
+    width: 40px;
+    height: 40px;
+  }
+
+  .zoom {
+    right: 12px;
+    bottom: calc(190px + env(safe-area-inset-bottom));
+  }
+}
+
+/* 터치 기기는 핀치로 확대하니까 +/− 버튼을 숨겨요 */
+@media (hover: none) and (pointer: coarse) {
+  .zoom {
+    display: none;
+  }
 }
 
 /* ---------- 하트 날리기 ---------- */
@@ -273,34 +384,4 @@ button {
   color: #fff;
   font-size: 20px;
   cursor: pointer;
-}
-
-@media (max-width: 640px) {
-  .hud {
-    top: calc(12px + env(safe-area-inset-top));
-    left: 16px;
-  }
-
-  .hud__hint {
-    font-size: 17px;
-  }
-
-  .chat {
-    left: 16px;
-    right: 16px;
-    bottom: calc(16px + env(safe-area-inset-bottom));
-    width: auto;
-    transform: none;
-  }
-
-  .chat__icon {
-    width: 46px;
-    height: 46px;
-    font-size: 21px;
-  }
-
-  .zoom {
-    right: 16px;
-    bottom: calc(84px + env(safe-area-inset-bottom));
-  }
 }
