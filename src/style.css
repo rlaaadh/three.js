@@ -4,6 +4,11 @@
   --ink: #3a2e2e;
   --pencil: #6b6b6b;
   --accent: #e8604c;
+  /* UI 외곽선 · 그림자: 진한 검정 대신 연한 베이지 갈색으로 부드럽게 */
+  --line: #e6d6c4;
+  --line-strong: #d4bca3;
+  --ink-soft: #6b5446;
+  --shadow-soft: 0 4px 14px rgba(122, 86, 64, 0.12);
   --font-hand: 'NanumHimNaeRaNeunMarBoDan', 'Apple SD Gothic Neo', sans-serif;
 }
 
@@ -96,12 +101,6 @@ button {
   pointer-events: none;
 }
 
-.hud__title {
-  margin: 0;
-  font-size: 34px;
-  font-weight: 700;
-}
-
 .hud__hint {
   margin: 4px 0 0;
   font-size: 20px;
@@ -120,17 +119,18 @@ button {
 .zoom button {
   width: 44px;
   height: 44px;
-  border: 2px solid var(--ink);
+  border: 1.5px solid var(--line);
   border-radius: 50%;
   background: #fff;
-  color: var(--ink);
-  font-size: 24px;
+  box-shadow: var(--shadow-soft);
+  color: var(--ink-soft);
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
 }
 
 .zoom button:hover {
-  background: #fff4d6;
+  background: #fffaf0;
 }
 
 /* ---------- 말풍선 ---------- */
@@ -141,9 +141,10 @@ button {
   z-index: 5;
   max-width: 240px;
   padding: 8px 16px;
-  border: 2px solid var(--ink);
+  border: 1.5px solid var(--line-strong);
   border-radius: 18px;
   background: #fff;
+  box-shadow: var(--shadow-soft);
   color: var(--ink);
   font-size: 22px;
   line-height: 1.2;
@@ -173,8 +174,8 @@ button {
   width: 12px;
   height: 12px;
   background: #fff;
-  border-right: 2px solid var(--ink);
-  border-bottom: 2px solid var(--ink);
+  border-right: 1.5px solid var(--line-strong);
+  border-bottom: 1.5px solid var(--line-strong);
   transform: translateX(-50%) rotate(45deg);
 }
 
@@ -200,9 +201,10 @@ button {
   flex-shrink: 0;
   width: 52px;
   height: 52px;
-  border: 2px solid var(--ink);
+  border: 1.5px solid var(--line);
   border-radius: 50%;
-  background: #fff4d6;
+  background: #fff7e2;
+  box-shadow: var(--shadow-soft);
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
@@ -210,7 +212,7 @@ button {
 }
 
 .chat__icon:hover {
-  background: #ffe7a3;
+  background: #ffefc4;
 }
 
 .chat__icon:active {
@@ -218,11 +220,11 @@ button {
 }
 
 .chat__icon--heart {
-  background: #ffe3ea;
+  background: #fff0f3;
 }
 
 .chat__icon--heart:hover {
-  background: #ffcfdb;
+  background: #ffe1e8;
 }
 
 .chat__form {
@@ -232,13 +234,24 @@ button {
   gap: 8px;
   min-width: 0;
   padding: 6px 6px 6px 20px;
-  border: 2px solid var(--ink);
+  border: 1.5px solid var(--line);
   border-radius: 999px;
   background: #fff;
+  box-shadow: var(--shadow-soft);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .chat__form:focus-within {
-  box-shadow: 0 0 0 4px rgba(232, 96, 76, 0.18);
+  border-color: var(--line-strong);
+  box-shadow:
+    var(--shadow-soft),
+    0 0 0 4px rgba(236, 106, 82, 0.1);
+}
+
+.chat__form input::placeholder {
+  color: #b9a593;
 }
 
 .chat__form input {
@@ -258,7 +271,7 @@ button {
   height: 38px;
   border: none;
   border-radius: 50%;
-  background: var(--accent);
+  background: #ec6a52;
   color: #fff;
   font-size: 20px;
   cursor: pointer;
@@ -301,7 +314,6 @@ button {
     width: 48px;
     height: 48px;
     font-size: 22px;
-    box-shadow: 0 2px 0 var(--ink);
   }
 
   .chat__form {
@@ -354,43 +366,4 @@ button {
     opacity: 0;
     transform: translate(calc(-50% + var(--dx)), calc(-50% - var(--rise))) scale(0.9) rotate(var(--rotate));
   }
-}
-
-.chat__form {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 6px 6px 6px 20px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  background: #fff;
-}
-
-.chat__form:focus-within {
-  box-shadow: 0 0 0 4px rgba(232, 96, 76, 0.18);
-}
-
-.chat__form input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-hand);
-  font-size: 21px;
-}
-
-.chat__send {
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border: none;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
 }
