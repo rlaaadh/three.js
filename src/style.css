@@ -1,0 +1,287 @@
+:root {
+  --paper: #fafaf7;
+  --grid: #e2e5ea;
+  --ink: #3a2e2e;
+  --pencil: #6b6b6b;
+  --accent: #e8604c;
+  --font-hand: 'Gaegu', 'Apple SD Gothic Neo', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-hand);
+}
+
+#webgl {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  outline: none;
+}
+
+/* ---------- 로딩 인트로 ---------- */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  transition: opacity 0.6s ease;
+}
+
+.loader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader__sketch {
+  width: min(220px, 50vw);
+  overflow: visible;
+}
+
+.loader__sketch path {
+  fill: none;
+  stroke: var(--pencil);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.loader__text {
+  margin: 0;
+  font-size: 26px;
+}
+
+/* ---------- HUD ---------- */
+.hud {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  pointer-events: none;
+}
+
+.hud__title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.hud__hint {
+  margin: 4px 0 0;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.zoom {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zoom button {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.zoom button:hover {
+  background: #fff4d6;
+}
+
+/* ---------- 말풍선 ---------- */
+.bubble {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  max-width: 240px;
+  padding: 8px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1.2;
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, calc(-100% - 14px)) scale(0.8);
+  transform-origin: 50% 100%;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.bubble.is-visible {
+  opacity: 1;
+  transform: translate(-50%, calc(-100% - 14px)) scale(1);
+}
+
+/* 말풍선 꼬리 */
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* ---------- 하단 채팅 ---------- */
+.chat {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 6;
+  display: flex;
+  gap: 8px;
+  width: min(600px, calc(100% - 160px));
+  transform: translateX(-50%);
+}
+
+.chat__icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #fff4d6;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.chat__icon:hover {
+  background: #ffe7a3;
+}
+
+.chat__icon:active {
+  transform: scale(0.9);
+}
+
+.chat__icon--heart {
+  background: #ffe3ea;
+}
+
+.chat__icon--heart:hover {
+  background: #ffcfdb;
+}
+
+/* ---------- 하트 날리기 ---------- */
+.heart {
+  position: fixed;
+  z-index: 5;
+  font-size: var(--size);
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  animation: heart-float var(--duration) ease-out var(--delay) forwards;
+}
+
+@keyframes heart-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% - var(--rise))) scale(0.9) rotate(var(--rotate));
+  }
+}
+
+.chat__form {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 6px 6px 20px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.chat__form:focus-within {
+  box-shadow: 0 0 0 4px rgba(232, 96, 76, 0.18);
+}
+
+.chat__form input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 21px;
+}
+
+.chat__send {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .chat {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    transform: none;
+  }
+
+  .chat__icon {
+    width: 46px;
+    height: 46px;
+    font-size: 21px;
+  }
+
+  .zoom {
+    bottom: 92px;
+  }
+}

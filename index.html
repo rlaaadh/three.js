@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Tiny Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- 3D 화면 -->
+    <canvas id="webgl"></canvas>
+
+    <!-- 로딩 인트로 -->
+    <div id="loader" class="loader">
+      <svg class="loader__sketch" viewBox="0 0 200 150" aria-hidden="true">
+        <path id="loader-path" d="M20 105 L100 65 L180 105 L100 145 Z M20 105 L20 45 L100 5 L100 65 M100 5 L180 45 L180 105" />
+      </svg>
+      <p class="loader__text">방 그리는 중... <span id="loader-percent">0</span>%</p>
+    </div>
+
+    <!-- 화면 위 UI -->
+    <div class="hud">
+      <p class="hud__hint" id="hint">바닥을 클릭하면 걸어가요</p>
+    </div>
+    <!-- 캐릭터 말풍선 (위치는 매 프레임 캐릭터 머리 위로 맞춰요) -->
+    <div class="bubble" id="bubble" aria-live="polite"></div>
+
+    <!-- 하단 채팅 · 인사 -->
+    <div class="chat">
+      <button id="wave" class="chat__icon" type="button" aria-label="손 흔들기" title="손 흔들기">👋</button>
+      <button id="heart" class="chat__icon chat__icon--heart" type="button" aria-label="하트 날리기" title="하트 날리기">❤️</button>
+      <!-- onsubmit: 어떤 경우에도 폼 전송(새로고침)이 일어나지 않게 -->
+      <form id="chat-form" class="chat__form" autocomplete="off" onsubmit="event.preventDefault()">
+        <input id="chat-input" type="text" maxlength="60" placeholder="하고 싶은 말을 입력해 보세요" aria-label="말풍선 메시지" />
+        <button type="submit" class="chat__send" aria-label="보내기">↑</button>
+      </form>
+    </div>
+
+    <div class="zoom">
+      <button id="zoom-in" aria-label="확대">+</button>
+      <button id="zoom-out" aria-label="축소">−</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
