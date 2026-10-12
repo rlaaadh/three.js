@@ -31,22 +31,22 @@ export function createNature() {
     pinkFlower: flowerTexture('#f7a6b2', '#ef5a43'),
   }
 
+  // 나무는 침실 쪽(왼쪽 · 뒤쪽)에만 두고, 주방 쪽(x > 3.2)은 집과 겹치지 않게 꽃만 둬요
   const items: [keyof typeof textures, number, number, number][] = [
     ['bigTree', -6.4, 0.6, 2.4],
     ['smallTree', -5.5, 2.1, 1.4],
     ['bigTree', -2.6, -6.6, 2.2],
     ['smallTree', -6.6, -3.8, 1.5],
-    ['bigTree', 5.4, -6.2, 2.4],
-    ['smallTree', 6.4, -4.9, 1.4],
-    ['bigTree', 7.0, 2.2, 2.2],
-    ['redFlower', 4.6, 4.3, 0.75],
-    ['pinkFlower', 5.4, 4.9, 0.65],
+    ['redFlower', 5.0, 5.0, 0.75],
+    ['pinkFlower', 5.8, 5.6, 0.65],
     ['pinkFlower', -4.7, 4.9, 0.65],
     ['redFlower', -5.4, 5.6, 0.75],
-    ['redFlower', 6.7, -1.2, 0.7],
     ['pinkFlower', 2.4, -5.4, 0.65],
     ['redFlower', -4.4, -5.4, 0.7],
-    ['pinkFlower', 7.4, 5.6, 0.6],
+    ['pinkFlower', 8.2, 5.4, 0.6],
+    ['redFlower', 11.6, 1.0, 0.7],
+    ['pinkFlower', 12.2, -1.6, 0.6],
+    ['redFlower', 11.4, 4.2, 0.7],
   ]
 
   const shadowTexture = blobShadowTexture()

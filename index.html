@@ -26,8 +26,10 @@
 
     <!-- 화면 위 UI -->
     <div class="hud">
-      <p class="hud__hint" id="hint">바닥을 누르면 걸어가요 · 드래그로 둘러보기</p>
+      <p class="hud__hint" id="hint">바닥을 누르거나 드래그해서 걸어요</p>
     </div>
+    <!-- 드래그하는 동안 뜨는 조이스틱 -->
+    <div class="stick" id="stick" aria-hidden="true"><span class="stick__knob"></span></div>
     <!-- 캐릭터 말풍선 (위치는 매 프레임 캐릭터 머리 위로 맞춰요) -->
     <div class="bubble" id="bubble" aria-live="polite"></div>
 

@@ -1,22 +1,26 @@
 import * as THREE from 'three'
 import type { Stage } from '../core/Stage'
-import type { CameraControls } from './CameraControls'
+import { STICK_RADIUS, type CameraControls } from './CameraControls'
 import type { Room, Spot } from '../world/Room'
 import type { Character } from '../world/Character'
 import type { ClickMarker } from '../world/ClickMarker'
 import { clampTarget } from '../world/Navigation'
+import { Joystick } from '../ui/Joystick'
 
-export const DEFAULT_HINT = '바닥을 누르면 걸어가요 · 드래그로 둘러보기'
+export const DEFAULT_HINT = '바닥을 누르거나 드래그해서 걸어요'
 
 /**
- * 마우스 클릭 · 호버 처리.
- * Raycaster로 클릭한 오브젝트를 찾아서 바닥(방 · 종이)이면 이동, 침대 · 책상이면 동작을 시켜요.
+ * 마우스 · 터치 입력 처리.
+ * - 탭: Raycaster로 누른 오브젝트를 찾아서 바닥(집 · 종이)이면 이동, 침대 · 책상 · 식탁 · 주방이면 동작
+ * - 드래그: 끈 방향으로 캐릭터가 360도 방향을 틀어 계속 걸어가요
  */
 export class Pointer {
   enabled = false
   private readonly raycaster = new THREE.Raycaster()
   private readonly ndc = new THREE.Vector2()
   private hovered: THREE.Object3D | null = null
+  private readonly joystick = new Joystick()
+  private readonly steerDir = new THREE.Vector3()
 
   constructor(
     private readonly stage: Stage,
@@ -29,6 +33,7 @@ export class Pointer {
   ) {
     // 드래그 · 핀치가 아닌 짧은 탭(클릭)만 이동 · 동작으로 처리해요
     controls.onTap = (e) => this.onClick(e)
+    controls.onStick = (stick) => this.onStick(stick)
     stage.renderer.domElement.addEventListener('pointermove', (e) => this.onHover(e))
   }
 
@@ -62,6 +67,17 @@ export class Pointer {
     const target = clampTarget(hit.point)
     this.marker.show(target)
     this.character.moveTo(target)
+  }
+
+  private onStick(stick: { x: number; y: number; dx: number; dy: number } | null) {
+    if (!stick || !this.enabled) {
+      this.character.steer(null)
+      this.joystick.hide()
+      return
+    }
+    const { x, y, dx, dy } = stick
+    this.joystick.show(x, y, dx, dy)
+    this.character.steer(this.stage.screenToGround(dx, dy, this.steerDir), Math.hypot(dx, dy) / STICK_RADIUS)
   }
 
   private onHover(e: PointerEvent) {

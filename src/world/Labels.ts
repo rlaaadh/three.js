@@ -57,6 +57,9 @@ export const LABEL_TEXTS = {
   title: 'my tiny room',
   bed: '1. 침대를 누르면 뒹굴뒹굴',
   desk: '2. 책상을 누르면 공부하는 척',
+  table: '3. 식탁을 누르면 냠냠',
+  kitchen: '4. 주방을 누르면 보글보글 요리',
+  drag: '드래그하면 그쪽으로 걸어가요',
 }
 
 /** 방 앞쪽 종이 위에 쓰는 안내 문구들 */
@@ -74,6 +77,18 @@ export function createLabels() {
   const deskHint = createLabel(LABEL_TEXTS.desk, { size: 0.4, color: '#e8604c' })
   deskHint.position.set(1.5, deskHint.position.y, 6.25)
   group.add(deskHint)
+
+  const tableHint = createLabel(LABEL_TEXTS.table, { size: 0.4, color: '#e8604c' })
+  tableHint.position.set(1.2, tableHint.position.y, 6.9)
+  group.add(tableHint)
+
+  const kitchenHint = createLabel(LABEL_TEXTS.kitchen, { size: 0.4, color: '#e8604c' })
+  kitchenHint.position.set(1.8, kitchenHint.position.y, 7.55)
+  group.add(kitchenHint)
+
+  const dragHint = createLabel(LABEL_TEXTS.drag, { size: 0.36, color: '#8a6a52' })
+  dragHint.position.set(1.6, dragHint.position.y, 8.25)
+  group.add(dragHint)
 
   return group
 }

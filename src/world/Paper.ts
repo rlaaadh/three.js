@@ -18,7 +18,7 @@ export function createPaper() {
   const ctx = canvas.getContext('2d')!
   ctx.fillStyle = '#fafaf7'
   ctx.fillRect(0, 0, 256, 256)
-  ctx.strokeStyle = '#dfe3e8'
+  ctx.strokeStyle = '#d9bf9f' // 연한 갈색 모눈
   ctx.lineWidth = 3
   ctx.beginPath()
   ctx.moveTo(0, 1.5)

@@ -1,13 +1,16 @@
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-import type { Spot } from './Room'
-import { groundHeight, planPath } from './Navigation'
+import type { Spot, SpotAction } from './Room'
+import { groundHeight, planPath, slideMove } from './Navigation'
 import { damp, dampAngle, easeInOutCubic } from '../utils/math'
 import { handFont } from '../utils/fonts'
 
-type State = 'idle' | 'walk' | 'transition' | 'lie' | 'sit'
+type State = 'idle' | 'walk' | 'steer' | 'transition' | SpotAction
 
-const WALK_SPEED = 1.8
+/** 동작 중에 머리 위에 떠 있는 손글씨 */
+export const EMOTE_TEXTS: Partial<Record<SpotAction, string>> = { eat: '냠냠', cook: '보글보글' }
+
+const WALK_SPEED = 2.6
 const TRANSITION_TIME = 0.55
 /** 발자국 간격 */
 const STEP_LENGTH = 0.3
@@ -27,11 +30,12 @@ const material = (color: string, roughness = 0.6) => new THREE.MeshStandardMater
 /**
  * 임시 캐릭터 (일자 앞머리 아이).
  * 나중에 GLB 모델 + 애니메이션으로 교체할 때는 build()와 pose 부분만 바꾸면 돼요.
- * 상태: idle → walk → transition → lie / sit
+ * 상태: idle → walk(클릭) / steer(드래그) → transition → lie / sit / eat / cook
  */
 export class Character {
   readonly root = new THREE.Group()
-  readonly zzz: THREE.Sprite
+  /** 동작별 머리 위 글씨 (Zzz, 냠냠, 보글보글) */
+  readonly emotes = new THREE.Group()
   state: State = 'idle'
   /** 한 걸음 디딜 때마다 호출돼요 (발자국 찍기용) */
   onStep: ((x: number, y: number, z: number, yaw: number) => void) | null = null
@@ -54,6 +58,12 @@ export class Character {
   private readonly faces = { normal: faceTexture('normal'), happy: faceTexture('happy') }
   private readonly faceMaterial = new THREE.MeshStandardMaterial({ map: this.faces.normal, roughness: 0.65 })
   private spot: Spot | null = null
+  /** 드래그 방향 (월드 xz 단위 벡터)과 세기(0~1). null이면 드래그 중이 아니에요 */
+  private steerDir: THREE.Vector3 | null = null
+  private steerStrength = 0
+  /** 드래그 중 실제로 움직였는지 (벽에 막히면 제자리에 서요) */
+  private moving = false
+  private readonly emoteSprites: Partial<Record<SpotAction, THREE.Sprite>> = {}
   private transition: {
     fromP: THREE.Vector3
     toP: THREE.Vector3
@@ -70,13 +80,38 @@ export class Character {
     this.root.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) o.castShadow = true
     })
-    this.zzz = createZzz()
+    this.emoteSprites.lie = createZzz()
+    for (const [action, text] of Object.entries(EMOTE_TEXTS) as [SpotAction, string][]) {
+      this.emoteSprites[action] = createEmote(text)
+    }
+    this.emotes.add(...Object.values(this.emoteSprites))
   }
 
   /** 바닥의 한 지점으로 걸어가요 */
   moveTo(point: THREE.Vector3) {
     if (this.state === 'transition') return
     this.leaveSpot(() => this.walk(point, null))
+  }
+
+  /**
+   * 드래그한 방향으로 계속 걸어가요. 손을 떼면 null로 불러서 멈춰요.
+   * @param dir 월드 xz 방향 (길이 무관)
+   * @param strength 0~1, 드래그를 짧게 하면 천천히 걸어요
+   */
+  steer(dir: THREE.Vector3 | null, strength = 1) {
+    if (!dir || dir.lengthSq() < 1e-8) {
+      this.steerDir = null
+      if (this.state === 'steer') this.state = 'idle'
+      return
+    }
+    const starting = !this.steerDir
+    this.steerDir = (this.steerDir ?? new THREE.Vector3()).set(dir.x, 0, dir.z).normalize()
+    this.steerStrength = THREE.MathUtils.clamp(strength, 0, 1)
+    if (!starting) return
+    // 누워있거나 앉아있으면 먼저 일어나요. 클릭으로 가던 길은 취소해요
+    this.path = []
+    this.onArrive = null
+    if (this.state !== 'transition') this.leaveSpot(() => {})
   }
 
   /** 침대 · 책상 같은 지점으로 가서 동작해요 */
@@ -112,10 +147,12 @@ export class Character {
       if (this.smileTime <= 0) this.faceMaterial.map = this.faces.normal
     }
 
+    if (this.steerDir && (this.state === 'idle' || this.state === 'walk')) this.state = 'steer'
     if (this.state === 'walk') this.updateWalk(dt)
+    if (this.state === 'steer') this.updateSteer(dt)
     if (this.state === 'transition') this.updateTransition(dt)
     this.updatePose(dt)
-    this.updateZzz()
+    this.updateEmotes()
   }
 
   // ---------- 이동 ----------
@@ -149,9 +186,29 @@ export class Character {
     const step = Math.min(WALK_SPEED * dt, dist)
     pos.x += (dx / dist) * step
     pos.z += (dz / dist) * step
-    // 방 ↔ 종이 사이 단차를 부드럽게 오르내려요
+    this.afterMove(step, Math.atan2(dx, dz), dt)
+  }
+
+  private updateSteer(dt: number) {
+    const dir = this.steerDir
+    if (!dir) return
+    const pos = this.root.position
+    const speed = WALK_SPEED * (0.45 + 0.55 * this.steerStrength)
+    const next = slideMove(pos, dir.x * speed * dt, dir.z * speed * dt)
+    const step = Math.hypot(next.x - pos.x, next.z - pos.z)
+    pos.x = next.x
+    pos.z = next.z
+    this.moving = step > speed * dt * 0.2
+    // 막혀 있어도 누른 방향으로는 몸을 돌려요
+    this.afterMove(step, Math.atan2(dir.x, dir.z), dt)
+  }
+
+  /** 걸은 뒤 공통 처리: 바닥 높이 · 방향 · 발자국 */
+  private afterMove(step: number, heading: number, dt: number) {
+    const pos = this.root.position
+    // 집 ↔ 종이 사이 단차를 부드럽게 오르내려요
     pos.y = damp(pos.y, groundHeight(pos.x, pos.z), 18, dt)
-    this.yaw = dampAngle(this.yaw, Math.atan2(dx, dz), 12, dt)
+    this.yaw = dampAngle(this.yaw, heading, 12, dt)
     this.root.rotation.set(0, this.yaw, 0)
 
     // 일정 거리마다 왼발 · 오른발 번갈아 발자국
@@ -166,7 +223,7 @@ export class Character {
     }
   }
 
-  // ---------- 침대 · 책상 진입 / 이탈 ----------
+  // ---------- 침대 · 책상 · 식탁 · 주방 진입 / 이탈 ----------
 
   private enter(spot: Spot) {
     this.spot = spot
@@ -177,7 +234,7 @@ export class Character {
 
   private leaveSpot(next: () => void) {
     const spot = this.spot
-    if (!spot || (this.state !== 'lie' && this.state !== 'sit')) {
+    if (!spot || this.state !== spot.action) {
       this.spot = null
       next()
       return
@@ -228,7 +285,9 @@ export class Character {
     let armR = 0
     let bob = 0
 
-    if (this.state === 'walk') {
+    let stirZ = 0
+
+    if (this.state === 'walk' || (this.state === 'steer' && this.moving)) {
       const phase = Math.sin(this.time * 11)
       legL = phase * 0.7
       legR = -phase * 0.7
@@ -238,6 +297,14 @@ export class Character {
     } else if (this.state === 'sit') {
       legL = legR = -Math.PI / 2
       armL = armR = -0.9 + Math.sin(this.time * 6) * 0.08 // 공부하는 척 끄적끄적
+    } else if (this.state === 'eat') {
+      legL = legR = -Math.PI / 2
+      armL = -0.9
+      armR = -1.0 - (Math.sin(this.time * 4) * 0.5 + 0.5) * 1.0 // 냠냠: 숟가락을 입으로
+    } else if (this.state === 'cook') {
+      armL = -0.7
+      armR = -1.1 + Math.sin(this.time * 6) * 0.12 // 보글보글: 냄비를 빙글빙글 저어요
+      stirZ = Math.cos(this.time * 6) * 0.2
     }
 
     hipL.rotation.x = damp(hipL.rotation.x, legL, 14, dt)
@@ -246,7 +313,7 @@ export class Character {
     // 손 흔들기: 오른팔을 옆으로 들어 좌우로 흔들어요
     const waving = this.waveTime > 0
     shR.rotation.x = damp(shR.rotation.x, waving ? 0 : armR, 14, dt)
-    shR.rotation.z = damp(shR.rotation.z, waving ? 2.5 + Math.sin(this.time * 14) * 0.4 : 0, 16, dt)
+    shR.rotation.z = damp(shR.rotation.z, waving ? 2.5 + Math.sin(this.time * 14) * 0.4 : stirZ, 16, dt)
     if (waving && this.state !== 'walk') {
       const since = 2.2 - this.waveTime
       if (since < 0.35) bob = Math.sin((since / 0.35) * Math.PI) * 0.12 // 반가워서 폴짝
@@ -258,14 +325,17 @@ export class Character {
     this.head.rotation.z = Math.sin(this.time * 1.4) * (this.state === 'lie' ? 0.02 : 0.06)
   }
 
-  private updateZzz() {
-    this.zzz.visible = this.state === 'lie'
-    if (!this.zzz.visible) return
-    this.head.getWorldPosition(this.zzz.position)
-    this.zzz.position.y += 0.6 + Math.sin(this.time * 2) * 0.08
-    this.zzz.position.x += 0.2
-    const material = this.zzz.material as THREE.SpriteMaterial
-    material.opacity = 0.6 + Math.sin(this.time * 2) * 0.3
+  private updateEmotes() {
+    for (const [action, sprite] of Object.entries(this.emoteSprites) as [SpotAction, THREE.Sprite][]) {
+      sprite.visible = this.state === action
+      if (!sprite.visible) continue
+      this.head.getWorldPosition(sprite.position)
+      // Zzz는 누운 머리 옆, 냠냠 · 보글보글은 머리 위로 (앞머리 · 번 머리에 가리지 않게)
+      sprite.position.y += (action === 'lie' ? 0.6 : 0.95) + Math.sin(this.time * 2) * 0.08
+      sprite.position.x += 0.2
+      const material = sprite.material as THREE.SpriteMaterial
+      material.opacity = 0.6 + Math.sin(this.time * 2) * 0.3
+    }
   }
 
   // ---------- 모델링 (임시 도형) ----------
@@ -524,6 +594,26 @@ function faceTexture(expression: 'normal' | 'happy' = 'normal') {
   texture.colorSpace = THREE.SRGBColorSpace
   texture.anisotropy = 8
   return texture
+}
+
+/** 머리 위에 띄우는 손글씨 한 줄 (냠냠, 보글보글) */
+function createEmote(text: string) {
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')!
+  ctx.font = handFont(72)
+  canvas.width = Math.ceil(ctx.measureText(text).width + 24)
+  canvas.height = 112
+  ctx.font = handFont(72)
+  ctx.fillStyle = '#e8604c'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, 12, 60)
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }))
+  const height = 0.42
+  sprite.scale.set((height * canvas.width) / canvas.height, height, 1)
+  sprite.visible = false
+  return sprite
 }
 
 function createZzz() {

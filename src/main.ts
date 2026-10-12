@@ -4,7 +4,7 @@ import { Stage } from './core/Stage'
 import { Loader } from './core/Loader'
 import { createPaper } from './world/Paper'
 import { Room } from './world/Room'
-import { Character } from './world/Character'
+import { Character, EMOTE_TEXTS } from './world/Character'
 import { createLabels, LABEL_TEXTS } from './world/Labels'
 import { ClickMarker } from './world/ClickMarker'
 import { Footprints } from './world/Footprints'
@@ -28,7 +28,7 @@ document.addEventListener('gesturestart', (e) => e.preventDefault())
 const loader = new Loader()
 
 // 손글씨 폰트가 준비돼야 캔버스(3D 바닥 글씨 · Zzz)가 제대로 그려져요
-const fontsReady = loadHandFont([...Object.values(LABEL_TEXTS), 'zZ'])
+const fontsReady = loadHandFont([...Object.values(LABEL_TEXTS), ...Object.values(EMOTE_TEXTS), 'zZ'])
 
 const paper = createPaper()
 const room = new Room()
@@ -44,7 +44,7 @@ let pointer: Pointer | null = null
 const intro = { t: -1 }
 room.group.scale.setScalar(0.001)
 nature.children.forEach((item) => item.scale.setScalar(0.001))
-stage.camera.zoom = 0.55
+stage.camera.zoom = 0.45
 stage.camera.updateProjectionMatrix()
 
 function updateIntro(dt: number) {
@@ -69,6 +69,8 @@ function updateIntro(dt: number) {
   }
 
   if (intro.t > 1.4 && pointer) pointer.enabled = true
+  // 집 전체를 보여준 뒤 카메라가 캐릭터를 따라가기 시작해요
+  if (intro.t > 1.6 && character) stage.followTarget = character.root.position
   if (intro.t > 2 + nature.children.length * 0.05) intro.t = 99 // 인트로 끝
 }
 
@@ -76,7 +78,7 @@ loader.start([fontsReady]).then(() => {
   character = new Character()
   character.root.position.set(0.4, 4, 0.8)
   character.root.visible = false
-  stage.scene.add(character.root, character.zzz, createLabels())
+  stage.scene.add(character.root, character.emotes, createLabels())
 
   character.onStep = (x, y, z, yaw) => footprints.stamp(x, y, z, yaw)
   pointer = new Pointer(stage, room, paper.ground, character, marker, hintEl, controls)

@@ -1,6 +1,6 @@
 :root {
   --paper: #fafaf7;
-  --grid: #e2e5ea;
+  --grid: #e0c9ab;
   --ink: #3a2e2e;
   --pencil: #6b6b6b;
   --accent: #e8604c;
@@ -366,4 +366,48 @@ button {
     opacity: 0;
     transform: translate(calc(-50% + var(--dx)), calc(-50% - var(--rise))) scale(0.9) rotate(var(--rotate));
   }
+}
+
+/* ---------- 드래그 조이스틱 ---------- */
+.stick {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.stick.is-active {
+  opacity: 1;
+}
+
+.stick::before,
+.stick__knob {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+}
+
+/* 바깥 원 (반지름은 CameraControls의 STICK_RADIUS와 같아요) */
+.stick::before {
+  left: -56px;
+  top: -56px;
+  width: 112px;
+  height: 112px;
+  border: 2px dashed var(--line-strong);
+  background: rgba(255, 248, 230, 0.45);
+}
+
+.stick__knob {
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #c89a6c;
+  background: #fff1c2;
+  box-shadow: var(--shadow-soft);
 }
