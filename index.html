@@ -8,6 +8,9 @@
     <!-- 손글씨 폰트: 나눔손글씨 힘내라는 말보단 (네이버 한글한글 아름답게) -->
     <link rel="preconnect" href="https://hangeul.pstatic.net" crossorigin />
     <link href="https://hangeul.pstatic.net/hangeul_static/css/NanumHimNaeRaNeunMarBoDan.css" rel="stylesheet" />
+    <!-- 타자연습 창 글씨: 읽는 글씨는 프리텐다드(쓰는 글자만 조금씩 받아와요), 귀여운 제목은 히피체 (style.css) -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet" />
   </head>
   <body>
     <!-- 3D 화면 -->
@@ -28,6 +31,9 @@
     <div class="hud">
       <p class="hud__hint" id="hint">바닥을 누르거나 드래그해서 걸어요</p>
     </div>
+    <!-- 책상에 앉으면 TV처럼 켜지는 타자연습 창 (내용은 src/ui/typing/TypingApp.ts에서 그려요) -->
+    <div class="typing" id="typing" aria-hidden="true"></div>
+
     <!-- 드래그하는 동안 뜨는 조이스틱 -->
     <div class="stick" id="stick" aria-hidden="true"><span class="stick__knob"></span></div>
     <!-- 캐릭터 말풍선 (위치는 매 프레임 캐릭터 머리 위로 맞춰요) -->

@@ -12,6 +12,8 @@ import { createNature } from './world/Nature'
 import { Pointer } from './interaction/Pointer'
 import { CameraControls } from './interaction/CameraControls'
 import { SpeechBubble } from './ui/SpeechBubble'
+import { TypingApp } from './ui/typing/TypingApp'
+import { isTouchDevice } from './utils/device'
 import { burstHearts } from './ui/HeartBurst'
 import { toScreen } from './ui/screen'
 import { loadHandFont } from './utils/fonts'
@@ -81,6 +83,11 @@ loader.start([fontsReady]).then(() => {
   stage.scene.add(character.root, character.emotes, createLabels())
 
   character.onStep = (x, y, z, yaw) => footprints.stamp(x, y, z, yaw)
+  // 책상에 앉으면 타자 연습 창, 일어나면 창을 닫아요
+  character.onAction = (action) => {
+    if (action === 'sit') sitAtDesk()
+    else if (action === null) leaveDesk()
+  }
   pointer = new Pointer(stage, room, paper.ground, character, marker, hintEl, controls)
   stage.zoomTarget = 1
   intro.t = 0
@@ -131,6 +138,40 @@ document.getElementById('heart')!.addEventListener('click', () => {
   burstHearts(x, y)
 })
 
+// ---------- 타자 연습 (책상에 앉으면) ----------
+const typing = new TypingApp()
+let zoomBeforeTyping = 1
+let atDesk = false
+let typingTimer = 0
+/** 3D 아이맥 화면: 꺼져 있다가 앉으면 환하게 켜져요 */
+const SCREEN_OFF = new THREE.Color('#4a4d55')
+const SCREEN_ON = new THREE.Color('#ffffff')
+
+function sitAtDesk() {
+  // 모바일은 화면 키보드로 치기 불편해서 타자연습 창 없이 예전처럼 앉아서 공부하는 척만 해요
+  if (isTouchDevice()) return
+  atDesk = true
+  zoomBeforeTyping = stage.zoomTarget
+  stage.zoomTarget = Math.max(stage.zoomTarget, 1.8)
+  // 모니터가 먼저 켜지고, 이어서 타자연습 창이 TV처럼 켜져요
+  typingTimer = window.setTimeout(() => typing.open(), 450)
+}
+
+function leaveDesk() {
+  if (!atDesk) return
+  atDesk = false
+  window.clearTimeout(typingTimer)
+  stage.zoomTarget = zoomBeforeTyping
+  typing.close()
+}
+
+typing.onKey = () => character?.typeKey()
+typing.onHit = () => character?.smile(0.8)
+typing.onClose = () => {
+  leaveDesk()
+  character?.standUp()
+}
+
 // ---------- 줌 버튼 ----------
 document.getElementById('zoom-in')!.addEventListener('click', () => stage.zoomBy(1.25))
 document.getElementById('zoom-out')!.addEventListener('click', () => stage.zoomBy(0.8))
@@ -148,6 +189,8 @@ stage.renderer.setAnimationLoop((time) => {
   updateIntro(dt)
   if (character && intro.t > 1.4) character.update(dt)
   marker.update(dt)
+  typing.update(dt)
+  room.monitorScreen.color.lerp(atDesk ? SCREEN_ON : SCREEN_OFF, 1 - Math.exp(-dt * 6))
   footprints.update(dt)
   if (character) bubble.update(dt, stage.camera, canvas, (v) => character!.getHeadTop(v))
   stage.update(dt)

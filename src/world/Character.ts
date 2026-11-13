@@ -39,6 +39,8 @@ export class Character {
   state: State = 'idle'
   /** 한 걸음 디딜 때마다 호출돼요 (발자국 찍기용) */
   onStep: ((x: number, y: number, z: number, yaw: number) => void) | null = null
+  /** 침대 · 책상 · 식탁 · 주방 동작을 시작하면 그 동작, 일어나기 시작하면 null로 불려요 */
+  onAction: ((action: SpotAction | null) => void) | null = null
 
   private readonly model = new THREE.Group()
   private readonly head = new THREE.Group()
@@ -53,9 +55,11 @@ export class Character {
   private time = 0
   /** 손 흔들기 남은 시간 */
   private waveTime = 0
+  /** 타자 치는 손놀림 남은 시간 */
+  private typingTime = 0
   /** 활짝 웃는 표정 남은 시간 */
   private smileTime = 0
-  private readonly faces = { normal: faceTexture('normal'), happy: faceTexture('happy') }
+  private readonly faces = { normal: faceTexture('normal'), happy: faceTexture('happy'), sleep: faceTexture('sleep') }
   private readonly faceMaterial = new THREE.MeshStandardMaterial({ map: this.faces.normal, roughness: 0.65 })
   private spot: Spot | null = null
   /** 드래그 방향 (월드 xz 단위 벡터)과 세기(0~1). null이면 드래그 중이 아니에요 */
@@ -120,6 +124,17 @@ export class Character {
     this.leaveSpot(() => this.walk(spot.approach, () => this.enter(spot)))
   }
 
+  /** 동작 중이면 일어나서 제자리에 서요 */
+  standUp() {
+    if (this.state === 'transition') return
+    this.leaveSpot(() => {})
+  }
+
+  /** 책상에 앉아 있을 때 잠깐 타닥타닥 빠르게 타자를 쳐요 */
+  typeKey() {
+    this.typingTime = 0.25
+  }
+
   /** 활짝 웃으면서 손을 흔들어요 */
   wave(duration = 2.2) {
     this.waveTime = duration
@@ -129,7 +144,7 @@ export class Character {
   /** 잠깐 활짝 웃어요 */
   smile(duration = 1.8) {
     this.smileTime = Math.max(this.smileTime, duration)
-    this.faceMaterial.map = this.faces.happy
+    this.updateFace()
   }
 
   /** 말풍선이 붙을 머리 위 지점 */
@@ -142,10 +157,9 @@ export class Character {
   update(dt: number) {
     this.time += dt
     this.waveTime = Math.max(this.waveTime - dt, 0)
-    if (this.smileTime > 0) {
-      this.smileTime -= dt
-      if (this.smileTime <= 0) this.faceMaterial.map = this.faces.normal
-    }
+    this.typingTime = Math.max(this.typingTime - dt, 0)
+    this.smileTime = Math.max(this.smileTime - dt, 0)
+    this.updateFace()
 
     if (this.steerDir && (this.state === 'idle' || this.state === 'walk')) this.state = 'steer'
     if (this.state === 'walk') this.updateWalk(dt)
@@ -229,6 +243,7 @@ export class Character {
     this.spot = spot
     this.startTransition(spot.position, spot.quaternion, () => {
       this.state = spot.action
+      this.onAction?.(spot.action)
     })
   }
 
@@ -240,6 +255,7 @@ export class Character {
       return
     }
     this.spot = null
+    this.onAction?.(null)
     this.yaw = Math.atan2(spot.approach.x - spot.position.x, spot.approach.z - spot.position.z)
     const standQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, this.yaw, 0))
     this.startTransition(spot.approach, standQ, () => {
@@ -296,7 +312,13 @@ export class Character {
       bob = Math.abs(Math.sin(this.time * 11)) * 0.05
     } else if (this.state === 'sit') {
       legL = legR = -Math.PI / 2
-      armL = armR = -0.9 + Math.sin(this.time * 6) * 0.08 // 공부하는 척 끄적끄적
+      if (this.typingTime > 0) {
+        // 타자 게임: 양손을 번갈아 빠르게 타닥타닥
+        armL = -0.95 + Math.sin(this.time * 32) * 0.12
+        armR = -0.95 - Math.sin(this.time * 32) * 0.12
+      } else {
+        armL = armR = -0.9 + Math.sin(this.time * 6) * 0.08 // 공부하는 척 끄적끄적
+      }
     } else if (this.state === 'eat') {
       legL = legR = -Math.PI / 2
       armL = -0.9
@@ -323,6 +345,12 @@ export class Character {
     // 숨쉬기 · 고개 까딱
     this.model.scale.y = 1 + Math.sin(this.time * 2.4) * 0.015
     this.head.rotation.z = Math.sin(this.time * 1.4) * (this.state === 'lie' ? 0.02 : 0.06)
+  }
+
+  /** 표정: 웃는 중이면 활짝, 침대에 누워 있으면 눈 감고 쿨쿨, 아니면 평소 */
+  private updateFace() {
+    const face = this.smileTime > 0 ? this.faces.happy : this.state === 'lie' ? this.faces.sleep : this.faces.normal
+    if (this.faceMaterial.map !== face) this.faceMaterial.map = face
   }
 
   private updateEmotes() {
@@ -453,8 +481,9 @@ function stripeTexture(repeat: number) {
  * 구의 UV는 가로 2 : 세로 1이고, 정면(+z)은 가로 1/4 지점 · 세로 가운데에 와요.
  * happy: 눈은 ^^ 모양, 입은 활짝 벌린 미소
  */
-function faceTexture(expression: 'normal' | 'happy' = 'normal') {
+function faceTexture(expression: 'normal' | 'happy' | 'sleep' = 'normal') {
   const happy = expression === 'happy'
+  const sleep = expression === 'sleep'
   const W = 1024
   const H = 512
   const canvas = document.createElement('canvas')
@@ -503,6 +532,34 @@ function faceTexture(expression: 'normal' | 'happy' = 'normal') {
       ctx.beginPath()
       ctx.moveTo(ex - 20, cy - 12)
       ctx.quadraticCurveTo(ex, cy - 24, ex + 20, cy - 12)
+      ctx.stroke()
+      continue
+    }
+
+    if (sleep) {
+      // 감은 눈: 아래로 둥근 곡선 + 아래로 내려온 속눈썹
+      ctx.strokeStyle = '#3a2216'
+      ctx.lineCap = 'round'
+      ctx.lineWidth = 7
+      ctx.beginPath()
+      ctx.arc(ex, ey - 6, 24, Math.PI * 0.12, Math.PI * 0.88)
+      ctx.stroke()
+      ctx.lineWidth = 4
+      for (const [dx, dy, lx, ly] of [
+        [20, 10, 30, 20],
+        [8, 17, 12, 29],
+      ]) {
+        ctx.beginPath()
+        ctx.moveTo(ex + s * dx, ey + dy)
+        ctx.lineTo(ex + s * lx, ey + ly)
+        ctx.stroke()
+      }
+      // 눈썹 (편안하게 살짝 내려가요)
+      ctx.strokeStyle = '#a8602c'
+      ctx.lineWidth = 5
+      ctx.beginPath()
+      ctx.moveTo(ex - 20, cy - 2)
+      ctx.quadraticCurveTo(ex, cy - 10, ex + 20, cy - 2)
       ctx.stroke()
       continue
     }
@@ -581,6 +638,12 @@ function faceTexture(expression: 'normal' | 'happy' = 'normal') {
     ctx.ellipse(cx, cy + 116, 16, 10, 0, 0, Math.PI * 2)
     ctx.fill()
     ctx.restore()
+  } else if (sleep) {
+    // 쌔근쌔근 살짝 벌린 작은 입
+    ctx.fillStyle = '#c4524c'
+    ctx.beginPath()
+    ctx.ellipse(cx, cy + 98, 9, 11, 0, 0, Math.PI * 2)
+    ctx.fill()
   } else {
     ctx.strokeStyle = '#c4524c'
     ctx.lineWidth = 5

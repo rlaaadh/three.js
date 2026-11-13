@@ -1,3 +1,11 @@
+/* 타자연습 창 제목용 귀여운 글씨: 히피체 (AI올컷, SIL OFL 1.1 · 눈누) */
+@font-face {
+  font-family: 'Hippie';
+  src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2610081905@hippie/hippie/hippie_%ED%9E%88%ED%94%BC%EC%B2%B4.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   --paper: #fafaf7;
   --grid: #e0c9ab;
@@ -410,4 +418,1165 @@ button {
   border: 2px solid #c89a6c;
   background: #fff1c2;
   box-shadow: var(--shadow-soft);
+}
+
+/* ---------- 타자연습.app (책상에 앉으면 TV처럼 켜지는 레트로 창) ---------- */
+.typing {
+  /* 창 비율: 가로 화면은 4:3, 세로 화면은 3:4 */
+  --ratio: 4 / 3;
+  --win-line: #5a4033;
+  --win-bar: #ffe7a3;
+  --win-body: #fffaf0;
+  --win-shadow: #e6c99a;
+  --win-soft: #f6ead6;
+  --win-point: #ec6a52;
+  /* 창 안은 대부분 히피체 (var(--font-hand)를 쓰는 버튼도 같이 바뀌어요), 칠 문장 · 입력창만 프리텐다드 */
+  --font-hand: 'Hippie', 'Pretendard Variable', 'Apple SD Gothic Neo', sans-serif;
+  --font-read: 'Pretendard Variable', 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  display: none;
+  background: rgba(58, 46, 46, 0.18);
+  animation: typing-fade 0.25s ease both;
+}
+
+.typing.is-open {
+  display: block;
+}
+
+.typing.is-closing {
+  animation: typing-fade 0.32s ease reverse both;
+}
+
+@media (orientation: portrait) {
+  .typing {
+    --ratio: 3 / 4;
+  }
+}
+
+/* 위 여백 10%, 아래 여백 5% 안에서 비율을 지키며 최대한 크게 (키보드가 올라오면 그만큼 작아져요) */
+.typing__frame {
+  position: absolute;
+  top: 10vh;
+  top: 10dvh;
+  left: 50%;
+  width: min(calc(100vw - 32px), calc((85vh - var(--keyboard, 0px)) * var(--ratio)));
+  width: min(calc(100vw - 32px), calc((85dvh - var(--keyboard, 0px)) * var(--ratio)));
+  aspect-ratio: var(--ratio);
+  translate: -50% 0;
+  container-type: size;
+  animation: typing-on 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.typing.is-closing .typing__frame {
+  animation: typing-off 0.32s ease-in both;
+}
+
+/* 옛날 TV처럼: 가운데 점 → 가로줄 → 세로로 펼쳐지며 켜져요 */
+@keyframes typing-on {
+  0% {
+    transform: scale(0.02, 0.008);
+    opacity: 0;
+    filter: brightness(2.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  45% {
+    transform: scale(1, 0.008);
+    filter: brightness(2.6);
+  }
+  80% {
+    transform: scale(1, 1.04);
+    filter: brightness(1.15);
+  }
+  100% {
+    transform: scale(1, 1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes typing-off {
+  0% {
+    transform: scale(1, 1);
+  }
+  55% {
+    transform: scale(1, 0.008);
+    filter: brightness(2.6);
+  }
+  100% {
+    transform: scale(0, 0.008);
+    opacity: 0;
+    filter: brightness(2.6);
+  }
+}
+
+@keyframes typing-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 창 위 고양이 귀 */
+.typing__ear {
+  position: absolute;
+  top: -17px;
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--win-line);
+  border-radius: 8px 4px 4px 4px;
+  background: var(--win-bar);
+  transform: rotate(45deg);
+}
+
+.typing__ear::after {
+  content: '';
+  position: absolute;
+  inset: 7px 14px 14px 7px;
+  border-radius: 4px 2px 2px 2px;
+  background: #ffc4b8;
+}
+
+.typing__ear--left {
+  left: 34px;
+}
+
+.typing__ear--right {
+  right: 34px;
+}
+
+/* 창 안 글자 크기는 창 크기를 따라가요 (작은 창에서도 같은 모양) */
+.typing__window {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border: 3px solid var(--win-line);
+  border-radius: 26px;
+  background: var(--win-body);
+  box-shadow: 8px 8px 0 var(--win-shadow);
+  color: var(--win-line);
+  font-family: var(--font-hand);
+  font-size: clamp(12px, min(1.68cqw, 2.22cqh), 19px);
+}
+
+.typing__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 16px;
+  border-bottom: 3px solid var(--win-line);
+  background: var(--win-bar);
+}
+
+.typing__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.typing__dots i {
+  width: 14px;
+  height: 14px;
+  border: 2.5px solid var(--win-line);
+  border-radius: 50%;
+  background: #f19a7c;
+}
+
+.typing__dots i:nth-child(2) {
+  background: #f7c95c;
+}
+
+.typing__dots i:nth-child(3) {
+  background: #a8dcc8;
+}
+
+/* 제목 양옆 줄무늬 */
+.typing__name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.typing__name::before,
+.typing__name::after {
+  content: '';
+  flex: 1;
+  height: 10px;
+  background: repeating-linear-gradient(to bottom, var(--win-line) 0 2px, transparent 2px 4px);
+  opacity: 0.45;
+}
+
+.typing__icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid var(--win-line);
+  border-radius: 50%;
+  background: var(--win-body);
+  color: var(--win-line);
+  font-family: var(--font-hand);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: scale 0.12s ease;
+}
+
+.typing__icon:active {
+  scale: 0.88;
+}
+
+.typing__icon.is-muted {
+  opacity: 0.55;
+}
+
+.typing__icon--close {
+  background: #ffd5c8;
+}
+
+.typing__body {
+  flex: 1;
+  min-height: 0;
+  padding: 1.1em;
+  background-color: var(--win-body);
+  background-image:
+    linear-gradient(rgba(224, 201, 171, 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(224, 201, 171, 0.35) 1px, transparent 1px);
+  background-size: 1.6em 1.6em;
+}
+
+.typing__body > * {
+  height: 100%;
+  animation: typing-pop-in 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+@keyframes typing-pop-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+/* ---------- 공통 조각 ---------- */
+.tcard {
+  border: 2.5px solid var(--win-line);
+  border-radius: 1.4em;
+  background: #fff;
+  box-shadow: 0.3em 0.3em 0 var(--win-soft);
+}
+
+.tcard__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0;
+  font-size: 1.25em;
+}
+
+.tback {
+  padding: 0.15em 0.8em;
+  border: 2px solid var(--win-line);
+  border-radius: 999px;
+  background: var(--win-body);
+  color: var(--win-line);
+  font-family: var(--font-hand);
+  font-size: 1.1em;
+  cursor: pointer;
+}
+
+.tbadge {
+  padding: 0.15em 0.9em;
+  border-radius: 999px;
+  background: var(--win-bar);
+  font-size: 1.1em;
+}
+
+.tbutton {
+  padding: 0.35em 1.6em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0.25em 0 var(--win-line);
+  color: var(--win-line);
+  font-family: var(--font-hand);
+  font-size: 1.4em;
+  cursor: pointer;
+  transition:
+    translate 0.08s ease,
+    box-shadow 0.08s ease;
+}
+
+.tbutton:active {
+  translate: 0 0.18em;
+  box-shadow: 0 0.07em 0 var(--win-line);
+}
+
+.tbutton--main {
+  background: #ffe08a;
+}
+
+.typing button:focus-visible {
+  outline: 3px solid var(--win-point);
+  outline-offset: 3px;
+}
+
+/* ---------- 메뉴: 책상 그림 + 모드 고르기 ---------- */
+.tmenu {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  align-items: center;
+  gap: 1.5em;
+}
+
+.tmenu__art {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2.5px solid var(--win-line);
+  border-radius: 1.6em;
+  background: linear-gradient(160deg, #ffe3d3 0%, #f7d6e4 45%, #d9e4fb 100%);
+}
+
+.tart {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+}
+
+.tart__float {
+  animation: tart-bob 3.2s ease-in-out infinite alternate;
+}
+
+.tart__float--late {
+  animation-delay: -1.6s;
+}
+
+.tart__letter {
+  font-family: var(--font-hand);
+  font-size: 46px;
+  stroke: #5a4033;
+  stroke-width: 2.5px;
+  paint-order: stroke;
+  animation: tart-bob 1.4s ease-in-out infinite alternate;
+}
+
+.tart__letter--2 {
+  animation-delay: -0.45s;
+}
+
+.tart__letter--3 {
+  animation-delay: -0.9s;
+}
+
+.tart__glow {
+  animation: tart-glow 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes tart-bob {
+  to {
+    translate: 0 -8px;
+  }
+}
+
+@keyframes tart-glow {
+  to {
+    opacity: 0.4;
+  }
+}
+
+.tmenu__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.tmenu__side p {
+  margin: 0;
+}
+
+.tmenu__hello {
+  font-size: 2.6em;
+  line-height: 1.1;
+}
+
+.tmenu__hello mark {
+  padding: 0 0.15em;
+  background: linear-gradient(transparent 55%, #ffe08a 55%);
+  color: inherit;
+}
+
+.tmenu__desc {
+  color: var(--ink-soft);
+  font-size: 1.3em;
+}
+
+.tmenu__modes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+  margin-top: 0.4em;
+}
+
+.tmode {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  padding: 0.65em 1em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 1.3em;
+  background: #fff;
+  box-shadow: 0 0.3em 0 var(--win-line);
+  color: var(--win-line);
+  font-family: var(--font-hand);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    translate 0.1s ease,
+    box-shadow 0.1s ease,
+    background-color 0.15s ease;
+}
+
+.tmode:hover {
+  background: #fff8e2;
+}
+
+.tmode:active {
+  translate: 0 0.2em;
+  box-shadow: 0 0.1em 0 var(--win-line);
+}
+
+/* 키캡 모양 아이콘 */
+.tmode__icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.3em;
+  height: 2.3em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 0.6em;
+  background: #ffe08a;
+  box-shadow: inset 0 -0.25em 0 rgba(90, 64, 51, 0.18);
+  font-size: 1.35em;
+}
+
+.tmode--sentence .tmode__icon {
+  background: #ffd9de;
+}
+
+.tmode--long .tmode__icon {
+  background: #d8f0e4;
+}
+
+.tmode__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.tmode__text b {
+  font-size: 1.45em;
+  font-weight: 400;
+}
+
+.tmode__text small {
+  color: var(--ink-soft);
+  font-size: 1.05em;
+}
+
+.tmode__best {
+  color: var(--win-point);
+  font-size: 1em;
+  white-space: nowrap;
+}
+
+/* ---------- 연습 화면 ---------- */
+.tprac {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16em;
+  gap: 1em;
+  min-height: 0;
+}
+
+.tprac__main,
+.tprac__side {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  min-height: 0;
+}
+
+.tprac__stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8em;
+  min-height: 0;
+  padding: 1em 1.4em 1.2em;
+  position: relative;
+}
+
+.tprac__top {
+  position: absolute;
+  top: 0.9em;
+  left: 1em;
+  right: 1em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 칠 글자: 크게, 지금 칠 글자는 버터색 칸 */
+.tprac__target {
+  margin: 1.4em 0 0;
+  max-width: 100%;
+  font-size: 2.6em;
+  line-height: 1.45;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.tprac--word .tprac__target {
+  font-size: 4.4em;
+}
+
+.tchar {
+  border-radius: 0.18em;
+  transition: color 0.1s ease;
+}
+
+.tchar.is-todo {
+  color: #a48f7a;
+}
+
+.tchar.is-done {
+  color: var(--win-line);
+}
+
+.tchar.is-wrong {
+  color: var(--win-point);
+  text-decoration: underline wavy;
+}
+
+/* 띄어쓰기 칸도 지금 칠 차례면 버터색 칸이 보이게 */
+.tchar--space.is-current {
+  display: inline-block;
+  min-width: 0.4em;
+}
+
+.tchar.is-current {
+  padding: 0 0.04em;
+  background: #ffe08a;
+  box-shadow: 0 0 0 2px var(--win-line);
+  color: var(--win-line);
+}
+
+.tprac__form {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  width: min(100%, 34em);
+  padding: 0.35em 0.4em 0.35em 1.2em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 999px;
+  background: var(--win-body);
+}
+
+.tprac__form:focus-within {
+  box-shadow: 0 0 0 0.3em rgba(255, 224, 138, 0.8);
+}
+
+.tprac__form input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--win-line);
+  font-family: var(--font-hand);
+  font-size: 1.5em;
+  text-align: center;
+}
+
+.tprac__form input::placeholder {
+  color: #c9b7a4;
+}
+
+.tprac__enter {
+  flex-shrink: 0;
+  padding: 0.25em 0.9em;
+  border: 2px solid var(--win-line);
+  border-radius: 999px;
+  background: #ffe08a;
+  color: var(--win-line);
+  font-family: var(--font-hand);
+  font-size: 1.1em;
+  cursor: pointer;
+}
+
+.tprac__count {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.05em;
+}
+
+/* ---------- 긴글: 글 전체를 문장 목록으로, 지금 문장만 강조 ---------- */
+.tlong {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-top: 0.9em;
+}
+
+.tlong__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.tlong__title {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0.15em 0.9em;
+  border-radius: 999px;
+  background: var(--win-bar);
+  font-size: 1.1em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tlong__head .tbadge {
+  margin-left: auto;
+}
+
+.tlong__list {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  margin: 0;
+  padding: 0.4em 0.2em;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  /* 위아래 끝을 살짝 흐리게 */
+  mask-image: linear-gradient(to bottom, transparent, #000 5%, #000 92%, transparent);
+}
+
+.tlong__line {
+  flex-shrink: 0;
+  padding: 0.3em 0.8em;
+  border-left: 0.3em solid transparent;
+  border-radius: 0.6em;
+  color: #b9a593;
+  font-size: 1.3em;
+  line-height: 1.5;
+  word-break: keep-all;
+  transition: background-color 0.2s ease;
+}
+
+.tlong__line.is-done {
+  color: var(--ink-soft);
+}
+
+.tlong__line.is-done::after {
+  margin-left: 0.4em;
+  font-family: var(--font-hand);
+}
+
+.tlong__line.is-perfect::after {
+  content: '✓';
+  color: #3f8f73;
+}
+
+.tlong__line.is-missed::after {
+  content: '•';
+  color: var(--win-point);
+}
+
+/* 지금 칠 문장: 버터색 띠 상자 안에 크게 */
+.tlong__line.is-current {
+  border-left-color: #f2b544;
+  background: #fff6d6;
+  color: var(--win-line);
+  font-size: 1.65em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.tlong .tprac__form {
+  width: 100%;
+}
+
+/* 긴글 목차: 문장 번호 동그라미 */
+.toutline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  padding: 1em 1.1em;
+}
+
+.toutline__dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45em;
+}
+
+.toutline__dots span {
+  display: grid;
+  place-items: center;
+  width: 2em;
+  height: 2em;
+  border: 2px solid #d9c6ae;
+  border-radius: 50%;
+  background: var(--win-body);
+  color: #a48f7a;
+  font-size: 0.95em;
+}
+
+.toutline__dots span.is-done {
+  border-color: var(--win-line);
+  background: #8fcfb5;
+  color: var(--win-line);
+}
+
+.toutline__dots span.is-current {
+  border-color: var(--win-line);
+  background: #ffe08a;
+  color: var(--win-line);
+  box-shadow: 0 0 0 0.2em rgba(255, 224, 138, 0.7);
+}
+
+/* 키보드 가이드: 다음에 누를 키가 반짝 */
+.tkeys {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  padding: 0.9em 1.2em 1em;
+}
+
+.tkeys__rows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.tkeys__row {
+  display: flex;
+  gap: 0.35em;
+}
+
+.tkeys__row:nth-child(2) {
+  margin-left: 1.2em;
+}
+
+.tkey {
+  display: grid;
+  place-items: center;
+  width: 2.5em;
+  height: 2.3em;
+  border: 2px solid #d9c6ae;
+  border-radius: 0.55em;
+  background: var(--win-body);
+  box-shadow: inset 0 -0.2em 0 rgba(90, 64, 51, 0.1);
+  color: #a08a76;
+  font-size: 1.05em;
+  transition:
+    background-color 0.12s ease,
+    translate 0.12s ease;
+}
+
+.tkey--wide {
+  width: 3.4em;
+}
+
+.tkey--space {
+  width: 16em;
+  font-size: 0.85em;
+  letter-spacing: 0.3em;
+}
+
+.tkey.is-next {
+  border-color: var(--win-line);
+  background: #ffe08a;
+  box-shadow: 0 0.2em 0 var(--win-line);
+  color: var(--win-line);
+  translate: 0 -0.15em;
+}
+
+/* 오른쪽: 오늘의 기록 */
+.tdash {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9em;
+  padding: 1.1em 1.2em;
+}
+
+.tdash__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 1.05em;
+}
+
+.tdash__row b {
+  font-size: 1.9em;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.tdash__bar {
+  height: 0.55em;
+  margin-top: 0.35em;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--win-soft);
+}
+
+.tdash__bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.tdash__metric--cpm b {
+  color: #c4472f;
+}
+
+.tdash__metric--cpm i {
+  background: #ec8a6a;
+}
+
+.tdash__metric--acc b {
+  color: #3f8f73;
+}
+
+.tdash__metric--acc i {
+  background: #8fcfb5;
+}
+
+.tdash__metric--progress b {
+  color: #9a6237;
+}
+
+.tdash__metric--progress i {
+  background: #e3b07c;
+}
+
+.tcheer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2em;
+  padding: 1em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 1.4em;
+  background: linear-gradient(160deg, #ffe08a, #f6c27a);
+  box-shadow: 0.3em 0.3em 0 var(--win-soft);
+  text-align: center;
+}
+
+.tcheer p {
+  margin: 0;
+}
+
+.tcheer__icon {
+  display: grid;
+  place-items: center;
+  width: 2.2em;
+  height: 2.2em;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 1.5em;
+}
+
+.tcheer__title {
+  font-size: 1.6em;
+}
+
+.tcheer__text {
+  font-size: 1.05em;
+}
+
+.ttip {
+  display: flex;
+  gap: 0.6em;
+  padding: 0.9em 1em;
+}
+
+.ttip p {
+  margin: 0;
+}
+
+.ttip__icon {
+  font-size: 1.3em;
+}
+
+.ttip__title {
+  font-size: 1.15em;
+}
+
+.ttip__text {
+  color: var(--ink-soft);
+  font-size: 0.98em;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+/* ---------- 긴글 주제 고르기 ---------- */
+.ttopics {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.ttopics__top {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+}
+
+.ttopics__title {
+  margin: 0;
+  font-size: 1.7em;
+}
+
+.ttopics__grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;
+  gap: 1em;
+}
+
+.ttopic {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+  padding: 1em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 1.4em;
+  background: #fff;
+  box-shadow: 0 0.3em 0 var(--win-line);
+  color: var(--win-line);
+  font-family: var(--font-hand);
+  cursor: pointer;
+  transition:
+    translate 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.ttopic:hover {
+  background: #fff8e2;
+}
+
+.ttopic:active {
+  translate: 0 0.2em;
+  box-shadow: 0 0.1em 0 var(--win-line);
+}
+
+.ttopic__icon {
+  display: grid;
+  place-items: center;
+  width: 2.4em;
+  height: 2.4em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 50%;
+  background: #ffe08a;
+  font-size: 1.7em;
+}
+
+.ttopic--tongue .ttopic__icon {
+  background: #d8f0e4;
+}
+
+.ttopic--diary .ttopic__icon {
+  background: #ffd9de;
+}
+
+.ttopic--classic .ttopic__icon {
+  background: #dcebff;
+}
+
+.ttopic__name {
+  font-size: 1.6em;
+  font-weight: 400;
+}
+
+.ttopic__desc {
+  color: var(--ink-soft);
+  font-size: 1.05em;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.ttopic__count {
+  position: absolute;
+  top: 0.8em;
+  right: 0.9em;
+  padding: 0.05em 0.6em;
+  border-radius: 999px;
+  background: var(--win-soft);
+  font-size: 0.95em;
+}
+
+/* ---------- 결과 ---------- */
+.tresult {
+  display: grid;
+  place-items: center;
+}
+
+.tresult__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1em;
+  width: min(100%, 26em);
+  padding: 1.6em 2em 2em;
+  border: 3px solid var(--win-line);
+  border-radius: 1.6em;
+  background: #fff;
+  box-shadow: 0.4em 0.4em 0 var(--win-shadow);
+}
+
+.tresult__title {
+  margin: 0;
+  font-size: 2.4em;
+  text-align: center;
+}
+
+.tresult__title mark {
+  display: block;
+  background: none;
+  color: var(--win-point);
+  font-size: 0.6em;
+}
+
+.tresult__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  width: 100%;
+}
+
+.tresult__line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4em 0.9em;
+  border-radius: 999px;
+  background: var(--win-soft);
+  font-size: 1.3em;
+}
+
+.tresult__line b {
+  font-weight: 400;
+  color: #c4472f;
+}
+
+.tresult__buttons {
+  display: flex;
+  gap: 0.8em;
+}
+
+/* 세로 화면: 위아래로 쌓고, 키보드 가이드 · 응원 · 팁은 접어요 */
+@container (max-aspect-ratio: 1 / 1) {
+  .tmenu {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .tmenu__hello {
+    font-size: 2em;
+  }
+
+  .tprac {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .tprac__side {
+    order: -1;
+  }
+
+  .tdash {
+    flex-direction: row;
+    padding: 0.7em 0.9em;
+  }
+
+  .tdash > .tcard__title,
+  .tkeys,
+  .tcheer,
+  .ttip,
+  .toutline {
+    display: none;
+  }
+
+  .tdash__metric {
+    flex: 1;
+  }
+
+  .tdash__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2em;
+  }
+
+  .tdash__row b {
+    font-size: 1.5em;
+  }
+}
+
+/* 게임 중에는 하단 채팅 · 안내 문구 · 줌 버튼을 숨겨요 */
+body.is-typing .chat,
+body.is-typing .hud,
+body.is-typing .zoom {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .typing__titlebar {
+    gap: 8px;
+    padding: 6px 8px 6px 12px;
+  }
+
+  .typing__dots i {
+    width: 12px;
+    height: 12px;
+  }
+
+  .typing__name {
+    font-size: 17px;
+  }
+
+  .typing__body {
+    padding: 0.8em;
+  }
+}
+
+/* 칠 문장 · 다음 줄 · 입력창만 또렷한 프리텐다드 (칠 문장은 굵게) */
+.tprac__target,
+.tlong__line,
+.tprac__form input {
+  font-family: var(--font-read);
+}
+
+.tprac__target {
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }

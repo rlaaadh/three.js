@@ -390,6 +390,8 @@ export class Room {
   readonly deskSpot: Spot
   readonly tableSpot: Spot
   readonly kitchenSpot: Spot
+  /** 아이맥 화면: 평소엔 어둡고, 책상에 앉으면 main에서 밝게 켜요 */
+  readonly monitorScreen = new THREE.MeshBasicMaterial({ map: screenTexture(), color: '#4a4d55' })
   /** 드래그로 걸을 때 피해 가는 가구 */
   private readonly obstacles: THREE.Object3D[] = []
 
@@ -585,10 +587,7 @@ export class Room {
     neck.rotation.x = -0.18
     place(box(0.66, 0.44, 0.022, C.silver, 0.02), 0, 0.39, -0.05, monitor)
     place(box(0.62, 0.33, 0.004, '#20232a', 0.002), 0, 0.43, -0.037, monitor)
-    const screen = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.6, 0.31),
-      new THREE.MeshBasicMaterial({ map: screenTexture() }),
-    )
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.31), this.monitorScreen)
     place(screen, 0, 0.43, -0.034, monitor)
     monitor.scale.setScalar(monitorScale)
     place(monitor, 0, deskTop + riserH, riserZ + 0.17, mac)
@@ -632,7 +631,7 @@ export class Room {
       approach: new THREE.Vector3(deskAt.x + chairZ + 0.8, 0, deskAt.z),
       position: new THREE.Vector3(deskAt.x + chairZ + 0.03, 0.24, deskAt.z),
       quaternion: yawQuat(-Math.PI / 2),
-      hint: '책상에 앉기',
+      hint: '책상에 앉아서 타자 게임',
     }
     desk.userData.spot = this.deskSpot
 

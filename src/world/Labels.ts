@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { PAPER_Y } from './Paper'
 import { handFont } from '../utils/fonts'
+import { isTouchDevice } from '../utils/device'
 
 interface LabelOptions {
   /** 월드 기준 글자 높이 */
@@ -56,7 +57,9 @@ export function createLabel(text: string, options: LabelOptions = {}) {
 export const LABEL_TEXTS = {
   title: 'my tiny room',
   bed: '1. 침대를 누르면 뒹굴뒹굴',
-  desk: '2. 책상을 누르면 공부하는 척',
+  desk: '2. 책상에 앉으면 타자 게임',
+  /** 모바일은 타자연습 창 없이 앉기만 해요 */
+  deskTouch: '2. 책상을 누르면 공부하는 척',
   table: '3. 식탁을 누르면 냠냠',
   kitchen: '4. 주방을 누르면 보글보글 요리',
   drag: '드래그하면 그쪽으로 걸어가요',
@@ -74,7 +77,7 @@ export function createLabels() {
   bedHint.position.set(1.3, bedHint.position.y, 5.6)
   group.add(bedHint)
 
-  const deskHint = createLabel(LABEL_TEXTS.desk, { size: 0.4, color: '#e8604c' })
+  const deskHint = createLabel(isTouchDevice() ? LABEL_TEXTS.deskTouch : LABEL_TEXTS.desk, { size: 0.4, color: '#e8604c' })
   deskHint.position.set(1.5, deskHint.position.y, 6.25)
   group.add(deskHint)
 
