@@ -53,8 +53,6 @@ export class Character {
   private onArrive: (() => void) | null = null
   private yaw = Math.PI / 4 // 처음엔 카메라 쪽을 바라봐요
   private time = 0
-  /** 손 흔들기 남은 시간 */
-  private waveTime = 0
   /** 타자 치는 손놀림 남은 시간 */
   private typingTime = 0
   /** 활짝 웃는 표정 남은 시간 */
@@ -135,28 +133,14 @@ export class Character {
     this.typingTime = 0.25
   }
 
-  /** 활짝 웃으면서 손을 흔들어요 */
-  wave(duration = 2.2) {
-    this.waveTime = duration
-    this.smile(duration)
-  }
-
   /** 잠깐 활짝 웃어요 */
   smile(duration = 1.8) {
     this.smileTime = Math.max(this.smileTime, duration)
     this.updateFace()
   }
 
-  /** 말풍선이 붙을 머리 위 지점 */
-  getHeadTop(target: THREE.Vector3) {
-    this.head.getWorldPosition(target)
-    target.y += 0.62
-    return target
-  }
-
   update(dt: number) {
     this.time += dt
-    this.waveTime = Math.max(this.waveTime - dt, 0)
     this.typingTime = Math.max(this.typingTime - dt, 0)
     this.smileTime = Math.max(this.smileTime - dt, 0)
     this.updateFace()
@@ -332,14 +316,8 @@ export class Character {
     hipL.rotation.x = damp(hipL.rotation.x, legL, 14, dt)
     hipR.rotation.x = damp(hipR.rotation.x, legR, 14, dt)
     shL.rotation.x = damp(shL.rotation.x, armL, 14, dt)
-    // 손 흔들기: 오른팔을 옆으로 들어 좌우로 흔들어요
-    const waving = this.waveTime > 0
-    shR.rotation.x = damp(shR.rotation.x, waving ? 0 : armR, 14, dt)
-    shR.rotation.z = damp(shR.rotation.z, waving ? 2.5 + Math.sin(this.time * 14) * 0.4 : stirZ, 16, dt)
-    if (waving && this.state !== 'walk') {
-      const since = 2.2 - this.waveTime
-      if (since < 0.35) bob = Math.sin((since / 0.35) * Math.PI) * 0.12 // 반가워서 폴짝
-    }
+    shR.rotation.x = damp(shR.rotation.x, armR, 14, dt)
+    shR.rotation.z = damp(shR.rotation.z, stirZ, 16, dt)
     this.model.position.y = damp(this.model.position.y, bob, 20, dt)
 
     // 숨쉬기 · 고개 까딱

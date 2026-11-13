@@ -37,20 +37,7 @@
     <!-- 드래그하는 동안 뜨는 조이스틱 -->
     <div class="stick" id="stick" aria-hidden="true"><span class="stick__knob"></span></div>
     <!-- 캐릭터 말풍선 (위치는 매 프레임 캐릭터 머리 위로 맞춰요) -->
-    <div class="bubble" id="bubble" aria-live="polite"></div>
 
-    <!-- 하단 채팅 · 인사 -->
-    <div class="chat">
-      <div class="chat__actions">
-        <button id="wave" class="chat__icon" type="button" aria-label="손 흔들기" title="손 흔들기">👋</button>
-        <button id="heart" class="chat__icon chat__icon--heart" type="button" aria-label="하트 날리기" title="하트 날리기">❤️</button>
-      </div>
-      <!-- onsubmit: 어떤 경우에도 폼 전송(새로고침)이 일어나지 않게 -->
-      <form id="chat-form" class="chat__form" autocomplete="off" onsubmit="event.preventDefault()">
-        <input id="chat-input" type="text" maxlength="60" placeholder="하고 싶은 말" aria-label="말풍선 메시지" />
-        <button type="submit" class="chat__send" aria-label="보내기">↑</button>
-      </form>
-    </div>
 
     <div class="zoom">
       <button id="zoom-in" aria-label="확대">+</button>

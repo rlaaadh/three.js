@@ -141,151 +141,7 @@ button {
   background: #fffaf0;
 }
 
-/* ---------- 말풍선 ---------- */
-.bubble {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 5;
-  max-width: 240px;
-  padding: 8px 16px;
-  border: 1.5px solid var(--line-strong);
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: var(--shadow-soft);
-  color: var(--ink);
-  font-size: 22px;
-  line-height: 1.2;
-  text-align: center;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-  pointer-events: none;
-  opacity: 0;
-  transform: translate(-50%, calc(-100% - 14px)) scale(0.8);
-  transform-origin: 50% 100%;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-.bubble.is-visible {
-  opacity: 1;
-  transform: translate(-50%, calc(-100% - 14px)) scale(1);
-}
-
-/* 말풍선 꼬리 */
-.bubble::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  width: 12px;
-  height: 12px;
-  background: #fff;
-  border-right: 1.5px solid var(--line-strong);
-  border-bottom: 1.5px solid var(--line-strong);
-  transform: translateX(-50%) rotate(45deg);
-}
-
-/* ---------- 하단 채팅 ---------- */
-/* PC: 화면 아래 가운데에 [👋][❤️][입력창]이 한 줄로 */
-.chat {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  z-index: 6;
-  display: flex;
-  gap: 8px;
-  width: min(600px, calc(100% - 160px));
-  transform: translateX(-50%);
-}
-
-.chat__actions {
-  display: flex;
-  gap: 8px;
-}
-
-.chat__icon {
-  flex-shrink: 0;
-  width: 52px;
-  height: 52px;
-  border: 1.5px solid var(--line);
-  border-radius: 50%;
-  background: #fff7e2;
-  box-shadow: var(--shadow-soft);
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.chat__icon:hover {
-  background: #ffefc4;
-}
-
-.chat__icon:active {
-  transform: scale(0.9);
-}
-
-.chat__icon--heart {
-  background: #fff0f3;
-}
-
-.chat__icon--heart:hover {
-  background: #ffe1e8;
-}
-
-.chat__form {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 6px 6px 6px 20px;
-  border: 1.5px solid var(--line);
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: var(--shadow-soft);
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.chat__form:focus-within {
-  border-color: var(--line-strong);
-  box-shadow:
-    var(--shadow-soft),
-    0 0 0 4px rgba(236, 106, 82, 0.1);
-}
-
-.chat__form input::placeholder {
-  color: #b9a593;
-}
-
-.chat__form input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-hand);
-  font-size: 21px;
-}
-
-.chat__send {
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border: none;
-  border-radius: 50%;
-  background: #ec6a52;
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-/* 모바일: 입력창은 맨 아래 전체 너비 받침 위에, 👋 ❤️는 그 위 오른쪽에 세로로 */
+/* 모바일: 안내 문구를 조금 작게 */
 @media (max-width: 640px) {
   .hud {
     top: calc(12px + env(safe-area-inset-top));
@@ -296,50 +152,9 @@ button {
     font-size: 17px;
   }
 
-  .chat {
-    left: 0;
-    right: 0;
-    /* 키보드가 올라오면 --keyboard 만큼 같이 올라가요 (main.ts에서 계산) */
-    bottom: var(--keyboard, 0px);
-    width: auto;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--grid);
-    background: rgba(250, 250, 247, 0.9);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-    transform: none;
-  }
-
-  .chat__actions {
-    position: absolute;
-    right: 12px;
-    bottom: calc(100% + 12px);
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .chat__icon {
-    width: 48px;
-    height: 48px;
-    font-size: 22px;
-  }
-
-  .chat__form {
-    padding: 4px 4px 4px 16px;
-  }
-
-  .chat__form input {
-    font-size: 19px;
-  }
-
-  .chat__send {
-    width: 40px;
-    height: 40px;
-  }
-
   .zoom {
     right: 12px;
-    bottom: calc(190px + env(safe-area-inset-bottom));
+    bottom: calc(16px + env(safe-area-inset-bottom));
   }
 }
 
@@ -347,32 +162,6 @@ button {
 @media (hover: none) and (pointer: coarse) {
   .zoom {
     display: none;
-  }
-}
-
-/* ---------- 하트 날리기 ---------- */
-.heart {
-  position: fixed;
-  z-index: 5;
-  font-size: var(--size);
-  line-height: 1;
-  pointer-events: none;
-  opacity: 0;
-  animation: heart-float var(--duration) ease-out var(--delay) forwards;
-}
-
-@keyframes heart-float {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.3);
-  }
-  15% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.15);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(-50% + var(--dx)), calc(-50% - var(--rise))) scale(0.9) rotate(var(--rotate));
   }
 }
 
@@ -455,14 +244,14 @@ button {
   }
 }
 
-/* 위 여백 10%, 아래 여백 5% 안에서 비율을 지키며 최대한 크게 (키보드가 올라오면 그만큼 작아져요) */
+/* 위 여백 10%, 아래 여백 5% 안에서 비율을 지키며 최대한 크게 */
 .typing__frame {
   position: absolute;
   top: 10vh;
   top: 10dvh;
   left: 50%;
-  width: min(calc(100vw - 32px), calc((85vh - var(--keyboard, 0px)) * var(--ratio)));
-  width: min(calc(100vw - 32px), calc((85dvh - var(--keyboard, 0px)) * var(--ratio)));
+  width: min(calc(100vw - 32px), calc(85vh * var(--ratio)));
+  width: min(calc(100vw - 32px), calc(85dvh * var(--ratio)));
   aspect-ratio: var(--ratio);
   translate: -50% 0;
   container-type: size;
@@ -1542,8 +1331,7 @@ button {
   }
 }
 
-/* 게임 중에는 하단 채팅 · 안내 문구 · 줌 버튼을 숨겨요 */
-body.is-typing .chat,
+/* 타자 연습 중에는 안내 문구 · 줌 버튼을 숨겨요 */
 body.is-typing .hud,
 body.is-typing .zoom {
   display: none;

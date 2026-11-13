@@ -11,11 +11,8 @@ import { Footprints } from './world/Footprints'
 import { createNature } from './world/Nature'
 import { Pointer } from './interaction/Pointer'
 import { CameraControls } from './interaction/CameraControls'
-import { SpeechBubble } from './ui/SpeechBubble'
 import { TypingApp } from './ui/typing/TypingApp'
 import { isTouchDevice } from './utils/device'
-import { burstHearts } from './ui/HeartBurst'
-import { toScreen } from './ui/screen'
 import { loadHandFont } from './utils/fonts'
 import { easeOutBack, easeOutBounce } from './utils/math'
 
@@ -93,51 +90,6 @@ loader.start([fontsReady]).then(() => {
   intro.t = 0
 })
 
-// ---------- 모바일 키보드 ----------
-// iOS는 키보드가 올라와도 fixed 요소가 그대로 가려져서, 가려진 높이만큼 입력창을 올려요
-const viewport = window.visualViewport
-if (viewport) {
-  const syncKeyboard = () => {
-    const covered = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
-    document.documentElement.style.setProperty('--keyboard', `${covered}px`)
-  }
-  viewport.addEventListener('resize', syncKeyboard)
-  viewport.addEventListener('scroll', syncKeyboard)
-}
-
-// ---------- 말풍선 · 채팅 · 손 흔들기 ----------
-const bubble = new SpeechBubble()
-const chatForm = document.getElementById('chat-form') as HTMLFormElement
-const chatInput = document.getElementById('chat-input') as HTMLInputElement
-
-chatInput.addEventListener('keydown', (e) => {
-  // 한글 입력 중(조합 중) Enter는 글자 확정용이라 전송하지 않아요
-  if (e.key === 'Enter' && (e.isComposing || e.keyCode === 229)) e.preventDefault()
-})
-chatForm.addEventListener('submit', (e) => {
-  e.preventDefault()
-  const text = chatInput.value.trim()
-  if (!text || !character) return
-  bubble.show(text)
-  chatInput.value = ''
-})
-
-document.getElementById('wave')!.addEventListener('click', () => {
-  if (!character) return
-  character.wave()
-  bubble.show('안녕! 👋', 2.2)
-})
-
-document.getElementById('heart')!.addEventListener('click', () => {
-  if (!character) return
-  character.smile()
-  // 얼굴 주변에서 하트가 퐁퐁
-  const head = character.getHeadTop(new THREE.Vector3())
-  head.y -= 0.45
-  const { x, y } = toScreen(head, stage.camera, canvas)
-  burstHearts(x, y)
-})
-
 // ---------- 타자 연습 (책상에 앉으면) ----------
 const typing = new TypingApp()
 let zoomBeforeTyping = 1
@@ -192,6 +144,5 @@ stage.renderer.setAnimationLoop((time) => {
   typing.update(dt)
   room.monitorScreen.color.lerp(atDesk ? SCREEN_ON : SCREEN_OFF, 1 - Math.exp(-dt * 6))
   footprints.update(dt)
-  if (character) bubble.update(dt, stage.camera, canvas, (v) => character!.getHeadTop(v))
   stage.update(dt)
 })
