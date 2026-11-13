@@ -1,5 +1,5 @@
 /**
- * 타자 연습 배경음악 · 효과음.
+ * 타자 연습 · 설거지 게임 배경음악 · 효과음.
  * 음악 파일 없이 Web Audio로 직접 만드는 짧은 칩튠이에요 (통통 튀는 C장조 4마디 반복).
  * 브라우저 정책상 소리는 사용자가 버튼을 누른 뒤에만 켤 수 있어서, OK 버튼에서 start()를 불러요.
  */
@@ -25,7 +25,7 @@ export class Chiptune {
   private timer = 0
   private step = 0
   private nextTime = 0
-  private readonly tempo = 132
+  private tempo = 132
   private noise: AudioBuffer | null = null
   /** 배경음악으로 예약해 둔 음들 (멈출 때 바로 끊어요) */
   private readonly voices = new Set<AudioScheduledSourceNode>()
@@ -60,13 +60,14 @@ export class Chiptune {
     return this._muted
   }
 
-  /** 배경음악 시작 (사용자 클릭 안에서 불러야 소리가 나요) */
-  start() {
+  /** 배경음악 시작 (사용자 클릭 안에서 불러야 소리가 나요). 게임은 조금 빠르게 */
+  start(tempo = 132) {
     const ctx = this.ensure()
     if (!ctx) return
     void ctx.resume()
     this.stopLoop()
     this.step = 0
+    this.tempo = tempo
     this.nextTime = ctx.currentTime + 0.05
     this.timer = window.setInterval(() => this.schedule(), 25)
   }
@@ -75,7 +76,7 @@ export class Chiptune {
     this.stopLoop()
   }
 
-  sfx(kind: 'hit' | 'miss' | 'clear' | 'open' | 'click') {
+  sfx(kind: 'hit' | 'miss' | 'clear' | 'open' | 'click' | 'scrub') {
     const ctx = this.ensure()
     if (!ctx) return
     void ctx.resume()
@@ -94,6 +95,12 @@ export class Chiptune {
       case 'open':
         this.tone(t, 523, 0.08, 'sine', 0.1, 784)
         break
+      case 'scrub': {
+        // 박박 문지르는 소리: 음높이를 조금씩 바꿔서 뽀득뽀득
+        const f = 900 + Math.random() * 500
+        this.tone(t, f, 0.05, 'sine', 0.07, f * 1.35)
+        break
+      }
       case 'click':
         // 버튼을 누르면 톡: 짧게 튀어 오르는 소리
         this.tone(t, 620, 0.06, 'sine', 0.12, 980)

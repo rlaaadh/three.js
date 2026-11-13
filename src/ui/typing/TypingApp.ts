@@ -1,4 +1,5 @@
-import { Chiptune } from '../Chiptune'
+import type { Chiptune } from '../Chiptune'
+import { RetroWindow } from '../RetroWindow'
 import { Practice, type PracticeMode } from './Practice'
 import { LONG_TOPICS } from './content'
 
@@ -29,8 +30,6 @@ export interface ViewContext {
 }
 
 const BEST_KEY = 'tiny-room-typing-best'
-/** 창이 꺼지는 애니메이션 시간(ms) — CSS typing-off와 맞춰요 */
-const CLOSE_MS = 320
 
 const MODES: { mode: PracticeMode; icon: string; title: string; desc: string }[] = [
   { mode: 'word', icon: '가', title: '낱말 연습', desc: '짧은 낱말부터 차근차근' },
@@ -50,44 +49,18 @@ export class TypingApp {
   /** 창을 닫을 때 */
   onClose: (() => void) | null = null
 
-  private readonly root = document.getElementById('typing')!
+  private readonly win: RetroWindow
   private readonly body: HTMLElement
-  private readonly soundButton: HTMLButtonElement
-  private readonly music = new Chiptune()
   private view: TypingView | null = null
-  private opened = false
-  private closeTimer = 0
   private readonly ctx: ViewContext
 
-  constructor() {
-    this.root.innerHTML = `
-      <div class="typing__frame">
-        <span class="typing__ear typing__ear--left" aria-hidden="true"></span>
-        <span class="typing__ear typing__ear--right" aria-hidden="true"></span>
-        <div class="typing__window" role="dialog" aria-label="타자 연습">
-          <div class="typing__titlebar">
-            <span class="typing__dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="typing__name">타자연습.app</span>
-            <button class="typing__icon" data-ref="sound" type="button"></button>
-            <button class="typing__icon typing__icon--close" data-ref="close" type="button" aria-label="닫기">✕</button>
-          </div>
-          <div class="typing__body" data-ref="body"></div>
-        </div>
-      </div>
-    `
-    this.body = this.root.querySelector('[data-ref="body"]')!
-    this.soundButton = this.root.querySelector('[data-ref="sound"]')!
-    this.soundButton.addEventListener('click', () => this.renderSound(this.music.toggleMute()))
-    this.renderSound(this.music.muted)
-    this.root.querySelector('[data-ref="close"]')!.addEventListener('click', () => this.close())
-    // 창 안 버튼을 누르면 톡 (ENTER는 맞음 · 틀림 소리가 따로 나서 빼요)
-    this.root.addEventListener('click', (e) => {
-      const button = (e.target as HTMLElement).closest('button')
-      if (button && button.type !== 'submit') this.music.sfx('click')
-    })
-    window.addEventListener('keydown', (e) => {
-      if (this.opened && e.key === 'Escape') this.close()
-    })
+  constructor(private readonly music: Chiptune) {
+    this.win = new RetroWindow(music, '타자연습.app', '타자 연습')
+    this.body = this.win.body
+    this.win.onClose = () => {
+      this.setView(null)
+      this.onClose?.()
+    }
 
     this.ctx = {
       music: this.music,
@@ -99,37 +72,22 @@ export class TypingApp {
   }
 
   get isOpen() {
-    return this.opened
+    return this.win.isOpen
   }
 
-  /** 창을 켜요: 가운데 점 → 가로줄 → 세로로 펼쳐져요 */
+  /** 창을 켜고 메뉴부터 */
   open() {
-    if (this.opened) return
-    window.clearTimeout(this.closeTimer)
-    this.opened = true
-    this.root.classList.remove('is-closing')
-    this.root.classList.add('is-open')
-    this.root.setAttribute('aria-hidden', 'false')
-    document.body.classList.add('is-typing')
-    this.music.sfx('open')
+    if (this.win.isOpen) return
+    this.win.open()
     this.showMenu()
   }
 
-  /** 창을 꺼요: 세로로 접혀 가로줄이 된 뒤 사라져요 */
   close() {
-    if (!this.opened) return
-    this.opened = false
-    this.setView(null)
-    this.music.stop()
-    this.root.classList.add('is-closing')
-    this.root.setAttribute('aria-hidden', 'true')
-    document.body.classList.remove('is-typing')
-    this.closeTimer = window.setTimeout(() => this.root.classList.remove('is-open', 'is-closing'), CLOSE_MS)
-    this.onClose?.()
+    this.win.close()
   }
 
   update(dt: number) {
-    if (this.opened) this.view?.update?.(dt)
+    if (this.win.isOpen) this.view?.update?.(dt)
   }
 
   // ---------- 화면 ----------
@@ -229,12 +187,6 @@ export class TypingApp {
     el.querySelector('[data-action="again"]')!.addEventListener('click', () => this.startMode(result.mode, result.topicId))
     el.querySelector('[data-action="menu"]')!.addEventListener('click', () => this.showMenu())
     this.setView({ el, focus: () => el.querySelector<HTMLButtonElement>('[data-action="again"]')?.focus({ preventScroll: true }) })
-  }
-
-  private renderSound(muted: boolean) {
-    this.soundButton.textContent = muted ? '♪̸' : '♪'
-    this.soundButton.classList.toggle('is-muted', muted)
-    this.soundButton.setAttribute('aria-label', muted ? '소리 켜기' : '소리 끄기')
   }
 
   // ---------- 최고 기록 (이 브라우저에만 저장) ----------

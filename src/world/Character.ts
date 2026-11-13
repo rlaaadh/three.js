@@ -8,7 +8,7 @@ import { handFont } from '../utils/fonts'
 type State = 'idle' | 'walk' | 'steer' | 'transition' | SpotAction
 
 /** 동작 중에 머리 위에 떠 있는 손글씨 */
-export const EMOTE_TEXTS: Partial<Record<SpotAction, string>> = { eat: '냠냠', cook: '보글보글' }
+export const EMOTE_TEXTS: Partial<Record<SpotAction, string>> = { eat: '냠냠' }
 
 const WALK_SPEED = 2.6
 const TRANSITION_TIME = 0.55
@@ -30,11 +30,11 @@ const material = (color: string, roughness = 0.6) => new THREE.MeshStandardMater
 /**
  * 임시 캐릭터 (일자 앞머리 아이).
  * 나중에 GLB 모델 + 애니메이션으로 교체할 때는 build()와 pose 부분만 바꾸면 돼요.
- * 상태: idle → walk(클릭) / steer(드래그) → transition → lie / sit / eat / cook
+ * 상태: idle → walk(클릭) / steer(드래그) → transition → lie / sit / eat / wash
  */
 export class Character {
   readonly root = new THREE.Group()
-  /** 동작별 머리 위 글씨 (Zzz, 냠냠, 보글보글) */
+  /** 동작별 머리 위 글씨 (Zzz, 냠냠) */
   readonly emotes = new THREE.Group()
   state: State = 'idle'
   /** 한 걸음 디딜 때마다 호출돼요 (발자국 찍기용) */
@@ -53,8 +53,8 @@ export class Character {
   private onArrive: (() => void) | null = null
   private yaw = Math.PI / 4 // 처음엔 카메라 쪽을 바라봐요
   private time = 0
-  /** 타자 치는 손놀림 남은 시간 */
-  private typingTime = 0
+  /** 타자 치기 · 설거지 박박처럼 손을 빠르게 놀리는 남은 시간 */
+  private busyHandsTime = 0
   /** 활짝 웃는 표정 남은 시간 */
   private smileTime = 0
   private readonly faces = { normal: faceTexture('normal'), happy: faceTexture('happy'), sleep: faceTexture('sleep') }
@@ -130,7 +130,12 @@ export class Character {
 
   /** 책상에 앉아 있을 때 잠깐 타닥타닥 빠르게 타자를 쳐요 */
   typeKey() {
-    this.typingTime = 0.25
+    this.busyHandsTime = 0.25
+  }
+
+  /** 싱크대 앞에서 잠깐 박박 접시를 문질러요 */
+  scrub() {
+    this.busyHandsTime = 0.2
   }
 
   /** 잠깐 활짝 웃어요 */
@@ -141,7 +146,7 @@ export class Character {
 
   update(dt: number) {
     this.time += dt
-    this.typingTime = Math.max(this.typingTime - dt, 0)
+    this.busyHandsTime = Math.max(this.busyHandsTime - dt, 0)
     this.smileTime = Math.max(this.smileTime - dt, 0)
     this.updateFace()
 
@@ -296,7 +301,7 @@ export class Character {
       bob = Math.abs(Math.sin(this.time * 11)) * 0.05
     } else if (this.state === 'sit') {
       legL = legR = -Math.PI / 2
-      if (this.typingTime > 0) {
+      if (this.busyHandsTime > 0) {
         // 타자 게임: 양손을 번갈아 빠르게 타닥타닥
         armL = -0.95 + Math.sin(this.time * 32) * 0.12
         armR = -0.95 - Math.sin(this.time * 32) * 0.12
@@ -307,10 +312,13 @@ export class Character {
       legL = legR = -Math.PI / 2
       armL = -0.9
       armR = -1.0 - (Math.sin(this.time * 4) * 0.5 + 0.5) * 1.0 // 냠냠: 숟가락을 입으로
-    } else if (this.state === 'cook') {
-      armL = -0.7
-      armR = -1.1 + Math.sin(this.time * 6) * 0.12 // 보글보글: 냄비를 빙글빙글 저어요
-      stirZ = Math.cos(this.time * 6) * 0.2
+    } else if (this.state === 'wash') {
+      // 설거지: 두 손을 싱크대로 뻗고, 문지를 때는 박박 빠르게
+      const fast = this.busyHandsTime > 0
+      const swing = Math.sin(this.time * (fast ? 30 : 4)) * (fast ? 0.2 : 0.05)
+      armL = -1.15 + swing
+      armR = -1.15 - swing
+      stirZ = fast ? Math.cos(this.time * 30) * 0.25 : 0
     }
 
     hipL.rotation.x = damp(hipL.rotation.x, legL, 14, dt)
@@ -336,7 +344,7 @@ export class Character {
       sprite.visible = this.state === action
       if (!sprite.visible) continue
       this.head.getWorldPosition(sprite.position)
-      // Zzz는 누운 머리 옆, 냠냠 · 보글보글은 머리 위로 (앞머리 · 번 머리에 가리지 않게)
+      // Zzz는 누운 머리 옆, 냠냠은 머리 위로 (앞머리 · 번 머리에 가리지 않게)
       sprite.position.y += (action === 'lie' ? 0.6 : 0.95) + Math.sin(this.time * 2) * 0.08
       sprite.position.x += 0.2
       const material = sprite.material as THREE.SpriteMaterial
@@ -637,7 +645,7 @@ function faceTexture(expression: 'normal' | 'happy' | 'sleep' = 'normal') {
   return texture
 }
 
-/** 머리 위에 띄우는 손글씨 한 줄 (냠냠, 보글보글) */
+/** 머리 위에 띄우는 손글씨 한 줄 (냠냠) */
 function createEmote(text: string) {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')!

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { BEDROOM, KITCHEN, PARTITION_X, setObstacles } from './Navigation'
 
-export type SpotAction = 'lie' | 'sit' | 'eat' | 'cook'
+export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash'
 
 /** 캐릭터가 다가가서 특정 동작을 하는 지점 (침대, 책상, 식탁, 주방) */
 export interface Spot {
@@ -730,13 +730,13 @@ export class Room {
     place(box(0.14, 0.14, 0.02, '#ffb3a7', 0.02), fridgeX + 0.15, 1.75, -2.15, k)
     place(box(0.12, 0.12, 0.02, C.woodMid, 0.02), fridgeX - 0.1, 1.95, -2.15, k)
 
-    // 가스레인지 앞에 서서 벽(-z)을 보고 냄비를 저어요
+    // 싱크대 앞에 서서 벽(-z)을 보고 설거지해요 (설거지 게임이 열려요)
     const spot: Spot = {
-      action: 'cook',
-      approach: new THREE.Vector3(stoveX - 0.2, 0, -1.3),
-      position: new THREE.Vector3(stoveX - 0.2, 0, -1.72),
+      action: 'wash',
+      approach: new THREE.Vector3(sinkX, 0, -1.3),
+      position: new THREE.Vector3(sinkX, 0, -1.72),
       quaternion: yawQuat(Math.PI),
-      hint: '주방에서 요리하기',
+      hint: '싱크대에서 설거지하기',
     }
     k.userData.spot = spot
     return spot

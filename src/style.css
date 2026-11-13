@@ -209,8 +209,8 @@ button {
   box-shadow: var(--shadow-soft);
 }
 
-/* ---------- 타자연습.app (책상에 앉으면 TV처럼 켜지는 레트로 창) ---------- */
-.typing {
+/* ---------- 레트로 앱 창 (타자연습.app · 설거지.app 공용, TV처럼 켜져요) ---------- */
+.appwin {
   /* 창 비율: 가로 화면은 4:3, 세로 화면은 3:4 */
   --ratio: 4 / 3;
   --win-line: #5a4033;
@@ -227,25 +227,25 @@ button {
   z-index: 7;
   display: none;
   background: rgba(58, 46, 46, 0.18);
-  animation: typing-fade 0.25s ease both;
+  animation: appwin-fade 0.25s ease both;
 }
 
-.typing.is-open {
+.appwin.is-open {
   display: block;
 }
 
-.typing.is-closing {
-  animation: typing-fade 0.32s ease reverse both;
+.appwin.is-closing {
+  animation: appwin-fade 0.32s ease reverse both;
 }
 
 @media (orientation: portrait) {
-  .typing {
+  .appwin {
     --ratio: 3 / 4;
   }
 }
 
 /* 위 여백 10%, 아래 여백 5% 안에서 비율을 지키며 최대한 크게 */
-.typing__frame {
+.appwin__frame {
   position: absolute;
   top: 10vh;
   top: 10dvh;
@@ -255,15 +255,15 @@ button {
   aspect-ratio: var(--ratio);
   translate: -50% 0;
   container-type: size;
-  animation: typing-on 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation: appwin-on 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 
-.typing.is-closing .typing__frame {
-  animation: typing-off 0.32s ease-in both;
+.appwin.is-closing .appwin__frame {
+  animation: appwin-off 0.32s ease-in both;
 }
 
 /* 옛날 TV처럼: 가운데 점 → 가로줄 → 세로로 펼쳐지며 켜져요 */
-@keyframes typing-on {
+@keyframes appwin-on {
   0% {
     transform: scale(0.02, 0.008);
     opacity: 0;
@@ -286,7 +286,7 @@ button {
   }
 }
 
-@keyframes typing-off {
+@keyframes appwin-off {
   0% {
     transform: scale(1, 1);
   }
@@ -301,14 +301,14 @@ button {
   }
 }
 
-@keyframes typing-fade {
+@keyframes appwin-fade {
   from {
     opacity: 0;
   }
 }
 
 /* 창 위 고양이 귀 */
-.typing__ear {
+.appwin__ear {
   position: absolute;
   top: -17px;
   width: 36px;
@@ -319,7 +319,7 @@ button {
   transform: rotate(45deg);
 }
 
-.typing__ear::after {
+.appwin__ear::after {
   content: '';
   position: absolute;
   inset: 7px 14px 14px 7px;
@@ -327,16 +327,16 @@ button {
   background: #ffc4b8;
 }
 
-.typing__ear--left {
+.appwin__ear--left {
   left: 34px;
 }
 
-.typing__ear--right {
+.appwin__ear--right {
   right: 34px;
 }
 
 /* 창 안 글자 크기는 창 크기를 따라가요 (작은 창에서도 같은 모양) */
-.typing__window {
+.appwin__window {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -351,7 +351,7 @@ button {
   font-size: clamp(12px, min(1.68cqw, 2.22cqh), 19px);
 }
 
-.typing__titlebar {
+.appwin__titlebar {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -360,12 +360,12 @@ button {
   background: var(--win-bar);
 }
 
-.typing__dots {
+.appwin__dots {
   display: flex;
   gap: 6px;
 }
 
-.typing__dots i {
+.appwin__dots i {
   width: 14px;
   height: 14px;
   border: 2.5px solid var(--win-line);
@@ -373,16 +373,16 @@ button {
   background: #f19a7c;
 }
 
-.typing__dots i:nth-child(2) {
+.appwin__dots i:nth-child(2) {
   background: #f7c95c;
 }
 
-.typing__dots i:nth-child(3) {
+.appwin__dots i:nth-child(3) {
   background: #a8dcc8;
 }
 
 /* 제목 양옆 줄무늬 */
-.typing__name {
+.appwin__name {
   flex: 1;
   display: flex;
   align-items: center;
@@ -392,8 +392,8 @@ button {
   white-space: nowrap;
 }
 
-.typing__name::before,
-.typing__name::after {
+.appwin__name::before,
+.appwin__name::after {
   content: '';
   flex: 1;
   height: 10px;
@@ -401,7 +401,7 @@ button {
   opacity: 0.45;
 }
 
-.typing__icon {
+.appwin__icon {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
@@ -416,19 +416,19 @@ button {
   transition: scale 0.12s ease;
 }
 
-.typing__icon:active {
+.appwin__icon:active {
   scale: 0.88;
 }
 
-.typing__icon.is-muted {
+.appwin__icon.is-muted {
   opacity: 0.55;
 }
 
-.typing__icon--close {
+.appwin__icon--close {
   background: #ffd5c8;
 }
 
-.typing__body {
+.appwin__body {
   flex: 1;
   min-height: 0;
   padding: 1.1em;
@@ -439,12 +439,12 @@ button {
   background-size: 1.6em 1.6em;
 }
 
-.typing__body > * {
+.appwin__body > * {
   height: 100%;
-  animation: typing-pop-in 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  animation: appwin-pop-in 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both;
 }
 
-@keyframes typing-pop-in {
+@keyframes appwin-pop-in {
   from {
     opacity: 0;
     scale: 0.96;
@@ -509,7 +509,7 @@ button {
   background: #ffe08a;
 }
 
-.typing button:focus-visible {
+.appwin button:focus-visible {
   outline: 3px solid var(--win-point);
   outline-offset: 3px;
 }
@@ -1331,28 +1331,402 @@ button {
   }
 }
 
-/* 타자 연습 중에는 안내 문구 · 줌 버튼을 숨겨요 */
-body.is-typing .hud,
-body.is-typing .zoom {
+/* ---------- 설거지.app: 몽글몽글 거품 속에서 뽀득뽀득 ---------- */
+/* 창 안은 진한 테두리 없이 연한 선 · 파스텔 · 거품으로 부드럽게 */
+.dish {
+  --dish-line: #ecdcc6;
+  --dish-sky: #dff1fb;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+}
+
+.dish__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.dish__label {
+  font-size: 1.5em;
+}
+
+.dish__percent {
+  color: var(--win-point);
+  font-size: 2.6em;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.dish__progress {
+  height: 1em;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--win-soft);
+  box-shadow: inset 0 0.12em 0.25em rgba(122, 86, 64, 0.12);
+}
+
+.dish__progress i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a8dcc8, #bfe3f5);
+  transition: width 0.15s ease;
+}
+
+/* 하늘색 배경 + 아래 거품 산 */
+.dish__scene {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 1.6em;
+  background: linear-gradient(180deg, #cfe9f8 0%, var(--dish-sky) 45%, #f4fbfe 100%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+}
+
+/* 거품 방울 공통: 테두리 없이 하얗고 동그랗게, 살짝 하늘색 음영 */
+.dish__foam span,
+.dish__air span {
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  translate: -50% 0;
+}
+
+.dish__foam {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dish__foam span {
+  background: radial-gradient(circle at 32% 30%, #fff 0 34%, #f6fbfe 58%, #dcf0f9 100%);
+  box-shadow:
+    inset -0.12em -0.16em 0 rgba(150, 196, 222, 0.28),
+    0 0.08em 0.2em rgba(120, 170, 200, 0.18);
+  animation: dish-foam 1.8s ease-in-out infinite alternate;
+}
+
+.dish__foam--back {
+  z-index: 1;
+}
+
+.dish__foam--front {
+  z-index: 4;
+}
+
+@keyframes dish-foam {
+  to {
+    scale: 1.1 0.94;
+  }
+}
+
+/* 하늘에 둥실 떠오르는 비눗방울 */
+.dish__air span {
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  background: radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.95) 0 18%, rgba(255, 255, 255, 0.15) 45%, rgba(191, 227, 245, 0.35));
+  animation: dish-air 6s ease-in-out infinite alternate;
+}
+
+@keyframes dish-air {
+  to {
+    translate: -50% -1.2em;
+  }
+}
+
+/* 거품 속에 파묻힌 안 닦은 그릇들 */
+.dish__pile {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.dish__item {
+  position: absolute;
+  width: 6em;
+  translate: -50% 0;
+  filter: drop-shadow(0 0.15em 0.2em rgba(150, 120, 80, 0.18));
+  animation: appwin-pop-in 0.3s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+.dish__item svg {
+  display: block;
+  width: 100%;
+}
+
+.dish__item--kettle {
+  width: 6.6em;
+}
+
+.dish__item--cup {
+  width: 4.4em;
+}
+
+/* 지금 닦는 접시: 가운데, 아랫부분은 앞쪽 거품에 잠겨요 */
+.dish__plate {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  z-index: 3;
+  height: 70%;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  filter: drop-shadow(0 0.25em 0.35em rgba(150, 120, 80, 0.2));
+}
+
+.dish__plate g {
+  transition: opacity 0.12s ease;
+}
+
+.dish__sponge {
+  position: absolute;
+  z-index: 5;
+  left: 57%;
+  bottom: 34%;
+  width: 7.5em;
+  rotate: -14deg;
+  filter: drop-shadow(0 0.25em 0.3em rgba(150, 120, 80, 0.25));
+  transition:
+    translate 0.07s ease,
+    rotate 0.07s ease;
+}
+
+.dish__sponge svg {
+  display: block;
+  width: 100%;
+}
+
+/* 문지를 때마다 접시 위를 왼쪽 · 오른쪽으로 박박 */
+.dish__sponge.is-left {
+  translate: -2.2em 0.4em;
+  rotate: 6deg;
+}
+
+/* 문지르면 퐁퐁 올라가는 거품 */
+.dish__bubble {
+  position: absolute;
+  z-index: 6;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff 0 35%, #eef8fd 60%, #cfe9f6);
+  pointer-events: none;
+  animation: dish-bubble 0.7s ease-out forwards;
+}
+
+@keyframes dish-bubble {
+  from {
+    opacity: 1;
+    scale: 0.3;
+  }
+  to {
+    opacity: 0;
+    scale: 1.1;
+    translate: 0 -2.6em;
+  }
+}
+
+/* 접시를 다 닦으면 뽀득! */
+.dish__pop {
+  position: absolute;
+  z-index: 7;
+  left: 50%;
+  top: 14%;
+  color: #ffd36b;
+  font-size: 3.2em;
+  text-shadow:
+    0 0.06em 0 #fff,
+    0 0.12em 0.2em rgba(226, 178, 106, 0.6);
+  translate: -50% 0;
+  pointer-events: none;
+  animation: dish-pop 0.8s ease forwards;
+}
+
+@keyframes dish-pop {
+  0% {
+    opacity: 0;
+    scale: 0.5;
+  }
+  25% {
+    opacity: 1;
+    scale: 1.2;
+  }
+  100% {
+    opacity: 0;
+    scale: 1;
+    translate: -50% -1.2em;
+  }
+}
+
+/* 아래 막대: 시계 · 남은 시간 · 닦은 접시 수 */
+.dish__bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.45em 1em;
+  border: 2px solid var(--dish-line);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.dish__clock {
+  font-size: 1.6em;
+}
+
+.dish__time {
+  flex: 1;
+  height: 1em;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--win-soft);
+  box-shadow: inset 0 0.12em 0.25em rgba(122, 86, 64, 0.12);
+}
+
+.dish__time i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f19a7c, #f7c95c);
+}
+
+.dish__time i.is-hurry {
+  animation: dish-hurry 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes dish-hurry {
+  to {
+    opacity: 0.45;
+  }
+}
+
+.dish__count {
+  font-size: 1.5em;
+  white-space: nowrap;
+}
+
+.dish__count b {
+  color: var(--win-point);
+  font-weight: 400;
+}
+
+/* 뽀득! 버튼 (모바일은 이걸 톡톡, PC는 스페이스바도 돼요) */
+.dish__scrub {
+  align-self: center;
+  padding: 0.3em 2.6em;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe7a3, #ffd36b);
+  box-shadow:
+    0 0.22em 0 #e9b95a,
+    0 0.4em 0.8em rgba(226, 178, 106, 0.3);
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 1.8em;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dish__scrub small {
+  margin-left: 0.3em;
+  font-size: 0.55em;
+  opacity: 0.6;
+}
+
+.dish__scrub:active {
+  translate: 0 0.16em;
+  box-shadow: 0 0.06em 0 #e9b95a;
+}
+
+/* 미션 카드 */
+.dish__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.dish__mission {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6em;
+  max-width: 90%;
+  padding: 1.2em 2.2em 1.6em;
+  border: 2px solid var(--dish-line);
+  border-radius: 1.6em;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0.6em 1.6em rgba(120, 170, 200, 0.25);
+  text-align: center;
+  animation: appwin-pop-in 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+.dish__mission p {
+  margin: 0;
+}
+
+.dish__mission-badge {
+  color: #7cc7aa;
+  font-size: 2.8em;
+  letter-spacing: 0.06em;
+  text-shadow:
+    0 0.05em 0 #fff,
+    0 0.1em 0 #d8f0e4;
+}
+
+.dish__mission-text {
+  font-size: 1.6em;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.dish__mission-text b {
+  color: var(--win-point);
+  font-weight: 400;
+}
+
+.dish__mission-tip {
+  color: var(--ink-soft);
+  font-size: 1.15em;
+}
+
+/* 확인 버튼도 뽀득! 버튼처럼 부드럽게 */
+.dish .tbutton {
+  border: none;
+  background: linear-gradient(180deg, #ffe7a3, #ffd36b);
+  box-shadow: 0 0.22em 0 #e9b95a;
+  color: var(--ink);
+}
+
+/* 앱 창이 떠 있는 동안 안내 문구 · 줌 버튼을 숨겨요 */
+body.is-app-open .hud,
+body.is-app-open .zoom {
   display: none;
 }
 
 @media (max-width: 640px) {
-  .typing__titlebar {
+  .appwin__titlebar {
     gap: 8px;
     padding: 6px 8px 6px 12px;
   }
 
-  .typing__dots i {
+  .appwin__dots i {
     width: 12px;
     height: 12px;
   }
 
-  .typing__name {
+  .appwin__name {
     font-size: 17px;
   }
 
-  .typing__body {
+  .appwin__body {
     padding: 0.8em;
   }
 }
