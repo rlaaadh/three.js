@@ -499,7 +499,7 @@ export class Room {
       approach: new THREE.Vector3(bedAt.x + bedL / 2, 0, bedAt.z + bedW / 2 + 0.45),
       position: new THREE.Vector3(bedAt.x + 0.5, 0.92, bedAt.z),
       quaternion: lieQuat,
-      hint: '침대에서 뒹굴기',
+      hint: '침대에서 잠자기',
     }
     bed.userData.spot = this.bedSpot
 
