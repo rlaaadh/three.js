@@ -76,7 +76,7 @@ export class Chiptune {
     this.stopLoop()
   }
 
-  sfx(kind: 'hit' | 'miss' | 'clear' | 'open' | 'click' | 'scrub') {
+  sfx(kind: 'hit' | 'miss' | 'clear' | 'open' | 'click' | 'scrub' | 'drip' | 'freeze') {
     const ctx = this.ensure()
     if (!ctx) return
     void ctx.resume()
@@ -101,6 +101,16 @@ export class Chiptune {
         this.tone(t, f, 0.05, 'sine', 0.07, f * 1.35)
         break
       }
+      case 'drip': {
+        // 초코가 퐁퐁 떨어지는 소리: 낮게 뚝뚝
+        const f = 320 + Math.random() * 90
+        this.tone(t, f, 0.07, 'sine', 0.08, f * 0.55)
+        break
+      }
+      case 'freeze':
+        // 꽁꽁 얼면 반짝반짝
+        ;[88, 91, 95, 100].forEach((n, i) => this.tone(t + i * 0.06, freq(n), 0.12, 'triangle', 0.05))
+        break
       case 'click':
         // 버튼을 누르면 톡: 짧게 튀어 오르는 소리
         this.tone(t, 620, 0.06, 'sine', 0.12, 980)

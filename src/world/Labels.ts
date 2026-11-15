@@ -62,6 +62,7 @@ export const LABEL_TEXTS = {
   deskTouch: '2. 책상을 누르면 공부하는 척',
   table: '3. 식탁을 누르면 냠냠',
   kitchen: '4. 주방을 누르면 뽀득뽀득 설거지',
+  fridge: '5. 냉장고를 누르면 얼초 만들기',
   drag: '드래그하면 그쪽으로 걸어가요',
 }
 
@@ -89,8 +90,12 @@ export function createLabels() {
   kitchenHint.position.set(1.8, kitchenHint.position.y, 7.55)
   group.add(kitchenHint)
 
+  const fridgeHint = createLabel(LABEL_TEXTS.fridge, { size: 0.4, color: '#e8604c' })
+  fridgeHint.position.set(1.5, fridgeHint.position.y, 8.2)
+  group.add(fridgeHint)
+
   const dragHint = createLabel(LABEL_TEXTS.drag, { size: 0.36, color: '#8a6a52' })
-  dragHint.position.set(1.6, dragHint.position.y, 8.25)
+  dragHint.position.set(1.6, dragHint.position.y, 8.9)
   group.add(dragHint)
 
   return group

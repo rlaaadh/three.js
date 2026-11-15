@@ -2,9 +2,9 @@ import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { BEDROOM, KITCHEN, PARTITION_X, setObstacles } from './Navigation'
 
-export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash'
+export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash' | 'chill'
 
-/** 캐릭터가 다가가서 특정 동작을 하는 지점 (침대, 책상, 식탁, 주방) */
+/** 캐릭터가 다가가서 특정 동작을 하는 지점 (침대, 책상, 식탁, 주방, 냉장고) */
 export interface Spot {
   action: SpotAction
   /** 동작 전에 걸어가서 서는 위치 */
@@ -15,6 +15,9 @@ export interface Spot {
   quaternion: THREE.Quaternion
   hint: string
 }
+
+/** 냉장고 가운데 x (주방 오른쪽 끝) */
+const FRIDGE_X = 6.73
 
 /** 집 전체 색: 밝은 버터색 벽 · 가구 + 따뜻한 나무 브라운 */
 const C = {
@@ -386,10 +389,13 @@ export class Room {
   readonly desk = new THREE.Group()
   readonly table = new THREE.Group()
   readonly kitchen = new THREE.Group()
+  /** 냉장고: 주방과 따로 눌러요 (얼초 만들기) */
+  readonly fridge = new THREE.Group()
   readonly bedSpot: Spot
   readonly deskSpot: Spot
   readonly tableSpot: Spot
   readonly kitchenSpot: Spot
+  readonly fridgeSpot: Spot
   /** 아이맥 화면: 평소엔 어둡고, 책상에 앉으면 main에서 밝게 켜요 */
   readonly monitorScreen = new THREE.MeshBasicMaterial({ map: screenTexture(), color: '#4a4d55' })
   /** 드래그로 걸을 때 피해 가는 가구 */
@@ -636,16 +642,17 @@ export class Room {
     desk.userData.spot = this.deskSpot
 
     this.kitchenSpot = this.buildKitchen()
+    this.fridgeSpot = this.buildFridge()
     this.tableSpot = this.buildTable()
     this.buildCoffeeShelf()
-    g.add(this.kitchen, this.table)
+    g.add(this.kitchen, this.fridge, this.table)
 
-    obstacles.push(bed, desk, this.kitchen, this.table)
+    obstacles.push(bed, desk, this.kitchen, this.fridge, this.table)
     g.updateMatrixWorld(true)
     setObstacles(obstacles)
   }
 
-  /** 뒤쪽 벽을 따라 싱크대 · 도마 · 가스레인지 · 밥솥 · 냉장고 */
+  /** 뒤쪽 벽을 따라 싱크대 · 도마 · 가스레인지 · 밥솥 (냉장고는 buildFridge에서 따로) */
   private buildKitchen(): Spot {
     const g = this.group
     const k = this.kitchen
@@ -656,7 +663,7 @@ export class Room {
     const sinkX = 4.0
     const boardX = 4.85
     const stoveX = 5.7
-    const fridgeX = 6.73
+    const fridgeX = FRIDGE_X
 
     // 벽 장식은 클릭 대상(그룹) 밖에 둬요: 타일 벽, 창문, 선반, 칸막이 액자
     const splash = box(cw, 0.8, 0.04, '#ffffff', 0.01)
@@ -722,14 +729,6 @@ export class Room {
     place(cylinder(0.17, 0.17, 0.24, C.cream), fridgeX + 0.1, 2.22, backZ, k)
     place(cylinder(0.18, 0.18, 0.05, C.caramel), fridgeX + 0.1, 2.36, backZ, k)
 
-    // 냉장고
-    place(box(0.95, 2.1, 0.85, '#fff0bf', 0.08), fridgeX, 1.05, -2.58, k)
-    place(box(0.97, 0.03, 0.87, C.caramel, 0.01), fridgeX, 1.4, -2.58, k)
-    place(box(0.05, 0.4, 0.05, C.woodDark, 0.02), fridgeX - 0.37, 1.75, -2.13, k)
-    place(box(0.05, 0.5, 0.05, C.woodDark, 0.02), fridgeX - 0.37, 0.95, -2.13, k)
-    place(box(0.14, 0.14, 0.02, '#ffb3a7', 0.02), fridgeX + 0.15, 1.75, -2.15, k)
-    place(box(0.12, 0.12, 0.02, C.woodMid, 0.02), fridgeX - 0.1, 1.95, -2.15, k)
-
     // 싱크대 앞에 서서 벽(-z)을 보고 설거지해요 (설거지 게임이 열려요)
     const spot: Spot = {
       action: 'wash',
@@ -739,6 +738,31 @@ export class Room {
       hint: '싱크대에서 설거지하기',
     }
     k.userData.spot = spot
+    return spot
+  }
+
+  /** 주방 끝 냉장고: 앞에 서면 얼초 만들기 게임이 열려요 (밥솥은 주방 쪽이라 위에 그대로) */
+  private buildFridge(): Spot {
+    const f = this.fridge
+    const fridgeX = FRIDGE_X
+    place(box(0.95, 2.1, 0.85, '#fff0bf', 0.08), fridgeX, 1.05, -2.58, f)
+    place(box(0.97, 0.03, 0.87, C.caramel, 0.01), fridgeX, 1.4, -2.58, f)
+    place(box(0.05, 0.4, 0.05, C.woodDark, 0.02), fridgeX - 0.37, 1.75, -2.13, f)
+    place(box(0.05, 0.5, 0.05, C.woodDark, 0.02), fridgeX - 0.37, 0.95, -2.13, f)
+    place(box(0.14, 0.14, 0.02, '#ffb3a7', 0.02), fridgeX + 0.15, 1.75, -2.15, f)
+    place(box(0.12, 0.12, 0.02, C.woodMid, 0.02), fridgeX - 0.1, 1.95, -2.15, f)
+    // 냉동실 문에 붙은 작은 초코 자석
+    place(box(0.12, 0.1, 0.02, '#9a6240', 0.02), fridgeX + 0.2, 1.08, -2.15, f)
+
+    // 냉장고 앞에 서서 벽(-z)을 보고 문을 열어요
+    const spot: Spot = {
+      action: 'chill',
+      approach: new THREE.Vector3(fridgeX - 0.1, 0, -1.2),
+      position: new THREE.Vector3(fridgeX - 0.1, 0, -1.62),
+      quaternion: yawQuat(Math.PI),
+      hint: '냉장고에서 얼초 만들기',
+    }
+    f.userData.spot = spot
     return spot
   }
 
@@ -955,6 +979,6 @@ export class Room {
 
   /** 클릭 판정 대상 */
   get clickables(): THREE.Object3D[] {
-    return [this.bed, this.desk, this.table, this.kitchen, ...this.floors]
+    return [this.bed, this.desk, this.table, this.kitchen, this.fridge, ...this.floors]
   }
 }

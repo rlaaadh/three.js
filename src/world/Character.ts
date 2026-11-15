@@ -30,7 +30,7 @@ const material = (color: string, roughness = 0.6) => new THREE.MeshStandardMater
 /**
  * 임시 캐릭터 (일자 앞머리 아이).
  * 나중에 GLB 모델 + 애니메이션으로 교체할 때는 build()와 pose 부분만 바꾸면 돼요.
- * 상태: idle → walk(클릭) / steer(드래그) → transition → lie / sit / eat / wash
+ * 상태: idle → walk(클릭) / steer(드래그) → transition → lie / sit / eat / wash / chill
  */
 export class Character {
   readonly root = new THREE.Group()
@@ -135,6 +135,11 @@ export class Character {
 
   /** 싱크대 앞에서 잠깐 박박 접시를 문질러요 */
   scrub() {
+    this.busyHandsTime = 0.2
+  }
+
+  /** 냉장고 앞에서 잠깐 튜브를 꾹꾹 주물러요 */
+  knead() {
     this.busyHandsTime = 0.2
   }
 
@@ -319,6 +324,12 @@ export class Character {
       armL = -1.15 + swing
       armR = -1.15 - swing
       stirZ = fast ? Math.cos(this.time * 30) * 0.25 : 0
+    } else if (this.state === 'chill') {
+      // 얼초 만들기: 두 손으로 튜브를 쥐고, 주무르거나 토핑을 뿌릴 때는 꾹꾹
+      const fast = this.busyHandsTime > 0
+      const squeeze = fast ? Math.sin(this.time * 24) * 0.18 : Math.sin(this.time * 3) * 0.04
+      armL = -1.0 + squeeze
+      armR = -1.0 + squeeze
     }
 
     hipL.rotation.x = damp(hipL.rotation.x, legL, 14, dt)

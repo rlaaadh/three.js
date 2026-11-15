@@ -1714,6 +1714,585 @@ button {
   color: var(--ink);
 }
 
+/* ---------- 얼초.app: 녹이고 · 붓고 · 토핑 올리고 · 꽁꽁 얼리기 ---------- */
+/* 미션 카드 · 시간 막대 · 퐁 글씨는 설거지.app(.dish) 조각을 그대로 써요 */
+.choco {
+  --choco-pink: #ffdbe4;
+  --choco-pink-dark: #f4a9bb;
+}
+
+.choco__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8em;
+}
+
+.choco__steps {
+  display: flex;
+  gap: 0.35em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 1.15em;
+}
+
+.choco__steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.15em 0.7em 0.15em 0.25em;
+  border-radius: 999px;
+  background: var(--win-soft);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.choco__steps i {
+  display: grid;
+  place-items: center;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  background: #fff;
+  font-style: normal;
+  font-size: 0.85em;
+}
+
+.choco__steps li.is-now {
+  background: linear-gradient(180deg, #ffe7a3, #ffd36b);
+  color: var(--ink);
+}
+
+.choco__steps li.is-done {
+  background: #dff3ea;
+  color: #4f9a7e;
+}
+
+.choco__order {
+  margin: 0;
+  padding: 0.2em 0.9em;
+  border: 2px dashed var(--choco-pink-dark);
+  border-radius: 0.8em;
+  background: #fff;
+  font-size: 1.2em;
+  white-space: nowrap;
+}
+
+.choco__order span {
+  color: var(--win-point);
+}
+
+/* 분홍빛 주방 배경 */
+.choco__scene {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  overflow: hidden;
+  border-radius: 1.6em;
+  background: linear-gradient(180deg, #fff1f4 0%, #fff8ee 70%, #fdebd3 100%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+  container-type: size;
+  touch-action: none;
+}
+
+.choco__hint {
+  margin: 0;
+  font-size: 1.35em;
+  text-align: center;
+  word-break: keep-all;
+  transition: color 0.15s ease;
+}
+
+.choco__hint b {
+  color: var(--win-point);
+  font-weight: 400;
+}
+
+.choco__hint.is-warn {
+  color: var(--win-point);
+  animation: choco-shake 0.3s ease;
+}
+
+@keyframes choco-shake {
+  25% {
+    translate: -0.3em 0;
+  }
+  75% {
+    translate: 0.3em 0;
+  }
+}
+
+/* 튜브 */
+.choco__tube {
+  display: block;
+  width: 3.4em;
+  filter: drop-shadow(0 0.2em 0.25em rgba(150, 120, 80, 0.2));
+}
+
+.choco__tube svg {
+  display: block;
+  width: 100%;
+}
+
+.choco__tubes {
+  display: flex;
+  gap: 1.6em;
+  align-items: flex-end;
+}
+
+.choco__tubes--deco {
+  position: absolute;
+  top: 8%;
+  gap: 2.4em;
+  opacity: 0.8;
+}
+
+.choco__pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.8em 1em 0.6em;
+  border: 2px solid transparent;
+  border-radius: 1.2em;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 1.2em;
+  cursor: pointer;
+  transition:
+    translate 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.choco__pick .choco__tube {
+  width: 4.2em;
+}
+
+.choco__pick:hover {
+  translate: 0 -0.3em;
+  border-color: var(--choco-pink-dark);
+}
+
+/* 1. 녹이기: 따뜻한 물 그릇 속 튜브 */
+.choco__melt {
+  position: relative;
+  width: min(60cqw, 48cqh * 1.6);
+  aspect-ratio: 240 / 190;
+}
+
+.choco__bowl-back,
+.choco__bowl-front {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.choco__bowl-back {
+  z-index: 1;
+}
+
+.choco__bowl-front {
+  z-index: 3;
+}
+
+.choco__tube--melt {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 30%;
+  width: 24%;
+  translate: -50% 0;
+  rotate: 8deg;
+  transition: scale 0.08s ease;
+}
+
+.choco__tube--melt.is-squish {
+  scale: 1.08 0.94;
+}
+
+.choco__melted {
+  opacity: var(--melt, 0);
+  transition: opacity 0.15s ease;
+}
+
+.choco__chunks {
+  opacity: calc(1 - var(--melt, 0));
+  transition: opacity 0.15s ease;
+}
+
+/* 모락모락 김 */
+.choco__steam {
+  position: absolute;
+  z-index: 4;
+  left: 18%;
+  right: 18%;
+  bottom: 70%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.choco__steam i {
+  width: 0.5em;
+  height: 2.6em;
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.95));
+  animation: choco-steam 2.2s ease-in-out infinite;
+}
+
+.choco__steam i:nth-child(2) {
+  animation-delay: -0.7s;
+}
+
+.choco__steam i:nth-child(3) {
+  animation-delay: -1.4s;
+}
+
+@keyframes choco-steam {
+  0% {
+    opacity: 0;
+    translate: 0 0.8em;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0.4em -1.4em;
+  }
+}
+
+.choco__meter {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  width: min(80%, 26em);
+  font-size: 1.15em;
+}
+
+.choco__meter span {
+  white-space: nowrap;
+}
+
+.choco__meter .dish__progress {
+  flex: 1;
+}
+
+.choco__meter b {
+  min-width: 2.8em;
+  color: var(--win-point);
+  font-weight: 400;
+  text-align: right;
+}
+
+/* 2 · 3. 초콜릿 틀 */
+.choco__mold {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6em;
+  width: min(92cqw, 100cqh * 1.75);
+  padding: 0.7em 0.9em;
+  border-radius: 1.4em;
+  background: #fff;
+  box-shadow:
+    0 0.3em 0 var(--choco-pink),
+    0 0.6em 1.2em rgba(226, 150, 170, 0.18);
+}
+
+.choco__scene--mission .choco__mold {
+  position: absolute;
+  bottom: 12%;
+  width: min(80cqw, 60cqh * 1.75);
+}
+
+.choco__cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.choco__cell svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+[data-cell] {
+  cursor: pointer;
+}
+
+.choco__cell-note {
+  min-height: 1.3em;
+  color: var(--ink-soft);
+  font-size: 1.05em;
+  white-space: nowrap;
+}
+
+.choco__cell-note.is-good {
+  color: #4f9a7e;
+}
+
+.choco__cell-note.is-bad {
+  color: var(--win-point);
+}
+
+/* 꾹 누르는 동안 칸 위에 거꾸로 든 튜브 + 초코 줄기 */
+.choco__pourer {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 88%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.choco__pourer .choco__tube {
+  width: 2.6em;
+  rotate: 180deg;
+  animation: choco-squeeze 0.25s ease-in-out infinite alternate;
+}
+
+.choco__stream {
+  width: 0.35em;
+  height: 2.2em;
+  margin-top: -0.2em;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.choco__cell.is-pouring .choco__pourer {
+  display: flex;
+}
+
+@keyframes choco-squeeze {
+  to {
+    scale: 1.06 0.95;
+  }
+}
+
+/* 토핑 병 */
+.choco__jars {
+  display: flex;
+  gap: 1em;
+}
+
+.choco__jar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1em;
+  padding: 0.3em 0.8em 0.35em;
+  border: 2px solid transparent;
+  border-radius: 1em;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 1.1em;
+  cursor: pointer;
+  transition:
+    translate 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.choco__jar svg {
+  width: 3em;
+}
+
+.choco__jar.is-picked {
+  translate: 0 -0.25em;
+  border-color: var(--win-point);
+  background: #fff;
+}
+
+/* 4. 냉장고 */
+.choco__fridge {
+  --frost: 0;
+  position: relative;
+  width: min(44cqw, 66cqh * 1.08);
+  aspect-ratio: 260 / 240;
+}
+
+.choco__fridge svg {
+  display: block;
+  width: 100%;
+  filter: drop-shadow(0 0.3em 0.4em rgba(150, 120, 80, 0.18));
+}
+
+.choco__fridge-frost {
+  opacity: calc(var(--frost) * 0.55);
+}
+
+.choco__fridge-tray {
+  animation: choco-tray-in 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+@keyframes choco-tray-in {
+  from {
+    translate: 0 4em;
+    opacity: 0;
+  }
+}
+
+.choco__snow {
+  opacity: var(--frost);
+}
+
+.choco__flake {
+  position: absolute;
+  top: 0;
+  color: #9fd3ee;
+  font-size: 1.4em;
+  opacity: calc(0.3 + var(--frost) * 0.7);
+  pointer-events: none;
+  animation: choco-flake 3s linear infinite;
+}
+
+@keyframes choco-flake {
+  from {
+    translate: 0 -10%;
+    rotate: 0deg;
+  }
+  to {
+    translate: 0.6em 900%;
+    rotate: 180deg;
+  }
+}
+
+.choco__frost i {
+  background: linear-gradient(90deg, #bfe3f5, #a9c6ff);
+}
+
+/* 아래 막대 오른쪽: 다음 단계 버튼 (뽀득! 버튼과 같은 모양) */
+.choco__action {
+  padding: 0.15em 1.2em;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe7a3, #ffd36b);
+  box-shadow: 0 0.18em 0 #e9b95a;
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 1.35em;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.choco__action small {
+  margin-left: 0.3em;
+  font-size: 0.6em;
+  opacity: 0.6;
+}
+
+.choco__action:active:not(:disabled) {
+  translate: 0 0.14em;
+  box-shadow: 0 0.05em 0 #e9b95a;
+}
+
+.choco__action:disabled {
+  background: var(--win-soft);
+  box-shadow: none;
+  color: var(--ink-soft);
+  opacity: 0.7;
+  cursor: default;
+}
+
+.choco__action.is-ready {
+  animation: choco-ready 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes choco-ready {
+  to {
+    scale: 1.08;
+  }
+}
+
+/* 결과: 완성한 얼초 + 별점 */
+.choco__result {
+  gap: 0.7em;
+  padding-top: 1.2em;
+}
+
+.choco__result .tresult__title {
+  font-size: 2em;
+}
+
+.choco__result-tray {
+  width: 100%;
+}
+
+.choco__result-tray .choco__mold {
+  width: 100%;
+  padding: 0.5em 0.7em;
+}
+
+.choco__result-tray .choco__cell-note,
+.choco__result-tray .choco__pourer {
+  display: none;
+}
+
+.choco__stars {
+  margin: 0;
+  color: #ffc93c;
+  font-size: 2em;
+  letter-spacing: 0.1em;
+  line-height: 1;
+}
+
+.choco__stars span {
+  color: var(--win-soft);
+}
+
+/* 세로 화면: 틀을 2줄로, 단계 표시 · 주문서는 위아래로 */
+@container (max-aspect-ratio: 1 / 1) {
+  .choco__top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .choco__steps {
+    justify-content: space-between;
+  }
+
+  .choco__order {
+    text-align: center;
+  }
+
+  .choco__mold {
+    grid-template-columns: repeat(2, 1fr);
+    width: min(80cqw, 40cqh);
+  }
+
+  .choco__scene--mission .choco__mold {
+    width: min(70cqw, 34cqh);
+  }
+
+  .choco__result-tray .choco__mold {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .choco__fridge {
+    width: min(70cqw, 60cqh * 1.08);
+  }
+}
+
 /* 앱 창이 떠 있는 동안 안내 문구 · 줌 버튼을 숨겨요 */
 body.is-app-open .hud,
 body.is-app-open .zoom {
