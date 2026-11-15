@@ -6,6 +6,15 @@
   font-display: swap;
 }
 
+/* 손글씨 폰트를 첫 화면에 쓰는 글자만 남긴 작은 파일 (scripts/subset-hand-font.sh로 만들어요)
+   원본(3MB+)을 다 받기 전에도 로딩 문구 · 바닥 글씨가 바로 그려지고, 없는 글자는 원본 폰트로 그려져요 */
+@font-face {
+  font-family: 'HandSubset';
+  src: url('/fonts/hand-subset.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   --paper: #fafaf7;
   --grid: #e0c9ab;
@@ -17,7 +26,7 @@
   --line-strong: #d4bca3;
   --ink-soft: #6b5446;
   --shadow-soft: 0 4px 14px rgba(122, 86, 64, 0.12);
-  --font-hand: 'NanumHimNaeRaNeunMarBoDan', 'Apple SD Gothic Neo', sans-serif;
+  --font-hand: 'HandSubset', 'NanumHimNaeRaNeunMarBoDan', 'Apple SD Gothic Neo', sans-serif;
 }
 
 * {

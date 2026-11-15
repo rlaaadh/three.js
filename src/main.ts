@@ -75,12 +75,22 @@ function updateIntro(dt: number) {
   if (intro.t > 2 + nature.children.length * 0.05) intro.t = 99 // 인트로 끝
 }
 
-loader.start([fontsReady]).then(() => {
-  character = new Character()
-  character.root.position.set(0.4, 4, 0.8)
-  character.root.visible = false
-  stage.scene.add(character.root, character.emotes, createLabels())
+// 폰트가 오면 캐릭터 · 바닥 글씨를 로딩 화면 뒤에서 미리 만들고, 셰이더 컴파일 · 텍스처 업로드까지 끝내둬요
+// (로딩이 끝난 뒤에 처음 그리면 그 순간 화면이 1초쯤 멈춰요)
+const sceneReady = fontsReady
+  .catch(() => {})
+  .then(async () => {
+    character = new Character()
+    character.root.position.set(0.4, 4, 0.8)
+    stage.scene.add(character.root, character.emotes, createLabels())
+    await stage.renderer.compileAsync(stage.scene, stage.camera)
+    // 로딩 화면이 덮고 있는 동안 한 프레임 그려서 그림자 · 텍스처까지 GPU에 올려요
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+    character.root.visible = false
+  })
 
+loader.start([sceneReady]).then(() => {
+  if (!character) return
   character.onStep = (x, y, z, yaw) => footprints.stamp(x, y, z, yaw)
   // 책상에 앉으면 타자 연습, 싱크대 앞에 서면 설거지 게임, 일어나면 창을 닫아요
   character.onAction = (action) => {

@@ -34,7 +34,7 @@ export class Loader {
   }
 
   /** 모든 작업이 끝나고, 최소 연출 시간이 지나면 resolve 돼요 */
-  start(tasks: Promise<unknown>[], minDuration = 2000): Promise<void> {
+  start(tasks: Promise<unknown>[], minDuration = 600): Promise<void> {
     let done = 0
     const total = tasks.length
     tasks.forEach((task) =>
