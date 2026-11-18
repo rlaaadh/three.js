@@ -28,7 +28,7 @@ export interface RainScore {
 export const NICKNAME_MAX = 8
 
 /** 랭킹은 몇 등까지 보여 줄지 (많으면 팝업 안에서 스크롤) */
-export const RANK_LIMIT = 50
+export const RANK_LIMIT = 10
 
 export const rankingEnabled = () => Boolean(URL_BASE && KEY)
 

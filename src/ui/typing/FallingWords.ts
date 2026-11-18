@@ -515,7 +515,7 @@ export class FallingWords implements TypingView {
 
   // ---------- 게임 전 랭킹 보기 ----------
 
-  /** 인트로 위에 랭킹 TOP 50 팝업을 띄워요. 닫으면 인트로로 돌아가요 */
+  /** 인트로 위에 랭킹 TOP 10 팝업을 띄워요. 닫으면 인트로로 돌아가요 */
   private openRanking() {
     if (this.rankPopup || this.playing || this.paused) return
     const popup = document.createElement('div')

@@ -368,7 +368,7 @@ const DESK_ART = `
   <ellipse cx="128" cy="122" rx="14" ry="5" fill="#fff6c8" class="tart__glow"/>
 </svg>`
 
-/** 결과 화면 옆 랭킹 카드: 닉네임 등록 + TOP 50 */
+/** 결과 화면 옆 랭킹 카드: 닉네임 등록 + TOP 10 */
 const RANK_CARD = `
   <section class="trank" aria-label="랭킹">
     <p class="trank__title">🏆 랭킹 TOP ${RANK_LIMIT}</p>
