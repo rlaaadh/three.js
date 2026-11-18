@@ -3,7 +3,7 @@ import { RetroWindow } from '../RetroWindow'
 import { Practice, type PracticeMode } from './Practice'
 import { FallingWords } from './FallingWords'
 import { LONG_TOPICS } from './content'
-import { NICKNAME_MAX, fetchTopScores, rankingEnabled, rememberNickname, savedNickname, submitScore, type RainScore } from './ranking'
+import { NICKNAME_MAX, RANK_LIMIT, fetchTopScores, rankingEnabled, rememberNickname, savedNickname, submitScore, type RainScore } from './ranking'
 
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
@@ -216,13 +216,21 @@ export class TypingApp {
     const note = el.querySelector<HTMLElement>('[data-ref="rankNote"]')!
     const card = el.querySelector<HTMLElement>('.trank')!
     const toggle = el.querySelector<HTMLButtonElement>('[data-action="rank"]')!
-    input.value = savedNickname()
+    input.value = savedNickname().slice(0, NICKNAME_MAX)
+    // 한글 조합 중에는 maxlength가 넘칠 수 있어서, 조합이 끝나면 한 번 더 잘라요
+    const clampNickname = () => {
+      if (input.value.length > NICKNAME_MAX) input.value = input.value.slice(0, NICKNAME_MAX)
+    }
+    input.addEventListener('compositionend', clampNickname)
+    input.addEventListener('input', (e) => {
+      if (!(e as InputEvent).isComposing) clampNickname()
+    })
     let mine: RainScore | null = null
     let loaded = false
 
     const render = async () => {
       try {
-        const top = await fetchTopScores(10)
+        const top = await fetchTopScores()
         if (!el.isConnected) return
         let marked = false
         list.innerHTML = top.length
@@ -360,10 +368,10 @@ const DESK_ART = `
   <ellipse cx="128" cy="122" rx="14" ry="5" fill="#fff6c8" class="tart__glow"/>
 </svg>`
 
-/** 결과 화면 옆 랭킹 카드: 닉네임 등록 + TOP 10 */
+/** 결과 화면 옆 랭킹 카드: 닉네임 등록 + TOP 50 */
 const RANK_CARD = `
   <section class="trank" aria-label="랭킹">
-    <p class="trank__title">🏆 랭킹 TOP 10</p>
+    <p class="trank__title">🏆 랭킹 TOP ${RANK_LIMIT}</p>
     <form class="trank__form" data-ref="rankForm" autocomplete="off">
       <input data-ref="nickname" type="text" maxlength="${NICKNAME_MAX}" placeholder="닉네임 (${NICKNAME_MAX}자까지)" aria-label="닉네임" spellcheck="false" />
       <button type="submit" class="tprac__enter">등록</button>

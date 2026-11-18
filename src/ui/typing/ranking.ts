@@ -24,8 +24,11 @@ export interface RainScore {
   created_at?: string
 }
 
-/** 닉네임은 1~12글자 */
-export const NICKNAME_MAX = 12
+/** 닉네임은 1~8글자 (랭킹 줄이 깨지지 않게) */
+export const NICKNAME_MAX = 8
+
+/** 랭킹은 몇 등까지 보여 줄지 (많으면 팝업 안에서 스크롤) */
+export const RANK_LIMIT = 50
 
 export const rankingEnabled = () => Boolean(URL_BASE && KEY)
 
@@ -34,7 +37,7 @@ function headers(extra: Record<string, string> = {}) {
 }
 
 /** 순위: 도달 라운드 → 총 점수 → 평균 타수 → 먼저 등록한 사람 */
-export async function fetchTopScores(limit = 10): Promise<RainScore[]> {
+export async function fetchTopScores(limit = RANK_LIMIT): Promise<RainScore[]> {
   if (!rankingEnabled()) return []
   const params = new URLSearchParams({
     select: 'nickname,reached_round,cleared,total_score,avg_cpm,max_cpm,min_cpm,created_at',

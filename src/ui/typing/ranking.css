@@ -188,3 +188,17 @@
 .trank .tresult__buttons {
   margin-top: 0.4em;
 }
+
+/* 랭킹이 많아지면 목록만 팝업 안에서 세로 스크롤 (7줄쯤 보여요) */
+.trank__list {
+  flex: 1 1 auto;
+  max-height: 15.5em;
+  padding-right: 0.3em;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--win-line) transparent;
+}
+
+.trank__row {
+  flex-shrink: 0;
+}

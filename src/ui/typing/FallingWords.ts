@@ -3,7 +3,7 @@ import { bindKoreanInput } from './input'
 import { strokesOf } from './hangul'
 import { IDIOMS, LONGER_WORDS, LONG_WORDS, SPECIAL_WORDS, WORDS, shuffle } from './content'
 import type { TypingView, ViewContext } from './TypingApp'
-import { fetchTopScores, rankingEnabled } from './ranking'
+import { RANK_LIMIT, fetchTopScores, rankingEnabled } from './ranking'
 
 /**
  * 라운드 설정: 떨어질 낱말 수 · 바닥까지 걸리는 시간(초) · 다음 낱말까지 간격(초) · 통과 점수.
@@ -515,14 +515,14 @@ export class FallingWords implements TypingView {
 
   // ---------- 게임 전 랭킹 보기 ----------
 
-  /** 인트로 위에 랭킹 TOP 10 팝업을 띄워요. 닫으면 인트로로 돌아가요 */
+  /** 인트로 위에 랭킹 TOP 50 팝업을 띄워요. 닫으면 인트로로 돌아가요 */
   private openRanking() {
     if (this.rankPopup || this.playing || this.paused) return
     const popup = document.createElement('div')
     popup.className = 'train__rankpop'
     popup.innerHTML = `
       <section class="trank" aria-label="랭킹">
-        <p class="trank__title">🏆 랭킹 TOP 10</p>
+        <p class="trank__title">🏆 랭킹 TOP ${RANK_LIMIT}</p>
         <ol class="trank__list"><li class="trank__empty">불러오는 중...</li></ol>
         <div class="tresult__buttons">
           <button type="button" class="tbutton" data-action="close-ranking">닫기</button>
@@ -537,7 +537,7 @@ export class FallingWords implements TypingView {
     close.addEventListener('click', () => this.closeRanking())
     close.focus({ preventScroll: true })
     const list = popup.querySelector<HTMLElement>('.trank__list')!
-    fetchTopScores(10)
+    fetchTopScores()
       .then((top) => {
         if (this.rankPopup !== popup) return
         list.innerHTML = top.length
