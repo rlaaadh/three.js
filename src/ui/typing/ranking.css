@@ -190,10 +190,12 @@
 }
 
 /* 랭킹이 많아지면 목록만 팝업 안에서 세로 스크롤 (7줄쯤 보여요) */
+/* 줄 사이 간격 + 내 줄 테두리(box-shadow)가 스크롤 영역에 잘리지 않게 안쪽 여백 */
 .trank__list {
   flex: 1 1 auto;
-  max-height: 15.5em;
-  padding-right: 0.3em;
+  gap: 0.5em;
+  max-height: 17em;
+  padding: 0.2em 0.4em 0.2em 0.2em;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--win-line) transparent;
