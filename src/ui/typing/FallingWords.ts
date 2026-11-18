@@ -245,12 +245,19 @@ export class FallingWords implements TypingView {
           <li>${config.goal}점보다 적게 모으면 게임이 끝나요</li>
           <li>도중에 <b>${FAIL_SCORE}점</b>이 되면 그 자리에서 바로 실패예요</li>
         </ul>
-        <button type="button" class="tbutton tbutton--main" data-action="start">시작하기</button>
+        <div class="train__buttons">
+          <button type="button" class="tbutton tbutton--main" data-action="start">시작하기</button>
+          ${cleared && rankingEnabled() ? '<button type="button" class="tbutton" data-action="submit-rank">🏆 그만하고 랭킹 등록</button>' : ''}
+        </div>
       </div>
     `
     this.overlay.classList.add('is-on')
     const button = this.overlay.querySelector<HTMLButtonElement>('[data-action="start"]')!
     button.addEventListener('click', () => this.startRound())
+    // 라운드를 통과한 뒤 여기서 그만두고 기록해도 돼요 (다음 라운드에 도달한 걸로 올라가요)
+    this.overlay
+      .querySelector('[data-action="submit-rank"]')
+      ?.addEventListener('click', () => this.finish(false, true, `라운드 ${this.round}까지 통과! 👏`))
     button.focus({ preventScroll: true })
   }
 
@@ -268,13 +275,18 @@ export class FallingWords implements TypingView {
       <div class="train__intro">
         <p class="train__title train__title--fail">실패!</p>
         <p class="train__desc">이번 라운드 점수가 <b>${this.roundScore}점</b>이 되었어요 (실패 기준 ${FAIL_SCORE}점 이하)</p>
-        <p class="train__rule">라운드 1부터 다시 도전해요</p>
-        <button type="button" class="tbutton tbutton--main" data-action="restart">다시 시작하기</button>
+        <p class="train__rule">라운드 ${this.round + 1}까지 왔어요 (총 ${this.totalScore}점) · 다시 시작하면 라운드 1부터예요</p>
+        <div class="train__buttons">
+          ${rankingEnabled() ? '<button type="button" class="tbutton tbutton--main" data-action="submit-rank">🏆 랭킹 등록</button>' : ''}
+          <button type="button" class="tbutton${rankingEnabled() ? '' : ' tbutton--main'}" data-action="restart">다시 시작하기</button>
+        </div>
       </div>
     `
     this.overlay.classList.add('is-on')
-    const button = this.overlay.querySelector<HTMLButtonElement>('[data-action="restart"]')!
-    button.addEventListener('click', () => this.restart())
+    // 실패해도 도달 라운드 · 총점으로 랭킹에 올릴 수 있어요
+    this.overlay.querySelector('[data-action="submit-rank"]')?.addEventListener('click', () => this.finish(false, true))
+    const button = this.overlay.querySelector<HTMLButtonElement>('.tbutton--main')!
+    this.overlay.querySelector('[data-action="restart"]')!.addEventListener('click', () => this.restart())
     button.focus({ preventScroll: true })
   }
 
@@ -404,13 +416,13 @@ export class FallingWords implements TypingView {
     this.finish(passed)
   }
 
-  private finish(allCleared: boolean) {
+  private finish(allCleared: boolean, openRanking = false, title?: string) {
     const avg = this.totalTypingSec > 0 ? Math.round(this.totalStrokes / (this.totalTypingSec / 60)) : 0
     const max = this.speeds.length ? Math.max(...this.speeds) : 0
     const min = this.speeds.length ? Math.min(...this.speeds) : 0
     this.ctx.showResult({
       mode: 'rain',
-      title: allCleared ? '모두 통과! 🎉' : '아쉬워요!',
+      title: title ?? (allCleared ? '모두 통과! 🎉' : '아쉬워요!'),
       score: avg,
       lines: [
         { label: '도달 라운드', value: `${this.round + 1} / ${ROUNDS.length}` },
@@ -427,6 +439,7 @@ export class FallingWords implements TypingView {
         max_cpm: max,
         min_cpm: min,
       },
+      openRanking,
     })
   }
 

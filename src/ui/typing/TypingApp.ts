@@ -30,6 +30,8 @@ export interface TypingResultInfo {
   lines: { label: string; value: string }[]
   /** 떨어지는 낱말연습: 랭킹에 올릴 기록 (닉네임은 결과 화면에서 받아요) */
   ranking?: Omit<RainScore, 'nickname'>
+  /** 결과 화면 대신 랭킹 팝업부터 열어요 (실패 화면의 랭킹 등록하기) */
+  openRanking?: boolean
 }
 
 export interface ViewContext {
@@ -194,13 +196,13 @@ export class TypingApp {
         </div>
         <div class="tresult__buttons">
           <button type="button" class="tbutton tbutton--main tbutton--icon" data-action="again" aria-label="다시 하기" title="다시 하기">${RETRY_ICON}</button>
-          ${hasRank ? '<button type="button" class="tbutton" data-action="rank">🏆 랭킹 확인</button>' : ''}
+          ${hasRank ? '<button type="button" class="tbutton" data-action="rank">🏆 랭킹 등록</button>' : ''}
           <button type="button" class="tbutton" data-action="menu">홈으로</button>
         </div>
       </div>
       ${hasRank ? RANK_CARD : ''}
     `
-    if (hasRank) this.bindRanking(el, result.ranking!)
+    if (hasRank) this.bindRanking(el, result.ranking!, result.openRanking)
     el.querySelector('[data-action="again"]')!.addEventListener('click', () => this.startMode(result.mode, result.topicId))
     el.querySelector('[data-action="menu"]')!.addEventListener('click', () => this.showMenu())
     this.setView({ el, focus: () => el.querySelector<HTMLButtonElement>('[data-action="again"]')?.focus({ preventScroll: true }) })
@@ -208,7 +210,7 @@ export class TypingApp {
 
   // ---------- 떨어지는 낱말연습 랭킹 (Supabase) ----------
 
-  private bindRanking(el: HTMLElement, record: Omit<RainScore, 'nickname'>) {
+  private bindRanking(el: HTMLElement, record: Omit<RainScore, 'nickname'>, openNow = false) {
     const form = el.querySelector<HTMLFormElement>('[data-ref="rankForm"]')!
     const input = el.querySelector<HTMLInputElement>('[data-ref="nickname"]')!
     const button = form.querySelector<HTMLButtonElement>('button')!
@@ -283,6 +285,7 @@ export class TypingApp {
       input.focus({ preventScroll: true })
     })
     card.querySelector('[data-action="home"]')!.addEventListener('click', () => this.showMenu())
+    if (openNow) toggle.click()
   }
 
   // ---------- 최고 기록 (이 브라우저에만 저장) ----------
