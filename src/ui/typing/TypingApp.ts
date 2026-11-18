@@ -3,6 +3,9 @@ import { RetroWindow } from '../RetroWindow'
 import { Practice, type PracticeMode } from './Practice'
 import { FallingWords } from './FallingWords'
 import { LONG_TOPICS } from './content'
+import { NICKNAME_MAX, fetchTopScores, rankingEnabled, rememberNickname, savedNickname, submitScore, type RainScore } from './ranking'
+
+const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 /** 창 안에 들어가는 화면 하나 (메뉴 · 연습 · 결과) */
 export interface TypingView {
@@ -25,6 +28,8 @@ export interface TypingResultInfo {
   /** 최고 기록 비교용 (평균 타수) */
   score: number
   lines: { label: string; value: string }[]
+  /** 떨어지는 낱말연습: 랭킹에 올릴 기록 (닉네임은 결과 화면에서 받아요) */
+  ranking?: Omit<RainScore, 'nickname'>
 }
 
 export interface ViewContext {
@@ -179,6 +184,7 @@ export class TypingApp {
     const isBest = result.score > 0 && result.score >= best
     this.music.sfx('clear')
     const el = document.createElement('div')
+    const hasRank = !!result.ranking && rankingEnabled()
     el.className = 'tresult'
     el.innerHTML = `
       <div class="tresult__card">
@@ -187,14 +193,97 @@ export class TypingApp {
           ${result.lines.map((line) => `<div class="tresult__line"><span>${line.label}</span><b>${line.value}</b></div>`).join('')}
         </div>
         <div class="tresult__buttons">
-          <button type="button" class="tbutton tbutton--main" data-action="again">다시 하기</button>
-          <button type="button" class="tbutton" data-action="menu">메뉴로</button>
+          <button type="button" class="tbutton tbutton--main tbutton--icon" data-action="again" aria-label="다시 하기" title="다시 하기">${RETRY_ICON}</button>
+          ${hasRank ? '<button type="button" class="tbutton" data-action="rank">🏆 랭킹 확인</button>' : ''}
+          <button type="button" class="tbutton" data-action="menu">홈으로</button>
         </div>
       </div>
+      ${hasRank ? RANK_CARD : ''}
     `
+    if (hasRank) this.bindRanking(el, result.ranking!)
     el.querySelector('[data-action="again"]')!.addEventListener('click', () => this.startMode(result.mode, result.topicId))
     el.querySelector('[data-action="menu"]')!.addEventListener('click', () => this.showMenu())
     this.setView({ el, focus: () => el.querySelector<HTMLButtonElement>('[data-action="again"]')?.focus({ preventScroll: true }) })
+  }
+
+  // ---------- 떨어지는 낱말연습 랭킹 (Supabase) ----------
+
+  private bindRanking(el: HTMLElement, record: Omit<RainScore, 'nickname'>) {
+    const form = el.querySelector<HTMLFormElement>('[data-ref="rankForm"]')!
+    const input = el.querySelector<HTMLInputElement>('[data-ref="nickname"]')!
+    const button = form.querySelector<HTMLButtonElement>('button')!
+    const list = el.querySelector<HTMLElement>('[data-ref="rankList"]')!
+    const note = el.querySelector<HTMLElement>('[data-ref="rankNote"]')!
+    const card = el.querySelector<HTMLElement>('.trank')!
+    const toggle = el.querySelector<HTMLButtonElement>('[data-action="rank"]')!
+    input.value = savedNickname()
+    let mine: RainScore | null = null
+    let loaded = false
+
+    const render = async () => {
+      try {
+        const top = await fetchTopScores(10)
+        if (!el.isConnected) return
+        let marked = false
+        list.innerHTML = top.length
+          ? top
+              .map((row, i) => {
+                const isMine =
+                  !marked && !!mine && row.nickname === mine.nickname && row.total_score === mine.total_score && row.avg_cpm === mine.avg_cpm
+                if (isMine) marked = true
+                return `<li class="trank__row${isMine ? ' is-mine' : ''}">
+                  <span class="trank__no">${i + 1}</span>
+                  <span class="trank__name">${escapeHtml(row.nickname)}</span>
+                  <span class="trank__round">${row.cleared ? '👑 ' : ''}R${row.reached_round}</span>
+                  <span class="trank__score">${row.total_score}점</span>
+                  <span class="trank__cpm">${row.avg_cpm}타</span>
+                </li>`
+              })
+              .join('')
+          : '<li class="trank__empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+      } catch (error) {
+        list.innerHTML = `<li class="trank__empty">${escapeHtml((error as Error).message)}</li>`
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const nickname = input.value.trim().slice(0, NICKNAME_MAX)
+      if (!nickname) {
+        note.textContent = '닉네임을 적어 주세요'
+        input.focus()
+        return
+      }
+      button.disabled = true
+      input.disabled = true
+      note.textContent = '올리는 중...'
+      try {
+        mine = { ...record, nickname }
+        await submitScore(mine)
+        rememberNickname(nickname)
+        note.textContent = '랭킹에 올렸어요! 🎉'
+        form.classList.add('is-done')
+        await render()
+      } catch (error) {
+        mine = null
+        note.textContent = (error as Error).message
+        button.disabled = false
+        input.disabled = false
+      }
+    })
+    // 랭킹 확인: 결과 팝업은 닫고 랭킹 팝업을 띄워요 (처음 열 때 불러와요)
+    const resultCard = el.querySelector<HTMLElement>('.tresult__card')!
+    card.hidden = true
+    toggle.addEventListener('click', () => {
+      resultCard.hidden = true
+      card.hidden = false
+      if (!loaded) {
+        loaded = true
+        void render()
+      }
+      input.focus({ preventScroll: true })
+    })
+    card.querySelector('[data-action="home"]')!.addEventListener('click', () => this.showMenu())
   }
 
   // ---------- 최고 기록 (이 브라우저에만 저장) ----------
@@ -270,3 +359,21 @@ const DESK_ART = `
   <path d="M106 112 Q 128 92 150 118 Z" fill="#ffe08a" stroke="#5a4033" stroke-width="3" stroke-linejoin="round"/>
   <ellipse cx="128" cy="122" rx="14" ry="5" fill="#fff6c8" class="tart__glow"/>
 </svg>`
+
+/** 결과 화면 옆 랭킹 카드: 닉네임 등록 + TOP 10 */
+const RANK_CARD = `
+  <section class="trank" aria-label="랭킹">
+    <p class="trank__title">🏆 랭킹 TOP 10</p>
+    <form class="trank__form" data-ref="rankForm" autocomplete="off">
+      <input data-ref="nickname" type="text" maxlength="${NICKNAME_MAX}" placeholder="닉네임 (${NICKNAME_MAX}자까지)" aria-label="닉네임" spellcheck="false" />
+      <button type="submit" class="tprac__enter">등록</button>
+    </form>
+    <p class="trank__note" data-ref="rankNote" aria-live="polite"></p>
+    <ol class="trank__list" data-ref="rankList"><li class="trank__empty">불러오는 중...</li></ol>
+    <div class="tresult__buttons">
+      <button type="button" class="tbutton" data-action="home">홈으로</button>
+    </div>
+  </section>`
+
+/** 다시 하기: 되돌리는 화살표 아이콘 */
+const RETRY_ICON = `<svg viewBox="0 0 24 24" width="1.1em" height="1.1em" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v4.6h4.6"/></svg>`

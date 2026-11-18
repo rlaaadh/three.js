@@ -1,24 +1,27 @@
 import './FallingWords.css'
 import { bindKoreanInput } from './input'
 import { strokesOf } from './hangul'
-import { LONGER_WORDS, LONG_WORDS, SPECIAL_WORDS, WORDS, shuffle } from './content'
+import { IDIOMS, LONGER_WORDS, LONG_WORDS, SPECIAL_WORDS, WORDS, shuffle } from './content'
 import type { TypingView, ViewContext } from './TypingApp'
+import { fetchTopScores, rankingEnabled } from './ranking'
 
 /**
  * 라운드 설정: 떨어질 낱말 수 · 바닥까지 걸리는 시간(초) · 다음 낱말까지 간격(초) · 통과 점수.
  * 라운드가 올라갈수록 더 많이, 더 빨리 떨어져요.
  */
+// 타수별 가상 플레이어 시뮬레이션으로 맞춘 값 (주석의 타수 이상이면 대부분 통과)
+// 1~4라운드는 300타 기준: 라운드마다 더 빨리 떨어지고 핑크 낱말(fast 비율)이 많아져요
 const ROUNDS = [
-  { count: 10, fall: 9, gap: 2.2, goal: 6 },
-  { count: 12, fall: 8, gap: 1.9, goal: 8 },
-  { count: 14, fall: 7, gap: 1.6, goal: 10 },
-  { count: 16, fall: 6.2, gap: 1.35, goal: 12 },
-  { count: 18, fall: 5.5, gap: 1.1, goal: 14 },
-  { count: 20, fall: 5, gap: 1, goal: 16 },
-  { count: 22, fall: 4.6, gap: 0.92, goal: 18 },
-  { count: 24, fall: 4.2, gap: 0.85, goal: 20 },
-  { count: 26, fall: 3.9, gap: 0.78, goal: 22 },
-  { count: 28, fall: 3.6, gap: 0.72, goal: 24 },
+  { count: 10, fall: 9, gap: 1.7, goal: 9, fast: 0.1 }, // ~300타
+  { count: 12, fall: 8, gap: 2.5, goal: 9, fast: 0.15 }, // ~300타
+  { count: 14, fall: 7, gap: 2.6, goal: 9, fast: 0.2 }, // ~300타
+  { count: 16, fall: 6.2, gap: 2.6, goal: 9, fast: 0.2 }, // ~300타
+  { count: 18, fall: 5.5, gap: 2.15, goal: 13, fast: 0.25 }, // ~400타
+  { count: 20, fall: 5.8, gap: 2.3, goal: 12, fast: 0.2 }, // ~500타
+  { count: 22, fall: 5.4, gap: 1.9, goal: 13, fast: 0.2 }, // ~600타
+  { count: 24, fall: 5, gap: 1.7, goal: 15, fast: 0.2 }, // ~700타
+  { count: 26, fall: 4.7, gap: 1.5, goal: 16, fast: 0.2 }, // ~800타
+  { count: 28, fall: 4.4, gap: 1.4, goal: 17, fast: 0.2 }, // ~900타
 ]
 
 /** 낱말 하나 맞히면 +1, 바닥에 떨어지면 -1 */
@@ -28,20 +31,20 @@ const MISS_POINT = -1
 const FAST_HIT_POINT = 2
 const FAST_MISS_POINT = -3
 /** 라운드 점수가 여기까지 떨어지면 실패 → 1라운드부터 다시 */
+/** 라운드 점수가 이보다 낮으면 위험 표시 */
+const DANGER_SCORE = -2
 const FAIL_SCORE = -5
 /** 너무 짧은 시간에 친 낱말이 타수를 튀게 하지 않도록 (초) */
 const MIN_TYPING_SEC = 0.25
-/** 라운드 낱말 중 이만큼은 핑크 낱말: 두 배 빨리 떨어져요 (난이도) */
-const FAST_RATIO = 0.2
+/** 핑크 낱말은 두 배 빨리 떨어져요 (비율은 ROUNDS의 fast) */
 const FAST_SPEED = 2
 /**
  * 라운드별 낱말 구성
  * - 라운드 1: 짧은 낱말
- * - 라운드 2: 사자성어 · 네 글자 낱말 + 다섯 글자 이상 1개
- * - 라운드 3~5: 사자성어 · 네 글자 낱말 + 다섯 글자 이상 2개
- * - 라운드 6~10: 대부분(80%) 다섯 글자 이상 + 햄버거 세트 · 립 색상 이름 2~3개 + 나머지 사자성어 · 네 글자 낱말
+ * - 라운드 2~5: 네 글자 사자성어만
+ * - 라운드 6~10: 다섯 글자 이상 35% + 햄버거 세트 · 립 색상 이름 2~3개 + 나머지 사자성어 · 네 글자 낱말
  */
-const LONGER_RATIO_LATE = 0.8
+const LONGER_RATIO_LATE = 0.35
 const LATE_FROM_ROUND = 6
 
 const escape = (text: string) => text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`)
@@ -92,7 +95,7 @@ interface Drop {
  * 떨어지는 낱말연습: 하늘에서 고양이 귀 방울에 담긴 낱말이 떨어져요.
  * - 낱말을 치고 Enter(또는 스페이스) → 맞히면 +1점, 바닥에 닿으면 -1점
  * - 라운드마다 통과 점수가 있어요. 점수를 넘겨도 그 라운드 낱말은 끝까지 다 떨어져야 라운드가 끝나요.
- * - 낱말 20%는 핑크색이고 두 배 빨리 떨어져요
+ * - 낱말 10~25%는 핑크색이고 두 배 빨리 떨어져요 (라운드마다 늘어요)
  * - 라운드 점수가 −5점이 되면 실패 화면 → 1라운드부터 다시
  * - 라운드 시작 전에 "라운드 N" 인트로 → 시작하기 버튼
  * - 끝나면 평균 · 최고 · 최저 타수
@@ -123,9 +126,12 @@ export class FallingWords implements TypingView {
   private readonly sky: HTMLElement
   private readonly overlay: HTMLElement
   private readonly pauseButton: HTMLButtonElement
+  private readonly rankButton: HTMLButtonElement
+  /** 게임 전 랭킹 보기 팝업 (열려 있을 때만) */
+  private rankPopup: HTMLElement | null = null
   private readonly input: HTMLInputElement
   private readonly form: HTMLFormElement
-  private readonly hud: Record<'round' | 'score' | 'left' | 'cpm', HTMLElement>
+  private readonly hud: Record<'round' | 'score' | 'left' | 'cpm' | 'warn', HTMLElement>
 
   constructor(private readonly ctx: ViewContext) {
     this.el.className = 'train'
@@ -134,7 +140,9 @@ export class FallingWords implements TypingView {
         <button type="button" class="tback" data-action="menu">← 메뉴</button>
         <span class="tbadge" data-hud="round"></span>
         <button type="button" class="tback train__pause" data-action="pause" hidden>⏸ 멈춤 <small>Esc</small></button>
+        <button type="button" class="tback train__rankbtn" data-action="ranking" hidden>🏆 랭킹 보기</button>
         <div class="train__stats">
+          <span class="train__warn" data-hud="warn" hidden></span>
           <span class="train__stat train__stat--score">이번 라운드 <b data-hud="score">0</b>점</span>
           <span class="train__stat">남은 낱말 <b data-hud="left">0</b></span>
           <span class="train__stat">평균 타수 <b data-hud="cpm">0</b></span>
@@ -157,10 +165,12 @@ export class FallingWords implements TypingView {
     this.input = ref<HTMLInputElement>('input')
     this.form = ref<HTMLFormElement>('form')
     const hud = (name: string) => this.el.querySelector<HTMLElement>(`[data-hud="${name}"]`)!
-    this.hud = { round: hud('round'), score: hud('score'), left: hud('left'), cpm: hud('cpm') }
+    this.hud = { round: hud('round'), score: hud('score'), left: hud('left'), cpm: hud('cpm'), warn: hud('warn') }
     this.el.querySelector('[data-action="menu"]')!.addEventListener('click', () => ctx.goMenu())
     this.pauseButton = this.el.querySelector<HTMLButtonElement>('[data-action="pause"]')!
     this.pauseButton.addEventListener('click', () => this.pause())
+    this.rankButton = this.el.querySelector<HTMLButtonElement>('[data-action="ranking"]')!
+    this.rankButton.addEventListener('click', () => this.openRanking())
 
     bindKoreanInput(this.input, this.form, {
       submitOnSpace: true,
@@ -248,6 +258,9 @@ export class FallingWords implements TypingView {
   private fail() {
     this.playing = false
     this.pauseButton.hidden = true
+    this.rankButton.hidden = !rankingEnabled()
+    this.el.classList.remove('is-danger')
+    this.hud.warn.hidden = true
     this.input.value = ''
     this.input.disabled = true
     this.ctx.music.stop()
@@ -285,10 +298,8 @@ export class FallingWords implements TypingView {
   private pickWords(count: number) {
     const round = this.round + 1
     if (round === 1) return shuffle(WORDS).slice(0, count)
-    if (round < LATE_FROM_ROUND) {
-      const longer = shuffle(LONGER_WORDS).slice(0, round === 2 ? 1 : 2)
-      return [...longer, ...shuffle(LONG_WORDS).slice(0, count - longer.length)]
-    }
+    // 라운드 2~5: 네 글자 사자성어만
+    if (round < LATE_FROM_ROUND) return shuffle(IDIOMS).slice(0, count)
     // 햄버거 세트 · 립 색상 이름은 2~3개, 한 판에서 겹치지 않게
     const specials = shuffle(SPECIAL_WORDS.filter((w) => !this.usedSpecials.has(w))).slice(0, 2 + Math.floor(Math.random() * 2))
     specials.forEach((w) => this.usedSpecials.add(w))
@@ -300,6 +311,10 @@ export class FallingWords implements TypingView {
   /** 멈춤: 낱말이 그 자리에 멈추고, 계속하기를 누르면 이어서 떨어져요 */
   /** 떨어지는 낱말연습에서만: 플레이 중 Esc → 멈춤, 멈춤 화면에서 Esc → 계속하기 (멈춤 버튼과 같은 동작) */
   onEscape() {
+    if (this.rankPopup) {
+      this.closeRanking()
+      return true
+    }
     if (this.playing) {
       this.pause()
       return true
@@ -329,7 +344,7 @@ export class FallingWords implements TypingView {
         <p class="train__desc">이번 라운드 <b>${this.roundScore}점</b> · 남은 낱말 ${this.queue.length + this.drops.length}개</p>
         <div class="train__buttons">
           <button type="button" class="tbutton tbutton--main" data-action="resume">계속하기</button>
-          <button type="button" class="tbutton" data-action="quit">메뉴로</button>
+          <button type="button" class="tbutton" data-action="quit">홈으로</button>
         </div>
       </div>
     `
@@ -355,7 +370,7 @@ export class FallingWords implements TypingView {
   private startRound() {
     const config = ROUNDS[this.round]
     // 정확히 20%(반올림)를 핑크 낱말로 섞어요
-    const fastCount = Math.round(config.count * FAST_RATIO)
+    const fastCount = Math.round(config.count * config.fast)
     const words = this.pickWords(config.count)
     this.queue = shuffle(shuffle(words).map((word, i) => ({ word, fast: i < fastCount })))
     this.drops = []
@@ -404,6 +419,14 @@ export class FallingWords implements TypingView {
         { label: '최고 타수', value: `${max}타` },
         { label: '최저 타수', value: `${min}타` },
       ],
+      ranking: {
+        reached_round: this.round + 1,
+        cleared: allCleared,
+        total_score: this.totalScore,
+        avg_cpm: avg,
+        max_cpm: max,
+        min_cpm: min,
+      },
     })
   }
 
@@ -490,14 +513,85 @@ export class FallingWords implements TypingView {
     for (const drop of this.drops) drop.el.classList.toggle('is-target', !!typed && drop.word.startsWith(typed))
   }
 
+  // ---------- 게임 전 랭킹 보기 ----------
+
+  /** 인트로 위에 랭킹 TOP 10 팝업을 띄워요. 닫으면 인트로로 돌아가요 */
+  private openRanking() {
+    if (this.rankPopup || this.playing || this.paused) return
+    const popup = document.createElement('div')
+    popup.className = 'train__rankpop'
+    popup.innerHTML = `
+      <section class="trank" aria-label="랭킹">
+        <p class="trank__title">🏆 랭킹 TOP 10</p>
+        <ol class="trank__list"><li class="trank__empty">불러오는 중...</li></ol>
+        <div class="tresult__buttons">
+          <button type="button" class="tbutton" data-action="close-ranking">닫기</button>
+        </div>
+      </section>
+    `
+    this.overlay.querySelector<HTMLElement>('.train__intro')?.setAttribute('hidden', '')
+    this.overlay.append(popup)
+    this.overlay.classList.add('is-on')
+    this.rankPopup = popup
+    const close = popup.querySelector<HTMLButtonElement>('[data-action="close-ranking"]')!
+    close.addEventListener('click', () => this.closeRanking())
+    close.focus({ preventScroll: true })
+    const list = popup.querySelector<HTMLElement>('.trank__list')!
+    fetchTopScores(10)
+      .then((top) => {
+        if (this.rankPopup !== popup) return
+        list.innerHTML = top.length
+          ? top
+              .map(
+                (row, i) => `<li class="trank__row">
+                  <span class="trank__no">${i + 1}</span>
+                  <span class="trank__name">${escapeHtml(row.nickname)}</span>
+                  <span class="trank__round">${row.cleared ? '👑 ' : ''}R${row.reached_round}</span>
+                  <span class="trank__score">${row.total_score}점</span>
+                  <span class="trank__cpm">${row.avg_cpm}타</span>
+                </li>`,
+              )
+              .join('')
+          : '<li class="trank__empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+      })
+      .catch((error: Error) => {
+        if (this.rankPopup === popup) list.innerHTML = `<li class="trank__empty">${escapeHtml(error.message)}</li>`
+      })
+  }
+
+  private closeRanking() {
+    if (!this.rankPopup) return
+    this.rankPopup.remove()
+    this.rankPopup = null
+    const intro = this.overlay.querySelector<HTMLElement>('.train__intro')
+    intro?.removeAttribute('hidden')
+    intro?.querySelector<HTMLButtonElement>('.tbutton--main')?.focus({ preventScroll: true })
+  }
+
   private renderHud() {
     const config = ROUNDS[this.round]
     this.pauseButton.hidden = !this.playing
+    // 게임을 시작하기 전(인트로 · 실패 화면)에만 랭킹 보기
+    this.rankButton.hidden = this.playing || this.paused || !rankingEnabled()
+    if (this.playing) this.closeRanking()
     this.hud.round.textContent = `라운드 ${this.round + 1} / ${ROUNDS.length}`
     this.hud.score.textContent = String(this.roundScore)
     this.hud.left.textContent = String(this.playing ? this.queue.length + this.drops.length : config.count)
     const avg = this.totalTypingSec > 0 ? Math.round(this.totalStrokes / (this.totalTypingSec / 60)) : 0
     this.hud.cpm.textContent = String(avg)
     this.el.classList.toggle('is-goal', this.roundScore >= config.goal)
+    // 위험 표시: 하늘이 핑크로 깜박깜박
+    // - 실패 직전: −2점보다 내려가면 (−5점이면 바로 실패)
+    // - 통과 위험: 모자란 점수 ≥ 남은 낱말 수 (남은 낱말을 거의 다 맞혀야 통과)
+    const left = this.queue.length + this.drops.length
+    const nearFail = this.playing && this.roundScore < DANGER_SCORE
+    const passRisk = this.playing && config.goal - this.roundScore > 0 && config.goal - this.roundScore >= left
+    this.el.classList.toggle('is-danger', nearFail || passRisk)
+    this.hud.warn.hidden = !(nearFail || passRisk)
+    this.hud.warn.textContent = nearFail ? '실패 직전!' : passRisk ? '통과 위험!' : ''
   }
+}
+
+function escapeHtml(text: string) {
+  return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 }

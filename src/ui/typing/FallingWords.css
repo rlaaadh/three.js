@@ -444,3 +444,75 @@
   font-size: 0.7em;
   vertical-align: 0.1em;
 }
+
+/* 게임 전 랭킹 보기: 인트로 자리에 랭킹 팝업 */
+.train__rankbtn[hidden],
+.train__intro[hidden] {
+  display: none;
+}
+
+.train__rankpop {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-height: 100%;
+  padding: 0.8em;
+  box-sizing: border-box;
+}
+
+.train__rankpop .trank {
+  max-height: 100%;
+}
+
+/* 위험: 라운드 점수가 −2점보다 낮으면 하늘이 핑크로 깜박여요 */
+.train.is-danger .train__field {
+  animation: train-danger 0.8s ease-in-out infinite alternate;
+}
+
+.train.is-danger .train__stat--score {
+  background: #ffd9de;
+}
+
+@keyframes train-danger {
+  from {
+    background-color: #fffaf0;
+  }
+  to {
+    background-color: #ffe3ea;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .train.is-danger .train__field {
+    animation: none;
+    background-color: #ffe1e9;
+  }
+}
+
+/* 위험 글자: 점수 칸 앞에 작게 */
+.train__warn {
+  align-self: center;
+  padding: 0.15em 0.7em;
+  border: 2px solid var(--win-line);
+  border-radius: 999px;
+  background: #ffb3c7;
+  font-size: 1.05em;
+  white-space: nowrap;
+  animation: train-warn 0.8s ease-in-out infinite alternate;
+}
+
+.train__warn[hidden] {
+  display: none;
+}
+
+@keyframes train-warn {
+  to {
+    scale: 1.08;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .train__warn {
+    animation: none;
+  }
+}

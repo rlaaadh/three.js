@@ -1,0 +1,190 @@
+
+/* ---------- 떨어지는 낱말연습 결과: 결과 카드 + 랭킹 카드 나란히 ---------- */
+.tresult--rank {
+  grid-template-columns: auto minmax(0, 22em);
+  place-content: center;
+  align-items: center;
+  gap: 1.2em;
+}
+
+.trank {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  max-height: 100%;
+  min-height: 0;
+  padding: 1.1em 1.2em;
+  border: 3px solid var(--win-line);
+  border-radius: 1.6em;
+  background: #fff;
+  box-shadow: 0.4em 0.4em 0 var(--win-shadow);
+}
+
+.trank__title {
+  margin: 0;
+  font-size: 1.5em;
+  text-align: center;
+}
+
+.trank__form {
+  display: flex;
+  gap: 0.4em;
+  padding: 0.25em 0.3em 0.25em 0.9em;
+  border: 2px solid var(--win-line);
+  border-radius: 999px;
+  background: var(--win-body);
+}
+
+.trank__form input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--win-line);
+  font-family: var(--font-read);
+  font-size: 1.1em;
+}
+
+.trank__form.is-done {
+  opacity: 0.55;
+}
+
+.trank__note {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--win-point);
+  font-size: 0.95em;
+  text-align: center;
+}
+
+.trank__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.trank__row {
+  display: grid;
+  grid-template-columns: 1.6em minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.25em 0.7em;
+  border-radius: 999px;
+  background: var(--win-soft);
+  font-size: 1em;
+}
+
+.trank__row.is-mine {
+  background: #ffe08a;
+  box-shadow: 0 0 0 2px var(--win-line);
+}
+
+.trank__row:nth-child(1) .trank__no {
+  color: #e0a100;
+}
+
+.trank__no {
+  text-align: center;
+}
+
+.trank__name {
+  overflow: hidden;
+  font-family: var(--font-read);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trank__score,
+.trank__cpm {
+  color: #c4472f;
+  white-space: nowrap;
+}
+
+.trank__round {
+  white-space: nowrap;
+}
+
+.trank__empty {
+  padding: 0.8em 0;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* 세로 화면: 결과 카드 아래에 랭킹 카드, 넘치면 창 안에서 스크롤 */
+@container (max-aspect-ratio: 1 / 1) {
+  .tresult--rank {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1em;
+    padding: 0.2em 0.5em 0.6em 0.2em;
+    overflow-y: auto;
+  }
+
+  .tresult--rank .tresult__card,
+  .tresult--rank .trank {
+    flex-shrink: 0;
+    width: auto;
+    max-height: none;
+  }
+
+  .tresult--rank .tresult__card {
+    gap: 0.6em;
+    padding: 1.1em 1.2em 1.3em;
+  }
+
+  .tresult--rank .tresult__title {
+    font-size: 1.9em;
+  }
+}
+
+.trank[hidden] {
+  display: none;
+}
+
+/* 다시 하기 아이콘 버튼 */
+.tbutton--icon {
+  display: inline-grid;
+  place-items: center;
+  padding-inline: 1em;
+}
+
+.tbutton--icon svg {
+  display: block;
+}
+
+/* 결과 버튼 셋(다시 하기 · 랭킹 확인 · 홈으로)이 한 줄에 들어가게 */
+.tresult__buttons {
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.tresult__buttons .tbutton {
+  padding: 0.35em 1em;
+  font-size: 1.25em;
+  white-space: nowrap;
+}
+
+.tresult__buttons .tbutton--icon {
+  padding-inline: 0.85em;
+}
+
+/* 랭킹 팝업: 결과 팝업 자리에 같은 크기로 */
+.trank {
+  width: min(100%, 26em);
+}
+
+.tresult__card[hidden] {
+  display: none;
+}
+
+.trank .tresult__buttons {
+  margin-top: 0.4em;
+}
