@@ -203,3 +203,46 @@
 .trank__row {
   flex-shrink: 0;
 }
+
+/* 랭킹 머리글: 각 칸이 무엇인지 (도달 라운드 · 총점 · 평균 타수) */
+.trank__row {
+  grid-template-columns: 2.2em minmax(0, 1fr) 4.4em 3.6em 4.2em;
+}
+
+.trank__row .trank__round,
+.trank__row .trank__score,
+.trank__row .trank__cpm {
+  text-align: right;
+}
+
+.trank__head {
+  flex-shrink: 0;
+  margin-right: 0.3em;
+  padding-block: 0;
+  background: none;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* 칸 너비(em)는 줄과 같게 두고 글자만 작게 */
+.trank__head > span {
+  font-size: 0.78em;
+}
+
+.trank__head .trank__name {
+  font-family: inherit;
+  font-weight: 400;
+}
+
+.trank__head .trank__round,
+.trank__head .trank__score,
+.trank__head .trank__cpm {
+  color: var(--ink-soft);
+}
+
+.trank__hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.78em;
+  text-align: center;
+}

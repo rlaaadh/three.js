@@ -113,3 +113,16 @@ export function rememberNickname(name: string) {
     // 저장소를 못 쓰면 넘어가요
   }
 }
+
+/** 떨어지는 낱말연습 랭킹 목록 위 머리글 (각 숫자가 무엇인지) */
+export const RAIN_RANK_HEAD = `
+  <div class="trank__row trank__head" aria-hidden="true">
+    <span class="trank__no">순위</span>
+    <span class="trank__name">닉네임</span>
+    <span class="trank__round">도달 라운드</span>
+    <span class="trank__score">총점</span>
+    <span class="trank__cpm">평균 타수</span>
+  </div>`
+
+/** 랭킹 목록 아래 작은 설명 */
+export const RAIN_RANK_HINT = '<p class="trank__hint">평균 타수는 게임 전체(모든 라운드) 평균이에요 · 👑 10라운드까지 모두 통과</p>'

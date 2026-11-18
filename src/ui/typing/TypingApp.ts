@@ -3,7 +3,7 @@ import { RetroWindow } from '../RetroWindow'
 import { Practice, type PracticeMode } from './Practice'
 import { FallingWords } from './FallingWords'
 import { LONG_TOPICS } from './content'
-import { NICKNAME_MAX, RANK_LIMIT, fetchTopScores, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage, submitScore, type RainScore } from './ranking'
+import { NICKNAME_MAX, RAIN_RANK_HEAD, RAIN_RANK_HINT, RANK_LIMIT, fetchTopScores, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage, submitScore, type RainScore } from './ranking'
 
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
@@ -371,7 +371,9 @@ const RANK_CARD = `
       <button type="submit" class="tprac__enter">등록</button>
     </form>
     <p class="trank__note" data-ref="rankNote" aria-live="polite"></p>
+    ${RAIN_RANK_HEAD}
     <ol class="trank__list" data-ref="rankList"><li class="trank__empty">불러오는 중...</li></ol>
+    ${RAIN_RANK_HINT}
     <div class="tresult__buttons">
       <button type="button" class="tbutton" data-action="home">홈으로</button>
     </div>

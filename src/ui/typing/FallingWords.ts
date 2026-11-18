@@ -3,7 +3,7 @@ import { bindKoreanInput } from './input'
 import { strokesOf } from './hangul'
 import { IDIOMS, LONGER_WORDS, LONG_WORDS, SPECIAL_WORDS, WORDS, shuffle } from './content'
 import type { TypingView, ViewContext } from './TypingApp'
-import { RANK_LIMIT, fetchTopScores, rankingEnabled } from './ranking'
+import { RAIN_RANK_HEAD, RAIN_RANK_HINT, RANK_LIMIT, fetchTopScores, rankingEnabled } from './ranking'
 
 /**
  * 라운드 설정: 떨어질 낱말 수 · 바닥까지 걸리는 시간(초) · 다음 낱말까지 간격(초) · 통과 점수.
@@ -536,7 +536,9 @@ export class FallingWords implements TypingView {
     popup.innerHTML = `
       <section class="trank" aria-label="랭킹">
         <p class="trank__title">🏆 랭킹 TOP ${RANK_LIMIT}</p>
+        ${RAIN_RANK_HEAD}
         <ol class="trank__list"><li class="trank__empty">불러오는 중...</li></ol>
+        ${RAIN_RANK_HINT}
         <div class="tresult__buttons">
           <button type="button" class="tbutton" data-action="close-ranking">닫기</button>
         </div>
