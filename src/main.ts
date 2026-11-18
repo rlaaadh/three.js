@@ -14,6 +14,7 @@ import { CameraControls } from './interaction/CameraControls'
 import { TypingApp } from './ui/typing/TypingApp'
 import { DishGame } from './ui/DishGame'
 import { ChocoGame } from './ui/ChocoGame'
+import { SleepGame } from './ui/SleepGame'
 import { Chiptune } from './ui/Chiptune'
 import { isTouchDevice } from './utils/device'
 import { loadHandFont } from './utils/fonts'
@@ -103,15 +104,17 @@ loader.start([sceneReady]).then(() => {
   intro.t = 0
 })
 
-// ---------- 앱 창: 타자 연습 (책상) · 설거지 게임 (싱크대) · 얼초 만들기 (냉장고) ----------
+// ---------- 앱 창: 타자 연습 (책상) · 설거지 게임 (싱크대) · 얼초 만들기 (냉장고) · 완벽한 잠을 사수하라 (침대) ----------
 // 배경음악 · 효과음은 하나를 같이 써요 (♪로 끄면 둘 다 꺼져요)
 const music = new Chiptune()
 const typing = new TypingApp(music)
 const dishes = new DishGame(music)
 const choco = new ChocoGame(music)
+const sleep = new SleepGame(music)
 let zoomBeforeApp = 1
-/** 지금 창을 띄운 동작 (sit: 타자 연습, wash: 설거지, chill: 얼초 만들기) */
-let activity: 'sit' | 'wash' | 'chill' | null = null
+/** 지금 창을 띄운 동작 (sit: 타자 연습, wash: 설거지, chill: 얼초 만들기, lie: 완벽한 잠을 사수하라) */
+type Activity = 'sit' | 'wash' | 'chill' | 'lie'
+let activity: Activity | null = null
 let openTimer = 0
 /** 3D 아이맥 화면: 꺼져 있다가 책상에 앉으면 환하게 켜져요 */
 const SCREEN_OFF = new THREE.Color('#4a4d55')
@@ -120,12 +123,12 @@ const SCREEN_ON = new THREE.Color('#ffffff')
 function startActivity(action: string) {
   // 모바일은 화면 키보드로 치기 불편해서 책상은 예전처럼 앉아서 공부하는 척만 해요 (설거지 · 얼초는 터치로 할 수 있어요)
   if (action === 'sit' && isTouchDevice()) return
-  if (action !== 'sit' && action !== 'wash' && action !== 'chill') return
+  if (action !== 'sit' && action !== 'wash' && action !== 'chill' && action !== 'lie') return
   activity = action
   zoomBeforeApp = stage.zoomTarget
   stage.zoomTarget = Math.max(stage.zoomTarget, 1.8)
-  // 모니터가 먼저 켜지거나 싱크대 · 냉장고 앞에 선 뒤, 창이 TV처럼 켜져요
-  const app = action === 'sit' ? typing : action === 'wash' ? dishes : choco
+  // 모니터가 먼저 켜지거나 싱크대 · 냉장고 앞에 서거나 침대에 누운 뒤, 창이 TV처럼 켜져요
+  const app = { sit: typing, wash: dishes, chill: choco, lie: sleep }[action]
   openTimer = window.setTimeout(() => app.open(), 450)
 }
 
@@ -137,6 +140,7 @@ function endActivity() {
   typing.close()
   dishes.close()
   choco.close()
+  sleep.close()
 }
 
 function onAppClose() {
@@ -153,6 +157,9 @@ dishes.onClose = onAppClose
 choco.onWork = () => character?.knead()
 choco.onGood = () => character?.smile(0.8)
 choco.onClose = onAppClose
+// 꿈속에서 양 · 별을 모으면 자면서 방긋
+sleep.onCollect = () => character?.smile(0.8)
+sleep.onClose = onAppClose
 
 // ---------- 줌 버튼 ----------
 document.getElementById('zoom-in')!.addEventListener('click', () => stage.zoomBy(1.25))
@@ -160,7 +167,7 @@ document.getElementById('zoom-out')!.addEventListener('click', () => stage.zoomB
 
 // 개발 중에만 콘솔에서 상태를 확인할 수 있게 열어둬요 (예: __app.stage.camera.zoom)
 if (import.meta.env.DEV) {
-  Object.assign(window, { __app: { stage, room, intro, choco, get character() { return character }, get pointer() { return pointer } } })
+  Object.assign(window, { __app: { stage, room, intro, choco, sleep, get character() { return character }, get pointer() { return pointer } } })
 }
 
 // ---------- 렌더 루프 ----------
@@ -174,6 +181,7 @@ stage.renderer.setAnimationLoop((time) => {
   typing.update(dt)
   dishes.update(dt)
   choco.update(dt)
+  sleep.update(dt)
   room.monitorScreen.color.lerp(activity === 'sit' ? SCREEN_ON : SCREEN_OFF, 1 - Math.exp(-dt * 6))
   footprints.update(dt)
   stage.update(dt)

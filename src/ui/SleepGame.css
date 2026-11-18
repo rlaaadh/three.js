@@ -1,0 +1,130 @@
+/* ---------- 꿈나라.app: 완벽한 잠을 사수하라! ---------- */
+/* 위 HUD · 인트로 · 멈춤 · 깼다! 팝업은 떨어지는 낱말연습(.train) 조각을 그대로 써요 */
+
+.sleep {
+  gap: 0.55em;
+}
+
+.sleep__clock {
+  min-width: 5.2em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 베개(목숨) 아이콘: 잃은 베개는 흐리게 */
+.sleep__pillows {
+  display: inline-flex;
+  gap: 0.15em;
+  vertical-align: -0.15em;
+}
+
+.sleep__pillows i {
+  display: block;
+  width: 1.45em;
+  transition:
+    opacity 0.2s ease,
+    scale 0.2s ease;
+}
+
+.sleep__pillows i svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sleep__pillows i.is-lost {
+  opacity: 0.25;
+  scale: 0.8;
+}
+
+/* 밤 11시 → 아침 7시 진행 막대 */
+.sleep__night {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  width: 100%;
+  font-size: 1.05em;
+}
+
+.sleep__bar {
+  flex: 1;
+  height: 0.75em;
+  overflow: hidden;
+  border: 2px solid var(--win-line);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.sleep__bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b8b3ea, #ffd9e6 70%, #ffe08a);
+}
+
+/* 꿈속 화면: 캔버스가 칸을 꽉 채워요 (누르면 점프) */
+.sleep__field {
+  background: #8f8ad8;
+}
+
+.sleep__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 제목: 떨어지는 낱말연습 라운드 제목과 같은 버터색 글씨, 두 줄이라 조금 작게 */
+.train__title.sleep__title {
+  font-size: 4.1em;
+}
+
+.sleep .train__overlay {
+  background: rgba(255, 250, 240, 0.78);
+}
+
+.sleep .train__intro {
+  max-height: 100%;
+  padding: 0.6em;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.train__chip.sleep__chip--sheep {
+  background: #fffaf0;
+}
+
+.train__chip.sleep__chip--star {
+  margin-left: 0.4em;
+  background: #fff4c7;
+}
+
+.tresult__line small {
+  color: var(--ink-soft);
+  font-size: 0.75em;
+}
+
+/* 베개가 하나 남으면 위험: 하늘이 핑크로 깜박 (낱말연습 위험 표시와 같아요) */
+.sleep.is-danger .train__field {
+  animation: none;
+}
+
+.sleep.is-danger .sleep__pillows i:first-child {
+  animation: train-warn 0.6s ease-in-out infinite alternate;
+}
+
+@container (max-aspect-ratio: 1 / 1) {
+  .train__title.sleep__title {
+    font-size: 2.9em;
+  }
+
+  .sleep .train__top {
+    flex-wrap: wrap;
+  }
+}

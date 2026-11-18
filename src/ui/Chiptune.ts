@@ -76,7 +76,7 @@ export class Chiptune {
     this.stopLoop()
   }
 
-  sfx(kind: 'hit' | 'miss' | 'clear' | 'open' | 'click' | 'scrub' | 'drip' | 'freeze') {
+  sfx(kind: 'hit' | 'miss' | 'clear' | 'open' | 'click' | 'scrub' | 'drip' | 'freeze' | 'jump' | 'ring' | 'buzz' | 'ding') {
     const ctx = this.ensure()
     if (!ctx) return
     void ctx.resume()
@@ -111,12 +111,44 @@ export class Chiptune {
         // 꽁꽁 얼면 반짝반짝
         ;[88, 91, 95, 100].forEach((n, i) => this.tone(t + i * 0.06, freq(n), 0.12, 'triangle', 0.05))
         break
+      case 'ring':
+        // 따르릉: 높은 종소리 두 개를 아주 빠르게 번갈아 (알람시계)
+        for (let i = 0; i < 18; i++) this.tone(t + i * 0.032, i % 2 ? 1568 : 1319, 0.03, 'square', 0.035)
+        break
+      case 'buzz':
+        this.buzz(t)
+        break
+      case 'ding':
+        // 띠링: 휴대폰 알림
+        this.tone(t, 1175, 0.12, 'sine', 0.12)
+        this.tone(t + 0.11, 1568, 0.2, 'sine', 0.1)
+        break
+      case 'jump':
+        // 꿈속 점프: 퐁 하고 올라가는 소리
+        this.tone(t, 380, 0.12, 'sine', 0.1, 820)
+        break
       case 'click':
         // 버튼을 누르면 톡: 짧게 튀어 오르는 소리
         this.tone(t, 620, 0.06, 'sine', 0.12, 980)
         this.tone(t, 1240, 0.04, 'triangle', 0.03)
         break
     }
+  }
+
+  /**
+   * 양 · 별을 연달아 먹을 때: 먹을수록 음이 한 칸씩 올라가요 (도레미솔라 → 한 옥타브 위 ...)
+   * @param combo 연속으로 먹은 수 (1부터)
+   */
+  coin(combo: number) {
+    const ctx = this.ensure()
+    if (!ctx) return
+    void ctx.resume()
+    const t = ctx.currentTime
+    const scale = [0, 2, 4, 7, 9]
+    const step = Math.min(combo - 1, 14)
+    const note = 76 + Math.floor(step / scale.length) * 12 + scale[step % scale.length]
+    this.tone(t, freq(note), 0.07, 'square', 0.05)
+    this.tone(t + 0.05, freq(note + 7), 0.09, 'sine', 0.07)
   }
 
   // ---------- 내부 ----------
@@ -195,6 +227,34 @@ export class Chiptune {
     osc.start(at)
     osc.stop(at + length + 0.02)
     return osc
+  }
+
+  /** 위잉~: 모기 날갯소리 (톱니파에 빠른 떨림, 가까이 왔다 멀어지듯) */
+  private buzz(at: number) {
+    const ctx = this.ctx!
+    const osc = ctx.createOscillator()
+    const lfo = ctx.createOscillator()
+    const lfoGain = ctx.createGain()
+    const filter = ctx.createBiquadFilter()
+    const gain = ctx.createGain()
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(560, at)
+    osc.frequency.linearRampToValueAtTime(640, at + 0.3)
+    osc.frequency.linearRampToValueAtTime(520, at + 0.65)
+    lfo.frequency.value = 38
+    lfoGain.gain.value = 30
+    lfo.connect(lfoGain).connect(osc.frequency)
+    filter.type = 'bandpass'
+    filter.frequency.value = 1200
+    filter.Q.value = 1.2
+    gain.gain.setValueAtTime(0.0001, at)
+    gain.gain.exponentialRampToValueAtTime(0.09, at + 0.12)
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.65)
+    osc.connect(filter).connect(gain).connect(this.master!)
+    osc.start(at)
+    lfo.start(at)
+    osc.stop(at + 0.7)
+    lfo.stop(at + 0.7)
   }
 
   private hat(at: number) {
