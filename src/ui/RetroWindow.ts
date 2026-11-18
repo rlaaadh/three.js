@@ -12,6 +12,8 @@ export class RetroWindow {
   readonly body: HTMLElement
   /** ✕ · Esc로 닫을 때 */
   onClose: (() => void) | null = null
+  /** Esc를 창 안에서 먼저 쓰고 싶을 때: true를 돌려주면 창을 닫지 않아요 */
+  onEscape: (() => boolean) | null = null
 
   private readonly root = document.createElement('div')
   private readonly soundButton: HTMLButtonElement
@@ -51,7 +53,12 @@ export class RetroWindow {
       if (button && button.type !== 'submit' && !button.hasAttribute('data-silent')) this.music.sfx('click')
     })
     window.addEventListener('keydown', (e) => {
-      if (this.opened && e.key === 'Escape') this.close()
+      if (!this.opened || e.key !== 'Escape') return
+      if (this.onEscape?.()) {
+        e.preventDefault()
+        return
+      }
+      this.close()
     })
   }
 

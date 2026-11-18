@@ -102,6 +102,8 @@ export class FallingWords implements TypingView {
 
   private round = 0
   private playing = false
+  /** 멈춤 화면이 떠 있는지 */
+  private paused = false
   /** 이번 라운드에 아직 안 떨어진 낱말들 */
   private queue: { word: string; fast: boolean }[] = []
   private drops: Drop[] = []
@@ -131,7 +133,7 @@ export class FallingWords implements TypingView {
       <div class="train__top">
         <button type="button" class="tback" data-action="menu">← 메뉴</button>
         <span class="tbadge" data-hud="round"></span>
-        <button type="button" class="tback train__pause" data-action="pause" hidden>⏸ 멈춤</button>
+        <button type="button" class="tback train__pause" data-action="pause" hidden>⏸ 멈춤 <small>Esc</small></button>
         <div class="train__stats">
           <span class="train__stat train__stat--score">이번 라운드 <b data-hud="score">0</b>점</span>
           <span class="train__stat">남은 낱말 <b data-hud="left">0</b></span>
@@ -296,9 +298,23 @@ export class FallingWords implements TypingView {
   }
 
   /** 멈춤: 낱말이 그 자리에 멈추고, 계속하기를 누르면 이어서 떨어져요 */
+  /** 떨어지는 낱말연습에서만: 플레이 중 Esc → 멈춤, 멈춤 화면에서 Esc → 계속하기 (멈춤 버튼과 같은 동작) */
+  onEscape() {
+    if (this.playing) {
+      this.pause()
+      return true
+    }
+    if (this.paused) {
+      this.resume()
+      return true
+    }
+    return false
+  }
+
   private pause() {
     if (!this.playing) return
     this.playing = false
+    this.paused = true
     // 멈춘 동안은 타수 시간에 넣지 않도록 치던 낱말은 지워요
     this.typingSince = 0
     this.input.value = ''
@@ -324,6 +340,8 @@ export class FallingWords implements TypingView {
   }
 
   private resume() {
+    if (!this.paused) return
+    this.paused = false
     this.overlay.classList.remove('is-on')
     this.overlay.replaceChildren()
     this.sky.classList.remove('is-paused')

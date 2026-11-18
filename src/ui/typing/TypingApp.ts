@@ -10,6 +10,8 @@ export interface TypingView {
   update?(dt: number): void
   focus?(): void
   destroy?(): void
+  /** Esc를 눌렀을 때 이 화면이 쓰면 true (창을 닫지 않아요) */
+  onEscape?(): boolean
 }
 
 /** 메뉴에서 고르는 모드: 연습 화면 셋 + 떨어지는 낱말연습 */
@@ -62,6 +64,7 @@ export class TypingApp {
   constructor(private readonly music: Chiptune) {
     this.win = new RetroWindow(music, '타자연습.app', '타자 연습')
     this.body = this.win.body
+    this.win.onEscape = () => this.view?.onEscape?.() ?? false
     this.win.onClose = () => {
       this.setView(null)
       this.onClose?.()
