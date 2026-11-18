@@ -248,6 +248,26 @@
 }
 
 /* 라운드 인트로 */
+/* 멈춤 버튼 · 멈춘 동안 낱말은 흐리게 (미리 보고 치지 못하게) */
+.train__pause[hidden] {
+  display: none;
+}
+
+.train__sky.is-paused .tdrop {
+  filter: blur(0.25em);
+  opacity: 0.5;
+}
+
+.train__title.train__title--pause {
+  color: #dcebff;
+  font-size: 4em;
+}
+
+.train__buttons {
+  display: flex;
+  gap: 0.8em;
+}
+
 .train__overlay {
   position: absolute;
   inset: 0;

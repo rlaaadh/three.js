@@ -120,6 +120,7 @@ export class FallingWords implements TypingView {
 
   private readonly sky: HTMLElement
   private readonly overlay: HTMLElement
+  private readonly pauseButton: HTMLButtonElement
   private readonly input: HTMLInputElement
   private readonly form: HTMLFormElement
   private readonly hud: Record<'round' | 'score' | 'left' | 'cpm', HTMLElement>
@@ -130,6 +131,7 @@ export class FallingWords implements TypingView {
       <div class="train__top">
         <button type="button" class="tback" data-action="menu">← 메뉴</button>
         <span class="tbadge" data-hud="round"></span>
+        <button type="button" class="tback train__pause" data-action="pause" hidden>⏸ 멈춤</button>
         <div class="train__stats">
           <span class="train__stat train__stat--score">이번 라운드 <b data-hud="score">0</b>점</span>
           <span class="train__stat">남은 낱말 <b data-hud="left">0</b></span>
@@ -155,6 +157,8 @@ export class FallingWords implements TypingView {
     const hud = (name: string) => this.el.querySelector<HTMLElement>(`[data-hud="${name}"]`)!
     this.hud = { round: hud('round'), score: hud('score'), left: hud('left'), cpm: hud('cpm') }
     this.el.querySelector('[data-action="menu"]')!.addEventListener('click', () => ctx.goMenu())
+    this.pauseButton = this.el.querySelector<HTMLButtonElement>('[data-action="pause"]')!
+    this.pauseButton.addEventListener('click', () => this.pause())
 
     bindKoreanInput(this.input, this.form, {
       submitOnSpace: true,
@@ -241,6 +245,7 @@ export class FallingWords implements TypingView {
   /** 라운드 점수가 −5점: 실패 화면 → 다시 시작하기를 누르면 1라운드부터 */
   private fail() {
     this.playing = false
+    this.pauseButton.hidden = true
     this.input.value = ''
     this.input.disabled = true
     this.ctx.music.stop()
@@ -288,6 +293,45 @@ export class FallingWords implements TypingView {
     const longer = shuffle(LONGER_WORDS).slice(0, Math.min(Math.round(count * LONGER_RATIO_LATE), count - specials.length))
     const rest = shuffle(LONG_WORDS).slice(0, count - specials.length - longer.length)
     return [...specials, ...longer, ...rest]
+  }
+
+  /** 멈춤: 낱말이 그 자리에 멈추고, 계속하기를 누르면 이어서 떨어져요 */
+  private pause() {
+    if (!this.playing) return
+    this.playing = false
+    // 멈춘 동안은 타수 시간에 넣지 않도록 치던 낱말은 지워요
+    this.typingSince = 0
+    this.input.value = ''
+    this.input.disabled = true
+    this.highlight()
+    this.renderHud()
+    this.sky.classList.add('is-paused')
+    this.ctx.music.stop()
+    this.overlay.innerHTML = `
+      <div class="train__intro">
+        <p class="train__title train__title--pause">잠깐 멈춤</p>
+        <p class="train__desc">이번 라운드 <b>${this.roundScore}점</b> · 남은 낱말 ${this.queue.length + this.drops.length}개</p>
+        <div class="train__buttons">
+          <button type="button" class="tbutton tbutton--main" data-action="resume">계속하기</button>
+          <button type="button" class="tbutton" data-action="quit">메뉴로</button>
+        </div>
+      </div>
+    `
+    this.overlay.classList.add('is-on')
+    this.overlay.querySelector('[data-action="resume"]')!.addEventListener('click', () => this.resume())
+    this.overlay.querySelector('[data-action="quit"]')!.addEventListener('click', () => this.ctx.goMenu())
+    this.overlay.querySelector<HTMLButtonElement>('[data-action="resume"]')!.focus({ preventScroll: true })
+  }
+
+  private resume() {
+    this.overlay.classList.remove('is-on')
+    this.overlay.replaceChildren()
+    this.sky.classList.remove('is-paused')
+    this.input.disabled = false
+    this.ctx.music.start()
+    this.playing = true
+    this.renderHud()
+    this.input.focus({ preventScroll: true })
   }
 
   private startRound() {
@@ -430,6 +474,7 @@ export class FallingWords implements TypingView {
 
   private renderHud() {
     const config = ROUNDS[this.round]
+    this.pauseButton.hidden = !this.playing
     this.hud.round.textContent = `라운드 ${this.round + 1} / ${ROUNDS.length}`
     this.hud.score.textContent = String(this.roundScore)
     this.hud.left.textContent = String(this.playing ? this.queue.length + this.drops.length : config.count)
