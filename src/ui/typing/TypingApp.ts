@@ -1,6 +1,7 @@
 import type { Chiptune } from '../Chiptune'
 import { RetroWindow } from '../RetroWindow'
 import { Practice, type PracticeMode } from './Practice'
+import { FallingWords } from './FallingWords'
 import { LONG_TOPICS } from './content'
 
 /** 창 안에 들어가는 화면 하나 (메뉴 · 연습 · 결과) */
@@ -11,8 +12,11 @@ export interface TypingView {
   destroy?(): void
 }
 
+/** 메뉴에서 고르는 모드: 연습 화면 셋 + 떨어지는 낱말연습 */
+export type TypingMode = PracticeMode | 'rain'
+
 export interface TypingResultInfo {
-  mode: PracticeMode
+  mode: TypingMode
   /** 긴글 연습 주제 (다시 하기 때 같은 주제로) */
   topicId?: string
   title: string
@@ -31,15 +35,16 @@ export interface ViewContext {
 
 const BEST_KEY = 'tiny-room-typing-best'
 
-const MODES: { mode: PracticeMode; icon: string; title: string; desc: string }[] = [
+const MODES: { mode: TypingMode; icon: string; title: string; desc: string }[] = [
   { mode: 'word', icon: '가', title: '낱말 연습', desc: '짧은 낱말부터 차근차근' },
+  { mode: 'rain', icon: '☂', title: '떨어지는 낱말연습', desc: '하늘에서 떨어지는 낱말을 받아요' },
   { mode: 'sentence', icon: '✎', title: '문장 연습', desc: '속담을 한 문장씩' },
   { mode: 'long', icon: '¶', title: '긴글 연습', desc: '가사 · 잰말놀이 · 일기 · 명작' },
 ]
 
 /**
  * 책상에 앉으면 옛날 TV처럼 켜지는 레트로 창 (타자연습.app).
- * 처음엔 메뉴(책상 그림 + 모드 고르기) → 낱말 연습 · 문장 연습 · 긴글 연습(주제 고르기) → 결과.
+ * 처음엔 메뉴(책상 그림 + 모드 고르기) → 낱말 연습 · 떨어지는 낱말연습 · 문장 연습 · 긴글 연습(주제 고르기) → 결과.
  */
 export class TypingApp {
   /** 글자를 칠 때마다 */
@@ -121,19 +126,19 @@ export class TypingApp {
       </div>
     `
     el.querySelectorAll<HTMLElement>('[data-mode]').forEach((button) =>
-      button.addEventListener('click', () => this.startMode(button.dataset.mode as PracticeMode)),
+      button.addEventListener('click', () => this.startMode(button.dataset.mode as TypingMode)),
     )
     this.setView({ el, focus: () => el.querySelector<HTMLButtonElement>('[data-mode]')?.focus({ preventScroll: true }) })
   }
 
-  private startMode(mode: PracticeMode, topicId?: string) {
+  private startMode(mode: TypingMode, topicId?: string) {
     if (mode === 'long' && !topicId) {
       this.showTopics()
       return
     }
     // 버튼 클릭 안에서 소리를 켜야 브라우저가 막지 않아요
     this.music.start()
-    this.setView(new Practice(mode, this.ctx, topicId))
+    this.setView(mode === 'rain' ? new FallingWords(this.ctx) : new Practice(mode, this.ctx, topicId))
   }
 
   /** 긴글 연습 주제 고르기: 가사 · 잰말놀이 · 일기 · 명작 */

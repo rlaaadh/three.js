@@ -1,0 +1,363 @@
+
+/* ---------- 떨어지는 낱말연습: 고양이 귀 방울에 담긴 낱말이 하늘에서 떨어져요 ---------- */
+.tmode--rain .tmode__icon {
+  background: #dcebff;
+}
+
+.train {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8em;
+  min-height: 0;
+}
+
+.train__top {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  width: 100%;
+}
+
+.train__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4em;
+  margin-left: auto;
+}
+
+.train__stat {
+  padding: 0.15em 0.8em;
+  border: 2px solid var(--win-line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 1.05em;
+  white-space: nowrap;
+}
+
+.train__stat b {
+  font-weight: 400;
+  color: #c4472f;
+}
+
+/* 통과 점수를 넘기면 점수 칸이 민트색 */
+.train.is-goal .train__stat--score {
+  background: #d8f0e4;
+}
+
+.train__field {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 2.5px solid var(--win-line);
+  border-radius: 1.4em;
+  /* 앱 창처럼 아이보리 모눈종이 */
+  background-color: #fffaf0;
+  background-image:
+    linear-gradient(rgba(224, 201, 171, 0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(224, 201, 171, 0.45) 1px, transparent 1px);
+  background-size: 1.6em 1.6em;
+  box-shadow: 0.3em 0.3em 0 var(--win-soft);
+}
+
+/* 하늘 꾸미기: 구름 · 별 · 방울이 천천히 둥실둥실 (낱말 뒤에) */
+.train__decor {
+  position: absolute;
+  inset: 0 0 1.6em 0;
+  pointer-events: none;
+}
+
+.train__deco {
+  position: absolute;
+  opacity: 0.85;
+  animation: tart-bob 3.2s ease-in-out infinite alternate;
+}
+
+.train__deco--late {
+  animation-delay: -1.6s;
+}
+
+.train__deco svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 낱말이 떨어지는 하늘: 바닥(잔디) 바로 위까지 */
+.train__sky {
+  position: absolute;
+  inset: 0 0 1.6em 0;
+}
+
+.train__ground {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1.6em;
+  border-top: 2.5px solid var(--win-line);
+  background:
+    radial-gradient(circle at 0.6em 0, #a8dcc8 0.6em, transparent 0.65em) 0 0 / 1.2em 1em repeat-x,
+    #d8f0e4;
+}
+
+/* 낱말 상자: 노란 둥근 네모 + 창과 같은 갈색 테두리 + 세모 고양이 귀 */
+.tdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding-top: 0.95em;
+  will-change: transform;
+}
+
+.tdrop__ear {
+  position: absolute;
+  top: 0;
+  width: 1.7em;
+  height: 1.36em;
+  overflow: visible;
+}
+
+.tdrop__ear:first-child {
+  left: 0.25em;
+}
+
+/* 오른쪽 귀는 왼쪽 귀를 거울처럼 뒤집어요 */
+.tdrop__ear:nth-child(2) {
+  right: 0.25em;
+  transform: scaleX(-1);
+}
+
+.tdrop__box {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding: 0.4em 0.85em;
+  /* 테두리는 고양이 귀 선(2px)과 같은 두께 */
+  border: 2px solid var(--win-line);
+  border-radius: 0.95em;
+  background: #ffe08a;
+  color: var(--win-line);
+  font-family: var(--font-read);
+  font-size: 1.25em;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    scale 0.15s ease;
+}
+
+/* 안쪽에 조금 작은 밝은 노란 둥근 네모 */
+.tdrop__box::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0.2em;
+  border-radius: 0.75em;
+  background: #fff4c7;
+  transition: background-color 0.15s ease;
+}
+
+/* 핑크 낱말: 두 배 빨리 떨어져요 */
+.tdrop--fast .tdrop__box {
+  background: #ffb3c7;
+}
+
+.tdrop--fast .tdrop__box::before {
+  background: #ffe1e9;
+}
+
+.tdrop--fast .tdrop__ear path:first-child {
+  fill: #ffb3c7;
+}
+
+.tdrop--fast .tdrop__ear path:last-child {
+  fill: #ffe1e9;
+}
+
+.tdrop.tdrop--fast.is-target .tdrop__box::before {
+  background: #fff1f5;
+}
+
+/* 치고 있는 글자로 시작하는 낱말 */
+.tdrop.is-target .tdrop__box::before {
+  background: #fffbe8;
+}
+
+.tdrop.is-target .tdrop__box {
+  scale: 1.08;
+}
+
+.tdrop.is-hit .tdrop__box,
+.tdrop.is-hit .tdrop__ear {
+  animation: tdrop-pop 0.35s ease-out forwards;
+}
+
+.tdrop.is-miss .tdrop__box,
+.tdrop.is-miss .tdrop__ear {
+  animation: tdrop-squash 0.45s ease-out forwards;
+}
+
+.tdrop.is-miss .tdrop__box {
+  background: #ffd9de;
+}
+
+.tdrop__point {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 0;
+  translate: -50% 0;
+  font-size: 1.5em;
+  color: #2f8a63;
+  -webkit-text-stroke: 0;
+  animation: tdrop-point 0.6s ease-out forwards;
+}
+
+.tdrop.is-miss .tdrop__point {
+  color: var(--win-point);
+}
+
+@keyframes tdrop-pop {
+  to {
+    scale: 1.35;
+    opacity: 0;
+  }
+}
+
+@keyframes tdrop-squash {
+  to {
+    scale: 1.2 0.5;
+    opacity: 0;
+  }
+}
+
+@keyframes tdrop-point {
+  from {
+    opacity: 0;
+    translate: -50% 0.4em;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    translate: -50% -1.4em;
+  }
+}
+
+/* 라운드 인트로 */
+.train__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: none;
+  place-items: center;
+  background: rgba(255, 250, 240, 0.72);
+}
+
+.train__overlay.is-on {
+  display: grid;
+}
+
+.train__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+  text-align: center;
+}
+
+.train__intro p {
+  margin: 0;
+}
+
+.train__cleared {
+  font-size: 1.4em;
+}
+
+.train__cleared mark {
+  padding: 0 0.15em;
+  background: linear-gradient(transparent 55%, #ffe08a 55%);
+  color: inherit;
+}
+
+.train__title {
+  color: #ffe08a;
+  font-size: 5.4em;
+  line-height: 1.05;
+  -webkit-text-stroke: 0.06em var(--win-line);
+  paint-order: stroke fill;
+  text-shadow: 0.06em 0.08em 0 var(--win-line);
+  animation: train-title 0.7s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+.train__title--fail {
+  color: #ffc4b8;
+}
+
+.train__desc {
+  font-size: 1.45em;
+}
+
+.train__desc b {
+  font-weight: 400;
+  color: #c4472f;
+}
+
+.train__rule {
+  margin-bottom: 0.6em !important;
+  color: var(--ink-soft);
+  font-size: 1.1em;
+}
+
+@keyframes train-title {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+.train__form.is-wrong {
+  animation: train-shake 0.3s ease;
+}
+
+@keyframes train-shake {
+  25% {
+    translate: -0.4em 0;
+  }
+  75% {
+    translate: 0.4em 0;
+  }
+}
+
+@container (max-aspect-ratio: 1 / 1) {
+  /* 모드 카드가 넷이라 세로 화면에서는 조금 납작하게 (책상 그림 자리를 남겨요) */
+  .tmenu__modes {
+    gap: 0.55em;
+  }
+
+  .tmode {
+    padding: 0.45em 0.9em;
+  }
+
+  .tmode__icon {
+    width: 2em;
+    height: 2em;
+  }
+
+  .train__top {
+    flex-wrap: wrap;
+  }
+
+  .train__stats {
+    justify-content: flex-start;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .train__title {
+    font-size: 4.2em;
+  }
+}
