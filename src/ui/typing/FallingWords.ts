@@ -1,7 +1,7 @@
 import './FallingWords.css'
 import { bindKoreanInput } from './input'
 import { strokesOf } from './hangul'
-import { LONG_WORDS, WORDS, shuffle } from './content'
+import { LONGER_WORDS, LONG_WORDS, SPECIAL_WORDS, WORDS, shuffle } from './content'
 import type { TypingView, ViewContext } from './TypingApp'
 
 /**
@@ -14,6 +14,11 @@ const ROUNDS = [
   { count: 14, fall: 7, gap: 1.6, goal: 10 },
   { count: 16, fall: 6.2, gap: 1.35, goal: 12 },
   { count: 18, fall: 5.5, gap: 1.1, goal: 14 },
+  { count: 20, fall: 5, gap: 1, goal: 16 },
+  { count: 22, fall: 4.6, gap: 0.92, goal: 18 },
+  { count: 24, fall: 4.2, gap: 0.85, goal: 20 },
+  { count: 26, fall: 3.9, gap: 0.78, goal: 22 },
+  { count: 28, fall: 3.6, gap: 0.72, goal: 24 },
 ]
 
 /** 낱말 하나 맞히면 +1, 바닥에 떨어지면 -1 */
@@ -29,6 +34,15 @@ const MIN_TYPING_SEC = 0.25
 /** 라운드 낱말 중 이만큼은 핑크 낱말: 두 배 빨리 떨어져요 (난이도) */
 const FAST_RATIO = 0.2
 const FAST_SPEED = 2
+/**
+ * 라운드별 낱말 구성
+ * - 라운드 1: 짧은 낱말
+ * - 라운드 2: 사자성어 · 네 글자 낱말 + 다섯 글자 이상 1개
+ * - 라운드 3~5: 사자성어 · 네 글자 낱말 + 다섯 글자 이상 2개
+ * - 라운드 6~10: 대부분(80%) 다섯 글자 이상 + 햄버거 세트 · 립 색상 이름 2~3개 + 나머지 사자성어 · 네 글자 낱말
+ */
+const LONGER_RATIO_LATE = 0.8
+const LATE_FROM_ROUND = 6
 
 const escape = (text: string) => text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`)
 
@@ -93,6 +107,8 @@ export class FallingWords implements TypingView {
   private drops: Drop[] = []
   private spawnTimer = 0
   private roundScore = 0
+  /** 이번 판에 이미 나온 긴 이름 */
+  private readonly usedSpecials = new Set<string>()
   private totalScore = 0
 
   /** 낱말마다 타수 (맞힌 낱말만) */
@@ -248,6 +264,7 @@ export class FallingWords implements TypingView {
     this.roundScore = 0
     this.totalScore = 0
     this.speeds.length = 0
+    this.usedSpecials.clear()
     this.totalStrokes = 0
     this.totalTypingSec = 0
     this.queue = []
@@ -257,14 +274,28 @@ export class FallingWords implements TypingView {
     this.showIntro()
   }
 
+  /** 라운드에 맞춰 낱말을 골라요 (위 '라운드별 낱말 구성' 참고) */
+  private pickWords(count: number) {
+    const round = this.round + 1
+    if (round === 1) return shuffle(WORDS).slice(0, count)
+    if (round < LATE_FROM_ROUND) {
+      const longer = shuffle(LONGER_WORDS).slice(0, round === 2 ? 1 : 2)
+      return [...longer, ...shuffle(LONG_WORDS).slice(0, count - longer.length)]
+    }
+    // 햄버거 세트 · 립 색상 이름은 2~3개, 한 판에서 겹치지 않게
+    const specials = shuffle(SPECIAL_WORDS.filter((w) => !this.usedSpecials.has(w))).slice(0, 2 + Math.floor(Math.random() * 2))
+    specials.forEach((w) => this.usedSpecials.add(w))
+    const longer = shuffle(LONGER_WORDS).slice(0, Math.min(Math.round(count * LONGER_RATIO_LATE), count - specials.length))
+    const rest = shuffle(LONG_WORDS).slice(0, count - specials.length - longer.length)
+    return [...specials, ...longer, ...rest]
+  }
+
   private startRound() {
     const config = ROUNDS[this.round]
     // 정확히 20%(반올림)를 핑크 낱말로 섞어요
     const fastCount = Math.round(config.count * FAST_RATIO)
-    // 라운드 1은 짧은 낱말, 라운드 2부터는 사자성어 · 네 글자 이상 낱말
-    const pool = this.round === 0 ? WORDS : LONG_WORDS
-    const words = shuffle(pool).slice(0, config.count)
-    this.queue = shuffle(words.map((word, i) => ({ word, fast: i < fastCount })))
+    const words = this.pickWords(config.count)
+    this.queue = shuffle(shuffle(words).map((word, i) => ({ word, fast: i < fastCount })))
     this.drops = []
     this.sky.replaceChildren()
     this.spawnTimer = 0.4
