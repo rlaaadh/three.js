@@ -1714,6 +1714,24 @@ button {
   color: var(--ink);
 }
 
+/* 미션 카드 버튼: 확인 · 랭킹 보기 나란히 */
+.dish__mission-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6em;
+}
+
+.dish__mission[hidden] {
+  display: none;
+}
+
+/* 미션 화면 랭킹 보기: 미션 카드 자리에, 넘치면 목록만 스크롤 */
+.dish__overlay .trank {
+  max-height: 92%;
+  box-sizing: border-box;
+}
+
 /* ---------- 얼초.app: 녹이고 · 붓고 · 토핑 올리고 · 꽁꽁 얼리기 ---------- */
 /* 미션 카드 · 시간 막대 · 퐁 글씨는 설거지.app(.dish) 조각을 그대로 써요 */
 .choco {

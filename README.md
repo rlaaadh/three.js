@@ -41,6 +41,7 @@ src/
 │   ├── Chiptune.ts          타자 연습 · 설거지 배경음악 · 효과음 (Web Audio로 직접 만든 칩튠)
 │   ├── RetroWindow.ts       TV처럼 켜지는 귀여운 레트로 창 (게임 공용)
 │   ├── DishGame.ts          싱크대 설거지 게임 (스페이스바 연타로 완료율 채우기)
+│   ├── dishRanking.ts       설거지 게임 랭킹 (Supabase dish_scores 테이블)
 │   ├── ChocoGame.ts         냉장고 얼초 만들기 게임 (녹이기 → 틀에 붓기 → 토핑 → 얼리기)
 │   ├── typing/
 │   │   ├── TypingApp.ts     타자연습.app 메뉴 · 결과 화면

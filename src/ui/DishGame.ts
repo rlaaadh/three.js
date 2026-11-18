@@ -1,6 +1,8 @@
 import type { Chiptune } from './Chiptune'
 import { RetroWindow } from './RetroWindow'
 import { isTouchDevice } from '../utils/device'
+import { NICKNAME_MAX, RANK_LIMIT, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage } from './typing/ranking'
+import { fetchDishTop, submitDishScore, type DishScore } from './dishRanking'
 
 /** 미션: 제한시간 안에 접시 몇 장 */
 const TIME_LIMIT = 20
@@ -14,6 +16,8 @@ const FRONT_FOAM = 36
 const AIR_BUBBLES = 10
 
 type Phase = 'mission' | 'playing' | 'result'
+
+const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 /** 거품 속에 파묻힌 안 닦은 그릇 자리 [가로 %, 아래 %, 종류, 기울기] — 닦을수록 뒤에서부터 사라져요 */
 const PILE: [left: number, bottom: number, kind: 'pot' | 'plate' | 'cup' | 'kettle', rotate: number][] = [
@@ -56,8 +60,12 @@ export class DishGame {
   constructor(private readonly music: Chiptune) {
     this.win = new RetroWindow(music, '설거지.app', '설거지 게임')
     this.win.onClose = () => this.onClose?.()
+    // 미션 화면에서 랭킹 보기를 열어 뒀으면 Esc는 랭킹만 닫아요
+    this.win.onEscape = () => this.closeRankingView()
     window.addEventListener('keydown', (e) => {
       if (!this.win.isOpen || e.code !== 'Space') return
+      // 닉네임 칸에서는 띄어쓰기를 그대로 써요
+      if (e.target instanceof HTMLInputElement) return
       // 스페이스가 버튼을 누르거나 화면을 내리지 않게 막고, 꾹 누르고 있는 건 한 번만 쳐요
       e.preventDefault()
       if (!e.repeat) this.scrub()
@@ -98,12 +106,18 @@ export class DishGame {
             <p class="dish__mission-badge">MISSION</p>
             <p class="dish__mission-text">제한시간 <b>${TIME_LIMIT}초</b> 안에<br />접시를 <b>${DISH_GOAL}장</b> 뽀득뽀득 닦아요!</p>
             <p class="dish__mission-tip">${isTouchDevice() ? '아래 뽀득! 버튼을 톡톡 빠르게 눌러요' : '스페이스바를 빠르게 연타해요'}</p>
-            <button type="button" class="tbutton tbutton--main" data-action="start">확인</button>
+            <div class="dish__mission-buttons">
+              <button type="button" class="tbutton tbutton--main" data-action="start">확인</button>
+              ${rankingEnabled() ? '<button type="button" class="tbutton" data-action="ranking">🏆 랭킹 보기</button>' : ''}
+            </div>
           </div>
+          ${rankingEnabled() ? RANK_VIEW : ''}
         </div>
       </div>
     `
     this.win.body.querySelector('[data-action="start"]')!.addEventListener('click', () => this.start())
+    this.win.body.querySelector('[data-action="ranking"]')?.addEventListener('click', () => this.openRankingView())
+    this.win.body.querySelector('[data-action="close-ranking"]')?.addEventListener('click', () => this.closeRankingView())
     // 미션 화면 뒤로도 그릇이 쌓인 설거지통이 보여요
     this.dishes = 0
     this.shine = 0
@@ -173,6 +187,7 @@ export class DishGame {
     this.music.sfx(success ? 'clear' : 'miss')
     const best = success ? this.saveBest(used) : this.readBest()
     const isBest = success && best === used
+    const hasRank = rankingEnabled()
     this.win.body.innerHTML = `
       <div class="tresult">
         <div class="tresult__card">
@@ -183,14 +198,120 @@ export class DishGame {
             <div class="tresult__line"><span>${success ? '걸린 시간' : '최고 기록'}</span><b>${success ? `${used.toFixed(1)}초` : best ? `${best.toFixed(1)}초` : '-'}</b></div>
           </div>
           <div class="tresult__buttons">
-            <button type="button" class="tbutton tbutton--main" data-action="again">다시 하기</button>
+            <button type="button" class="tbutton tbutton--main tbutton--icon" data-action="again" aria-label="다시 하기" title="다시 하기">${RETRY_ICON}</button>
+            ${hasRank ? '<button type="button" class="tbutton" data-action="rank">🏆 랭킹 확인</button>' : ''}
             <button type="button" class="tbutton" data-action="quit">그만하기</button>
           </div>
         </div>
+        ${hasRank ? RANK_CARD : ''}
       </div>
     `
-    this.win.body.querySelector('[data-action="again"]')!.addEventListener('click', () => this.showMission())
-    this.win.body.querySelector('[data-action="quit"]')!.addEventListener('click', () => this.close())
+    this.win.body.querySelectorAll('[data-action="again"]').forEach((b) => b.addEventListener('click', () => this.showMission()))
+    this.win.body.querySelectorAll('[data-action="quit"]').forEach((b) => b.addEventListener('click', () => this.close()))
+    if (hasRank) this.bindRanking({ dishes: this.dishes, cleared: success, percent, time_sec: Math.round(used * 10) / 10 })
+  }
+
+  // ---------- 랭킹 (Supabase, 떨어지는 낱말연습과 같은 방식) ----------
+
+  /** 결과 화면: 랭킹 확인 → 결과 카드 자리에 랭킹 카드 (닉네임 등록 + TOP 10) */
+  private bindRanking(record: Omit<DishScore, 'nickname'>) {
+    const el = this.win.body
+    const resultCard = el.querySelector<HTMLElement>('.tresult__card')!
+    const card = el.querySelector<HTMLElement>('.trank')!
+    const form = el.querySelector<HTMLFormElement>('[data-ref="rankForm"]')!
+    const input = el.querySelector<HTMLInputElement>('[data-ref="nickname"]')!
+    const button = form.querySelector<HTMLButtonElement>('button')!
+    const list = el.querySelector<HTMLElement>('[data-ref="rankList"]')!
+    const note = el.querySelector<HTMLElement>('[data-ref="rankNote"]')!
+    input.value = savedNickname().slice(0, NICKNAME_MAX)
+    limitNickname(input)
+    let mine: DishScore | null = null
+    let loaded = false
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const nickname = input.value.trim().slice(0, NICKNAME_MAX)
+      if (!nickname) {
+        note.textContent = '닉네임을 적어 주세요'
+        input.focus()
+        return
+      }
+      button.disabled = true
+      input.disabled = true
+      note.textContent = '올리는 중...'
+      try {
+        mine = { ...record, nickname }
+        const result = await submitDishScore(mine)
+        rememberNickname(nickname)
+        note.textContent = submitMessage(result)
+        form.classList.add('is-done')
+        await this.renderRanking(list, mine)
+      } catch (error) {
+        mine = null
+        note.textContent = (error as Error).message
+        button.disabled = false
+        input.disabled = false
+      }
+    })
+    el.querySelector('[data-action="rank"]')!.addEventListener('click', () => {
+      resultCard.hidden = true
+      card.hidden = false
+      if (!loaded) {
+        loaded = true
+        void this.renderRanking(list, mine)
+      }
+      input.focus({ preventScroll: true })
+    })
+  }
+
+  /** 미션 화면: 랭킹 보기 → 미션 카드 자리에 TOP 10 */
+  private openRankingView() {
+    const mission = this.win.body.querySelector<HTMLElement>('.dish__mission')
+    const view = this.win.body.querySelector<HTMLElement>('[data-ref="rankView"]')
+    if (!mission || !view || this.phase !== 'mission') return
+    mission.hidden = true
+    view.hidden = false
+    const list = view.querySelector<HTMLElement>('[data-ref="rankList"]')!
+    list.innerHTML = '<li class="trank__empty">불러오는 중...</li>'
+    void this.renderRanking(list, null)
+    view.querySelector<HTMLButtonElement>('[data-action="close-ranking"]')?.focus({ preventScroll: true })
+  }
+
+  /** 랭킹 보기를 닫았으면 true */
+  private closeRankingView() {
+    const view = this.win.body.querySelector<HTMLElement>('[data-ref="rankView"]')
+    if (!view || view.hidden) return false
+    view.hidden = true
+    const mission = this.win.body.querySelector<HTMLElement>('.dish__mission')
+    if (mission) mission.hidden = false
+    this.win.body.querySelector<HTMLButtonElement>('[data-action="start"]')?.focus({ preventScroll: true })
+    return true
+  }
+
+  /** TOP 10 그리기: 순위 · 닉네임 · 닦은 접시(성공하면 👑) · 완료율 · 걸린 시간 */
+  private async renderRanking(list: HTMLElement, mine: DishScore | null) {
+    try {
+      const top = await fetchDishTop()
+      if (!list.isConnected) return
+      list.innerHTML = top.length
+        ? top
+            .map((row, i) => {
+              const time = Number(row.time_sec)
+              // 닉네임은 한 줄만 있어서 이름으로 내 줄을 찾아요 (예전 기록이 남았어도 그 줄)
+              const isMine = !!mine && row.nickname === mine.nickname
+              return `<li class="trank__row${isMine ? ' is-mine' : ''}">
+                <span class="trank__no">${i + 1}</span>
+                <span class="trank__name">${escapeHtml(row.nickname)}</span>
+                <span class="trank__round">${row.cleared ? '👑 ' : ''}${row.dishes}장</span>
+                <span class="trank__score">${row.percent}%</span>
+                <span class="trank__cpm">${row.cleared ? `${time.toFixed(1)}초` : '-'}</span>
+              </li>`
+            })
+            .join('')
+        : '<li class="trank__empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+    } catch (error) {
+      if (list.isConnected) list.innerHTML = `<li class="trank__empty">${escapeHtml((error as Error).message)}</li>`
+    }
   }
 
   // ---------- 화면 ----------
@@ -300,6 +421,35 @@ export class DishGame {
     return seconds
   }
 }
+
+/** 다시 하기: 되돌리는 화살표 아이콘 (타자연습.app 결과 화면과 같아요) */
+const RETRY_ICON = `<svg viewBox="0 0 24 24" width="1.1em" height="1.1em" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v4.6h4.6"/></svg>`
+
+/** 결과 화면 랭킹 카드: 닉네임 등록 + TOP 10 */
+const RANK_CARD = `
+  <section class="trank" aria-label="랭킹" hidden>
+    <p class="trank__title">🏆 랭킹 TOP ${RANK_LIMIT}</p>
+    <form class="trank__form" data-ref="rankForm" autocomplete="off">
+      <input data-ref="nickname" type="text" maxlength="${NICKNAME_MAX}" placeholder="닉네임 (${NICKNAME_MAX}자까지)" aria-label="닉네임" spellcheck="false" />
+      <button type="submit" class="tprac__enter">등록</button>
+    </form>
+    <p class="trank__note" data-ref="rankNote" aria-live="polite"></p>
+    <ol class="trank__list" data-ref="rankList"><li class="trank__empty">불러오는 중...</li></ol>
+    <div class="tresult__buttons">
+      <button type="button" class="tbutton tbutton--main tbutton--icon" data-action="again" aria-label="다시 하기" title="다시 하기">${RETRY_ICON}</button>
+      <button type="button" class="tbutton" data-action="quit">그만하기</button>
+    </div>
+  </section>`
+
+/** 미션 화면 랭킹 보기: TOP 10만 (닫으면 미션 카드로) */
+const RANK_VIEW = `
+  <section class="trank" data-ref="rankView" aria-label="랭킹" hidden>
+    <p class="trank__title">🏆 랭킹 TOP ${RANK_LIMIT}</p>
+    <ol class="trank__list" data-ref="rankList"><li class="trank__empty">불러오는 중...</li></ol>
+    <div class="tresult__buttons">
+      <button type="button" class="tbutton" data-action="close-ranking">닫기</button>
+    </div>
+  </section>`
 
 /** 귀여운 수세미: 버터색 스펀지 위에 민트색 거친 면, 작은 얼굴 (테두리 없이) */
 const SPONGE_ART = `

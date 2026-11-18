@@ -3,7 +3,7 @@ import { RetroWindow } from '../RetroWindow'
 import { Practice, type PracticeMode } from './Practice'
 import { FallingWords } from './FallingWords'
 import { LONG_TOPICS } from './content'
-import { NICKNAME_MAX, RANK_LIMIT, fetchTopScores, rankingEnabled, rememberNickname, savedNickname, submitScore, type RainScore } from './ranking'
+import { NICKNAME_MAX, RANK_LIMIT, fetchTopScores, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage, submitScore, type RainScore } from './ranking'
 
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
@@ -217,14 +217,7 @@ export class TypingApp {
     const card = el.querySelector<HTMLElement>('.trank')!
     const toggle = el.querySelector<HTMLButtonElement>('[data-action="rank"]')!
     input.value = savedNickname().slice(0, NICKNAME_MAX)
-    // 한글 조합 중에는 maxlength가 넘칠 수 있어서, 조합이 끝나면 한 번 더 잘라요
-    const clampNickname = () => {
-      if (input.value.length > NICKNAME_MAX) input.value = input.value.slice(0, NICKNAME_MAX)
-    }
-    input.addEventListener('compositionend', clampNickname)
-    input.addEventListener('input', (e) => {
-      if (!(e as InputEvent).isComposing) clampNickname()
-    })
+    limitNickname(input)
     let mine: RainScore | null = null
     let loaded = false
 
@@ -232,13 +225,11 @@ export class TypingApp {
       try {
         const top = await fetchTopScores()
         if (!el.isConnected) return
-        let marked = false
         list.innerHTML = top.length
           ? top
               .map((row, i) => {
-                const isMine =
-                  !marked && !!mine && row.nickname === mine.nickname && row.total_score === mine.total_score && row.avg_cpm === mine.avg_cpm
-                if (isMine) marked = true
+                // 닉네임은 한 줄만 있어서 이름으로 내 줄을 찾아요 (예전 기록이 남았어도 그 줄)
+                const isMine = !!mine && row.nickname === mine.nickname
                 return `<li class="trank__row${isMine ? ' is-mine' : ''}">
                   <span class="trank__no">${i + 1}</span>
                   <span class="trank__name">${escapeHtml(row.nickname)}</span>
@@ -267,9 +258,9 @@ export class TypingApp {
       note.textContent = '올리는 중...'
       try {
         mine = { ...record, nickname }
-        await submitScore(mine)
+        const result = await submitScore(mine)
         rememberNickname(nickname)
-        note.textContent = '랭킹에 올렸어요! 🎉'
+        note.textContent = submitMessage(result)
         form.classList.add('is-done')
         await render()
       } catch (error) {
