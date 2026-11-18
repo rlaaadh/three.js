@@ -19,6 +19,9 @@ const ROUNDS = [
 /** 낱말 하나 맞히면 +1, 바닥에 떨어지면 -1 */
 const HIT_POINT = 1
 const MISS_POINT = -1
+/** 핑크 낱말은 맞히면 +2점, 바닥에 닿으면 −3점 */
+const FAST_HIT_POINT = 2
+const FAST_MISS_POINT = -3
 /** 라운드 점수가 여기까지 떨어지면 실패 → 1라운드부터 다시 */
 const FAIL_SCORE = -5
 /** 너무 짧은 시간에 친 낱말이 타수를 튀게 하지 않도록 (초) */
@@ -67,6 +70,8 @@ interface Drop {
   /** 떨어지기 시작한 뒤 흐른 시간(초) */
   t: number
   fall: number
+  /** 핑크 낱말 (두 배 빠르고 점수도 커요) */
+  fast: boolean
 }
 
 /**
@@ -101,7 +106,7 @@ export class FallingWords implements TypingView {
   private readonly overlay: HTMLElement
   private readonly input: HTMLInputElement
   private readonly form: HTMLFormElement
-  private readonly hud: Record<'round' | 'score' | 'goal' | 'left' | 'total' | 'cpm', HTMLElement>
+  private readonly hud: Record<'round' | 'score' | 'left' | 'cpm', HTMLElement>
 
   constructor(private readonly ctx: ViewContext) {
     this.el.className = 'train'
@@ -110,10 +115,9 @@ export class FallingWords implements TypingView {
         <button type="button" class="tback" data-action="menu">← 메뉴</button>
         <span class="tbadge" data-hud="round"></span>
         <div class="train__stats">
-          <span class="train__stat train__stat--score">점수 <b data-hud="score">0</b> / <b data-hud="goal">0</b></span>
+          <span class="train__stat train__stat--score">이번 라운드 <b data-hud="score">0</b>점</span>
           <span class="train__stat">남은 낱말 <b data-hud="left">0</b></span>
-          <span class="train__stat">총점 <b data-hud="total">0</b></span>
-          <span class="train__stat">타수 <b data-hud="cpm">0</b></span>
+          <span class="train__stat">평균 타수 <b data-hud="cpm">0</b></span>
         </div>
       </div>
       <div class="train__field" data-ref="field">
@@ -133,7 +137,7 @@ export class FallingWords implements TypingView {
     this.input = ref<HTMLInputElement>('input')
     this.form = ref<HTMLFormElement>('form')
     const hud = (name: string) => this.el.querySelector<HTMLElement>(`[data-hud="${name}"]`)!
-    this.hud = { round: hud('round'), score: hud('score'), goal: hud('goal'), left: hud('left'), total: hud('total'), cpm: hud('cpm') }
+    this.hud = { round: hud('round'), score: hud('score'), left: hud('left'), cpm: hud('cpm') }
     this.el.querySelector('[data-action="menu"]')!.addEventListener('click', () => ctx.goMenu())
 
     bindKoreanInput(this.input, this.form, {
@@ -202,8 +206,13 @@ export class FallingWords implements TypingView {
       <div class="train__intro">
         ${cleared ? `<p class="train__cleared">라운드 ${cleared.round} 통과! <mark>${cleared.score}점</mark></p>` : ''}
         <p class="train__title">라운드 ${this.round + 1}</p>
-        <p class="train__desc">낱말 ${config.count}개 중 <b>${config.goal}점</b> 이상 모으면 통과!</p>
-        <p class="train__rule">맞히면 +1점 · 바닥에 닿으면 −1점 · ${FAIL_SCORE}점이 되면 실패</p>
+        <p class="train__desc">낱말이 다 떨어졌을 때 <b>${config.goal}점</b> 이상이면 통과!</p>
+        <ul class="train__rules">
+          <li><span class="train__chip">노란 낱말</span>맞히면 <b>+${HIT_POINT}점</b> · 놓치면 <b>${MISS_POINT}점</b></li>
+          <li><span class="train__chip train__chip--fast">핑크 낱말</span>맞히면 <b>+${FAST_HIT_POINT}점</b> · 놓치면 <b>${FAST_MISS_POINT}점</b> (두 배 빨라요!)</li>
+          <li>${config.goal}점보다 적게 모으면 게임이 끝나요</li>
+          <li>도중에 <b>${FAIL_SCORE}점</b>이 되면 그 자리에서 바로 실패예요</li>
+        </ul>
         <button type="button" class="tbutton tbutton--main" data-action="start">시작하기</button>
       </div>
     `
@@ -222,7 +231,7 @@ export class FallingWords implements TypingView {
     this.overlay.innerHTML = `
       <div class="train__intro">
         <p class="train__title train__title--fail">실패!</p>
-        <p class="train__desc">점수가 <b>${FAIL_SCORE}점</b>이 되었어요</p>
+        <p class="train__desc">이번 라운드 점수가 <b>${this.roundScore}점</b>이 되었어요 (실패 기준 ${FAIL_SCORE}점 이하)</p>
         <p class="train__rule">라운드 1부터 다시 도전해요</p>
         <button type="button" class="tbutton tbutton--main" data-action="restart">다시 시작하기</button>
       </div>
@@ -321,7 +330,7 @@ export class FallingWords implements TypingView {
       if (recent.every((d) => Math.abs(d.x - x) > 0.2)) break
       x = Math.random()
     }
-    this.drops.push({ word, el, x, t: 0, fall })
+    this.drops.push({ word, el, x, t: 0, fall, fast })
     this.highlight()
   }
 
@@ -352,8 +361,9 @@ export class FallingWords implements TypingView {
     this.totalStrokes += strokes
     this.totalTypingSec += sec
 
-    this.remove(target, 'is-hit', `+${HIT_POINT}`)
-    this.addScore(HIT_POINT)
+    const hit = target.fast ? FAST_HIT_POINT : HIT_POINT
+    this.remove(target, 'is-hit', `+${hit}`)
+    this.addScore(hit)
     this.ctx.music.sfx('hit')
     this.ctx.onHit()
     this.highlight()
@@ -361,8 +371,9 @@ export class FallingWords implements TypingView {
 
   /** 바닥에 닿았어요: −1점 */
   private land(drop: Drop) {
-    this.remove(drop, 'is-miss', `${MISS_POINT}`)
-    this.addScore(MISS_POINT)
+    const miss = drop.fast ? FAST_MISS_POINT : MISS_POINT
+    this.remove(drop, 'is-miss', `${miss}`)
+    this.addScore(miss)
     this.ctx.music.sfx('miss')
     if (this.roundScore <= FAIL_SCORE) this.fail()
   }
@@ -390,9 +401,7 @@ export class FallingWords implements TypingView {
     const config = ROUNDS[this.round]
     this.hud.round.textContent = `라운드 ${this.round + 1} / ${ROUNDS.length}`
     this.hud.score.textContent = String(this.roundScore)
-    this.hud.goal.textContent = String(config.goal)
     this.hud.left.textContent = String(this.playing ? this.queue.length + this.drops.length : config.count)
-    this.hud.total.textContent = String(this.totalScore)
     const avg = this.totalTypingSec > 0 ? Math.round(this.totalStrokes / (this.totalTypingSec / 60)) : 0
     this.hud.cpm.textContent = String(avg)
     this.el.classList.toggle('is-goal', this.roundScore >= config.goal)
