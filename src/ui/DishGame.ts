@@ -199,7 +199,7 @@ export class DishGame {
           </div>
           <div class="tresult__buttons">
             <button type="button" class="tbutton tbutton--main tbutton--icon" data-action="again" aria-label="다시 하기" title="다시 하기">${RETRY_ICON}</button>
-            ${hasRank ? '<button type="button" class="tbutton" data-action="rank">🏆 랭킹 확인</button>' : ''}
+            ${hasRank ? `<button type="button" class="tbutton" data-action="rank">🏆 랭킹 등록</button>` : ''}
             <button type="button" class="tbutton" data-action="quit">그만하기</button>
           </div>
         </div>
@@ -213,7 +213,7 @@ export class DishGame {
 
   // ---------- 랭킹 (Supabase, 떨어지는 낱말연습과 같은 방식) ----------
 
-  /** 결과 화면: 랭킹 확인 → 결과 카드 자리에 랭킹 카드 (닉네임 등록 + TOP 10) */
+  /** 결과 화면: 랭킹 등록 → 결과 카드 자리에 랭킹 카드 (닉네임 등록 + TOP 10) */
   private bindRanking(record: Omit<DishScore, 'nickname'>) {
     const el = this.win.body
     const resultCard = el.querySelector<HTMLElement>('.tresult__card')!

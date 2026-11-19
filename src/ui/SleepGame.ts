@@ -16,6 +16,8 @@ import { fetchSleepTop, submitSleepScore, type SleepScore } from './sleepRanking
 
 // ---------- 게임 설정 ----------
 
+/** 꿈속 화면에서 가로로 최소 이만큼은 보여요 (세로로 긴 모바일 화면용) */
+const MIN_WORLD_W = 108
 /** 밤 11시 → 아침 7시까지 걸리는 실제 시간(초) */
 const NIGHT_SEC = 90
 /** 잔 시간 (분) */
@@ -126,6 +128,8 @@ export class SleepGame {
   private phase: Phase = 'intro'
   /** 화면 크기 (높이 100 기준 단위) */
   private worldW = 133
+  /** 세로로 긴 화면에서 0보다 위로 더 보이는 하늘 높이 */
+  private skyTop = 0
   private scale = 4
   /** 전체 흐른 시간 (배경 애니메이션용, 멈춰 있어도 흘러요) */
   private time = 0
@@ -757,15 +761,17 @@ export class SleepGame {
       this.canvas.width = pw
       this.canvas.height = ph
     }
-    this.scale = ph / 100
+    // 세로로 긴 화면에서도 앞이 보이게 가로는 최소 MIN_WORLD_W만큼 보여요 (남는 높이는 위쪽 하늘로)
+    this.scale = Math.min(ph / 100, pw / MIN_WORLD_W)
     this.worldW = pw / this.scale
+    this.skyTop = ph / this.scale - 100
   }
 
   private draw() {
     const c = this.screen
     const p = this.progress()
     this.ctx = c
-    c.setTransform(this.scale, 0, 0, this.scale, 0, 0)
+    c.setTransform(this.scale, 0, 0, this.scale, 0, this.skyTop * this.scale)
     c.lineJoin = 'round'
     c.lineCap = 'round'
     this.drawSky(p)
@@ -797,13 +803,15 @@ export class SleepGame {
     g.addColorStop(0.62, mid)
     g.addColorStop(1, bottom)
     c.fillStyle = g
-    c.fillRect(0, 0, W, 100)
+    c.fillRect(0, -this.skyTop, W, 100 + this.skyTop)
 
     // 반짝이는 작은 별 (멀리 있어서 천천히 지나가요)
     c.globalAlpha = 1 - morning
-    for (let i = 0; i < 26; i++) {
+    const starCount = Math.round(26 * (1 + this.skyTop / 60))
+    for (let i = 0; i < starCount; i++) {
       const sx = (((i * 37.7 - this.distance * 0.06) % (W + 10)) + W + 10) % (W + 10) - 5
-      const sy = 6 + ((i * 53.3) % 52)
+      // 세로로 긴 화면이면 위로 더 보이는 하늘까지 고르게 흩어져요
+      const sy = 6 - this.skyTop + ((i * 53.3) % (52 + this.skyTop))
       const tw = 0.6 + 0.4 * Math.sin(this.time * 2.4 + i * 1.7)
       c.fillStyle = i % 3 ? '#fffaf0' : '#fde68a'
       sparkle(c, sx, sy, 0.6 + (i % 4) * 0.25 * tw)

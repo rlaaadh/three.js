@@ -56,7 +56,7 @@ export function createLabel(text: string, options: LabelOptions = {}) {
 
 export const LABEL_TEXTS = {
   title: 'my tiny room',
-  bed: '1. 침대를 누르면 잠을 자요',
+  bed: '1. 침대에 누우면 잠 사수 게임',
   desk: '2. 책상에 앉으면 타자 게임',
   /** 모바일은 타자연습 창 없이 앉기만 해요 */
   deskTouch: '2. 책상을 누르면 공부하는 척',
