@@ -80,13 +80,8 @@ export class Kkomantle {
   open() {
     if (this.win.isOpen) return
     this.win.open()
-    // 하던 판이 있으면 이어서, 아니면 처음 화면
-    if (this.phase === 'playing' && this.round && this.day === todayKey()) {
-      this.unpauseClock()
-      this.music.start(100, 'book')
-      this.showPlay()
-    }
-    else this.showIntro()
+    // 늘 처음 화면부터. 하던 판이 있으면 "이어서 하기"를 눌러야 시간이 다시 흘러요
+    this.showIntro()
   }
 
   close() {
@@ -102,7 +97,7 @@ export class Kkomantle {
     const saved = readSaved(day)
     // 오늘 맞혔거나 포기했으면 정답을 이미 아니까 내일까지 다시 못 해요
     const done = !!saved?.done
-    const startLabel = !done && saved?.words.length ? '이어서 하기' : '시작하기'
+    const startLabel = saved && !done ? '이어서 하기' : '시작하기'
     this.win.body.innerHTML = `
       <div class="kkom kkom--intro">
         <div class="kkom__card">
