@@ -4,6 +4,24 @@ import type { Chiptune } from './Chiptune'
 const CLOSE_MS = 320
 
 /**
+ * 모바일 화면 키보드가 올라오면 보이는 높이(visualViewport)가 줄어요.
+ * 그 높이 · 위치를 CSS 변수(--vv-h: 1%, --vv-top)로 넘겨서 세로 화면 창이 키보드 위에 꼭 맞게 줄어들어요.
+ */
+function trackVisualViewport() {
+  const vv = window.visualViewport
+  if (!vv) return
+  const root = document.documentElement
+  const sync = () => {
+    root.style.setProperty('--vv-h', `${vv.height / 100}px`)
+    root.style.setProperty('--vv-top', `${vv.offsetTop}px`)
+  }
+  vv.addEventListener('resize', sync)
+  vv.addEventListener('scroll', sync)
+  sync()
+}
+trackVisualViewport()
+
+/**
  * 옛날 TV처럼 켜지는 귀여운 레트로 창 (타자연습.app · 설거지.app 공용).
  * 고양이 귀 · 버터색 제목줄 · ♪ 소리 버튼 · ✕ 닫기, 안에 내용은 body에 그려요.
  */

@@ -267,14 +267,17 @@ button {
   animation: appwin-on 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 
-/* 세로 화면(모바일): 비율 대신 화면 높이의 퍼센트로 길게 (위 귀 자리 7%, 아래 여백 3%) */
+/* 세로 화면(모바일): 비율 대신 화면 높이의 퍼센트로 길게 (위 귀 자리 7%, 아래 여백 3%)
+   화면 키보드가 올라오면 보이는 높이(--vv-h = 1%, RetroWindow.ts)에 맞춰 같이 줄어요 */
 @media (orientation: portrait) {
   .appwin__frame {
     top: 7vh;
     top: 7dvh;
+    top: calc(var(--vv-top, 0px) + var(--vv-h, 1dvh) * 7);
     width: calc(100vw - 24px);
     height: 90vh;
     height: 90dvh;
+    height: calc(var(--vv-h, 1dvh) * 90);
     aspect-ratio: auto;
   }
 }
@@ -1316,7 +1319,7 @@ button {
   }
 
   .tprac {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
   }
 
@@ -1349,6 +1352,56 @@ button {
 
   .tdash__row b {
     font-size: 1.5em;
+  }
+}
+
+/* 휴대폰 · 태블릿: 화면 키보드로 쳐요. 키보드가 올라와 창이 납작해져도 세로 화면처럼
+   기록은 한 줄로, 키보드 가이드 · 응원 · 팁은 접어요 (위 세로 화면 규칙과 같아요) */
+@media (hover: none) and (pointer: coarse) {
+  .tprac {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .tprac__side {
+    order: -1;
+  }
+
+  .tdash {
+    flex-direction: row;
+    padding: 0.5em 0.9em;
+  }
+
+  .tdash > .tcard__title,
+  .tkeys,
+  .tcheer,
+  .ttip,
+  .toutline {
+    display: none;
+  }
+
+  .tdash__metric {
+    flex: 1;
+  }
+
+  .tdash__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2em;
+  }
+
+  .tdash__row b {
+    font-size: 1.5em;
+  }
+
+  .tprac__form {
+    width: 100%;
+  }
+
+  /* 입력창 글자가 16px보다 작으면 아이폰이 화면을 확대해 버려요 */
+  .tprac__form input,
+  .train__form input {
+    font-size: max(16px, 1em);
   }
 }
 

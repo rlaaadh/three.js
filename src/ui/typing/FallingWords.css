@@ -436,6 +436,39 @@
   }
 }
 
+/* 휴대폰 · 태블릿: 화면 키보드가 올라와 창이 납작해져도 위 칸이 세로 화면처럼 두 줄로 */
+@media (hover: none) and (pointer: coarse) {
+  .train__top {
+    flex-wrap: wrap;
+  }
+
+  .train__stats {
+    justify-content: flex-start;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* 설명은 꼭 필요한 줄만 남기고 크게 (덧붙임 줄 · 괄호 설명은 숨겨요) */
+  .train__more {
+    display: none;
+  }
+
+  .train__desc {
+    font-size: 1.4em;
+  }
+
+  .train__rules {
+    gap: 0.5em;
+    padding: 0.7em 0.9em;
+    font-size: 1.25em;
+  }
+
+  /* 화면 키보드에는 Esc가 없어서 멈춤 버튼의 Esc 표시는 숨겨요 */
+  .train__pause small {
+    display: none;
+  }
+}
+
 .train__pause small {
   margin-left: 0.2em;
   padding: 0 0.35em;

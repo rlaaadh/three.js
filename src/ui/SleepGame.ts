@@ -289,13 +289,13 @@ export class SleepGame {
         <p class="train__title sleep__title">완벽한 잠을<br />사수하라!</p>
         <p class="train__desc">아침 <b>7시</b>까지 깨지 않고 푹 자면 성공!</p>
         <ul class="train__rules">
-          <li><span class="train__chip">${tap}</span>점프! 공중에서 한 번 더 누르면 <b>2단 점프</b></li>
-          <li><span class="train__chip sleep__chip--sheep">🐑 양</span><b>+${SHEEP_POINT}점</b> · <span class="train__chip sleep__chip--star">⭐ 별</span><b>+${STAR_POINT}점</b> (높이 있어요!)</li>
-          <li><span class="train__chip train__chip--fast">⏰ 📱 🦟</span>알람 · 휴대폰 · 모기에 부딪히면 베개 <b>−1</b></li>
-          <li>양을 <b>연달아</b> 먹으면 콤보! 음이 올라가고 ${COMBO_STEP}콤보마다 <b>+${COMBO_BONUS}점</b></li>
-          <li>이불 틈으로 떨어지면 <b>바로 깨요!</b> (넓은 틈은 2단 점프로 건너요)</li>
-          <li>따뜻한 우유 🥛를 마시면 베개가 하나 돌아와요</li>
-          <li>베개 <b>${MAX_PILLOWS}개</b>를 다 잃으면 잠에서 깨요</li>
+          <li><span class="train__chip">${tap}</span>점프! <span class="train__more">공중에서 </span>한 번 더 누르면 <b>2단 점프</b></li>
+          <li><span class="train__chip sleep__chip--sheep">🐑 양</span><b>+${SHEEP_POINT}점</b> · <span class="train__chip sleep__chip--star">⭐ 별</span><b>+${STAR_POINT}점</b><span class="train__more"> (높이 있어요!)</span></li>
+          <li><span class="train__chip train__chip--fast">⏰ 📱 🦟</span><span class="train__more">알람 · 휴대폰 · 모기에 </span>부딪히면 베개 <b>−1</b></li>
+          <li class="train__more">양을 <b>연달아</b> 먹으면 콤보! 음이 올라가고 ${COMBO_STEP}콤보마다 <b>+${COMBO_BONUS}점</b></li>
+          <li>이불 틈으로 떨어지면 <b>바로 깨요!</b><span class="train__more"> (넓은 틈은 2단 점프로 건너요)</span></li>
+          <li class="train__more">따뜻한 우유 🥛를 마시면 베개가 하나 돌아와요</li>
+          <li class="train__more">베개 <b>${MAX_PILLOWS}개</b>를 다 잃으면 잠에서 깨요</li>
         </ul>
         <div class="train__buttons">
           <button type="button" class="tbutton tbutton--main" data-action="start">게임 시작</button>

@@ -16,7 +16,6 @@ import { DishGame } from './ui/DishGame'
 import { ChocoGame } from './ui/ChocoGame'
 import { SleepGame } from './ui/SleepGame'
 import { Chiptune } from './ui/Chiptune'
-import { isTouchDevice } from './utils/device'
 import { loadHandFont } from './utils/fonts'
 import { easeOutBack, easeOutBounce } from './utils/math'
 
@@ -121,8 +120,6 @@ const SCREEN_OFF = new THREE.Color('#4a4d55')
 const SCREEN_ON = new THREE.Color('#ffffff')
 
 function startActivity(action: string) {
-  // 모바일은 화면 키보드로 치기 불편해서 책상은 예전처럼 앉아서 공부하는 척만 해요 (설거지 · 얼초는 터치로 할 수 있어요)
-  if (action === 'sit' && isTouchDevice()) return
   if (action !== 'sit' && action !== 'wash' && action !== 'chill' && action !== 'lie') return
   activity = action
   zoomBeforeApp = stage.zoomTarget

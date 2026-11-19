@@ -241,9 +241,9 @@ export class FallingWords implements TypingView {
         <p class="train__desc">낱말이 다 떨어졌을 때 <b>${config.goal}점</b> 이상이면 통과!</p>
         <ul class="train__rules">
           <li><span class="train__chip">노란 낱말</span>맞히면 <b>+${HIT_POINT}점</b> · 놓치면 <b>${MISS_POINT}점</b></li>
-          <li><span class="train__chip train__chip--fast">핑크 낱말</span>맞히면 <b>+${FAST_HIT_POINT}점</b> · 놓치면 <b>${FAST_MISS_POINT}점</b> (두 배 빨라요!)</li>
-          <li>${config.goal}점보다 적게 모으면 게임이 끝나요</li>
-          <li>도중에 <b>${FAIL_SCORE}점</b>이 되면 그 자리에서 바로 실패예요</li>
+          <li><span class="train__chip train__chip--fast">핑크 낱말</span>맞히면 <b>+${FAST_HIT_POINT}점</b> · 놓치면 <b>${FAST_MISS_POINT}점</b><span class="train__more"> (두 배 빨라요!)</span></li>
+          <li class="train__more">${config.goal}점보다 적게 모으면 게임이 끝나요</li>
+          <li>도중에 <b>${FAIL_SCORE}점</b>이 되면 <span class="train__more">그 자리에서 </span>바로 실패예요</li>
         </ul>
         <div class="train__buttons">
           <button type="button" class="tbutton tbutton--main" data-action="start">시작하기</button>
