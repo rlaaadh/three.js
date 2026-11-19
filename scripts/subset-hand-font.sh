@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 
 SRC_URL='https://hangeul.pstatic.net/hangeul_static/webfont/clova/NanumHimNaeRaNeunMarBoDan.woff'
 OUT='public/fonts/hand-subset.woff2'
-SOURCES=(index.html src/world/Labels.ts src/world/Character.ts src/world/Room.ts src/interaction/Pointer.ts)
+SOURCES=(index.html src/world/Labels.ts src/world/Character.ts src/world/Room.ts src/world/GameRoom.ts src/interaction/Pointer.ts)
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 

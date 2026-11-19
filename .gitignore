@@ -5,3 +5,6 @@ dist
 
 # 로컬 개발 도구 설정 (내 PC 경로가 들어 있어요)
 .claude/
+
+# 꼬맨틀 데이터 원본 (scripts/build-kkomantle-data.py가 받아요)
+scripts/.cache/

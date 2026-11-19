@@ -1,0 +1,456 @@
+/* ---------- 꼬맨틀.app (책꽂이 단어 유사도 게임) ---------- */
+.kkom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  min-height: 0;
+}
+
+/* 처음 화면 · 결과: 가운데 카드 하나 (랭킹 보기를 열면 카드 자리에 랭킹) */
+.kkom--intro,
+.kkom--result {
+  align-items: center;
+  justify-content: center;
+}
+
+.kkom__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7em;
+  width: min(100%, 30em);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1.4em 1.8em 1.6em;
+  border: 3px solid var(--win-line);
+  border-radius: 1.6em;
+  background: #fff;
+  box-shadow: 0.4em 0.4em 0 var(--win-shadow);
+}
+
+.kkom__card[hidden],
+.kkom__result[hidden] {
+  display: none;
+}
+
+.kkom__art {
+  width: 11em;
+  border-radius: 1.2em;
+  padding: 0.4em 0.6em 0.2em;
+  background: linear-gradient(160deg, #ffe3d3 0%, #f7d6e4 50%, #d9e4fb 100%);
+  border: 2.5px solid var(--win-line);
+}
+
+.kkom__art svg {
+  display: block;
+  width: 100%;
+}
+
+.kkom__badge {
+  margin: 0;
+  padding: 0.05em 1em;
+  border-radius: 999px;
+  background: var(--win-bar);
+  font-size: 1.9em;
+}
+
+.kkom__lead {
+  margin: 0;
+  font-size: 1.35em;
+  text-align: center;
+}
+
+.kkom__lead b,
+.kkom__rules b,
+.kkom__hint b {
+  font-weight: 400;
+  color: var(--win-point);
+}
+
+.kkom__rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  margin: 0;
+  padding: 0.7em 1em 0.7em 2em;
+  border-radius: 1em;
+  background: var(--win-soft);
+  font-size: 1.05em;
+}
+
+.kkom__note {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--win-point);
+  text-align: center;
+}
+
+.kkom__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8em;
+}
+
+/* 게임 화면 */
+.kkom--play {
+  width: min(100%, 40em);
+  margin: 0 auto;
+}
+
+.kkom__top {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.kkom__top .tbadge b {
+  font-weight: 400;
+  color: var(--win-point);
+}
+
+.kkom__top .tback {
+  margin-left: auto;
+}
+
+.kkom__hint {
+  margin: 0;
+  padding: 0.4em 0.9em;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px dashed var(--win-shadow);
+  font-size: 1em;
+  text-align: center;
+}
+
+.kkom__form {
+  display: flex;
+  gap: 0.4em;
+  padding: 0.3em 0.35em 0.3em 1em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.kkom__form:focus-within {
+  box-shadow: 0 0 0 0.3em rgba(255, 224, 138, 0.8);
+}
+
+.kkom__form input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--win-line);
+  font-family: var(--font-read);
+  font-size: 1.3em;
+}
+
+.kkom__form input::placeholder {
+  color: #c9b7a4;
+}
+
+.kkom__msg {
+  min-height: 1.3em;
+  margin: -0.2em 0 0;
+  font-size: 1.05em;
+  text-align: center;
+}
+
+.kkom__msg.is-bad {
+  color: var(--win-point);
+  animation: kkom-shake 0.35s ease;
+}
+
+@keyframes kkom-shake {
+  25% {
+    translate: -0.3em 0;
+  }
+  75% {
+    translate: 0.3em 0;
+  }
+}
+
+/* 기록 표: 공책처럼 흰 카드 안에서 스크롤 */
+.kkom__table {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 0.5em 0.6em;
+  border: 2.5px solid var(--win-line);
+  border-radius: 1.2em;
+  background: #fff;
+  box-shadow: 0.3em 0.3em 0 var(--win-soft);
+}
+
+.kkom__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.kkom__row {
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr) 4.6em 8.5em;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.22em 0.7em;
+  border-radius: 999px;
+  font-size: 1.05em;
+}
+
+.kkom__head {
+  color: var(--ink-soft);
+  font-size: 0.95em;
+}
+
+.kkom__list .kkom__row:nth-child(even) {
+  background: var(--win-body);
+}
+
+.kkom__row.is-latest {
+  background: #ffe08a !important;
+  animation: appwin-pop-in 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.kkom__no {
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.kkom__word {
+  overflow: hidden;
+  font-family: var(--font-read);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kkom__sim {
+  color: #c4472f;
+  text-align: right;
+}
+
+.kkom__rank {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4em;
+  white-space: nowrap;
+}
+
+.kkom__rank.is-far {
+  color: #b8a593;
+}
+
+.kkom__rank.is-answer {
+  color: var(--win-point);
+}
+
+/* 순위 막대: 1위에 가까울수록 길고 진해요 */
+.kkom__bar {
+  flex: 1;
+  height: 0.6em;
+  border-radius: 999px;
+  background: var(--win-soft);
+  overflow: hidden;
+}
+
+.kkom__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a8dcc8, #f7c95c 60%, #f19a7c);
+}
+
+.kkom__divider {
+  height: 2px;
+  margin: 0.2em 0.6em;
+  background: repeating-linear-gradient(90deg, var(--win-shadow) 0 6px, transparent 6px 10px);
+}
+
+.kkom__empty {
+  padding: 1.2em 0;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* 결과 */
+.kkom__answer {
+  margin: -0.3em 0 0;
+  padding: 0.1em 1em;
+  border-radius: 999px;
+  background: #ffe08a;
+  font-family: var(--font-read);
+  font-size: 2em;
+  font-weight: 800;
+}
+
+.kkom__result {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.kkom__near-title {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.kkom__near {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25em 0.8em;
+  width: 100%;
+  margin: -0.4em 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: near;
+}
+
+.kkom__near li {
+  display: flex;
+  gap: 0.4em;
+  padding: 0.15em 0.7em;
+  border-radius: 999px;
+  background: var(--win-soft);
+  counter-increment: near;
+}
+
+.kkom__near li::before {
+  content: counter(near);
+  color: var(--ink-soft);
+}
+
+.kkom__near span {
+  flex: 1;
+  font-family: var(--font-read);
+  font-weight: 600;
+}
+
+.kkom__near b {
+  font-weight: 400;
+  color: #c4472f;
+}
+
+.kkom .trank {
+  width: min(100%, 26em);
+}
+
+/* 세로 화면(모바일): 표 칸을 좁히고 순위 막대는 숨겨요 */
+@container (max-aspect-ratio: 1 / 1) {
+  .kkom__card {
+    padding: 1.1em 1.1em 1.3em;
+  }
+
+  .kkom__row {
+    grid-template-columns: 1.8em minmax(0, 1fr) 4.2em 5.4em;
+    gap: 0.35em;
+    padding: 0.25em 0.5em;
+  }
+
+  .kkom__bar {
+    display: none;
+  }
+
+  .kkom__hint {
+    border-radius: 1em;
+  }
+}
+
+/* 멈춤 (Esc): 기록 표 위에 크림색 막 + 가운데 카드. 멈춘 동안 표는 흐리게 */
+.kkom--play {
+  position: relative;
+}
+
+.kkom__top .tback small {
+  opacity: 0.6;
+  font-size: 0.75em;
+}
+
+.kkom__top [data-action='pause'] {
+  margin-left: auto;
+}
+
+.kkom__top [data-action='pause'] + .tback {
+  margin-left: 0;
+}
+
+.kkom--play.is-paused > :not(.kkom__pause) {
+  filter: blur(0.15em);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.kkom__pause {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  border-radius: 1.2em;
+  background: rgba(255, 250, 240, 0.6);
+}
+
+.kkom__pause[hidden] {
+  display: none;
+}
+
+.kkom__pause-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6em;
+  padding: 1.3em 2em 1.2em;
+  border: 3px solid var(--win-line);
+  border-radius: 1.6em;
+  background: #fff;
+  box-shadow: 0.4em 0.4em 0 var(--win-shadow);
+  text-align: center;
+  animation: appwin-pop-in 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.kkom__pause-card p {
+  margin: 0;
+}
+
+.kkom__pause-title {
+  padding: 0.05em 1em;
+  border-radius: 999px;
+  background: var(--win-bar);
+  font-size: 1.9em;
+}
+
+.kkom__pause-desc {
+  font-size: 1.15em;
+}
+
+.kkom__pause-desc b {
+  font-weight: 400;
+  color: var(--win-point);
+}
+
+.kkom__pause-tip {
+  color: var(--ink-soft);
+  font-size: 0.9em;
+}
+
+/* 오늘의 단어 몇 번째 · 다음 단어까지 남은 시간 */
+.kkom__day {
+  margin: -0.2em 0 0;
+  color: var(--ink-soft);
+  font-size: 0.95em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 꼬맨틀 랭킹은 단어 칸 없이 순위 · 닉네임 · 추측 · 시간 */
+.kkom .trank__row {
+  grid-template-columns: 2.2em minmax(0, 1fr) 4.4em 5.6em;
+}

@@ -14,6 +14,46 @@ const MELODY: (number | null)[] = [
 /** 베이스: 4분음표 16칸 */
 const BASS: (number | null)[] = [48, 55, 48, 55, 43, 50, 43, 50, 45, 52, 45, 52, 43, 50, 48, null]
 
+/** 배경음악 한 곡: 멜로디(8분음표) · 베이스(4분음표) · 멜로디 음색 · 하이햇 */
+interface Song {
+  melody: (number | null)[]
+  bass: (number | null)[]
+  lead: OscillatorType
+  leadVolume: number
+  /** 하이햇을 8분음표 뒷박마다 칠지 */
+  hat: boolean
+}
+
+/**
+ * 곡 목록
+ * - play: 통통 튀는 C장조 4마디 (타자 · 설거지 · 얼초 · 잠 게임)
+ * - book: 책장 넘기듯 잔잔한 F장조 8마디, 오르골 같은 세모파 (꼬맨틀: 천천히 생각하는 게임)
+ */
+const SONGS = {
+  play: { melody: MELODY, bass: BASS, lead: 'square', leadVolume: 0.045, hat: true },
+  book: {
+    melody: [
+      72, null, 69, 72, 77, null, 76, 74,
+      72, null, null, 69, 70, 69, 67, null,
+      65, null, 67, 69, 72, null, 70, 69,
+      67, null, null, null, 64, null, 67, null,
+      72, null, 69, 72, 77, null, 79, 77,
+      76, null, 74, 72, 74, null, 76, null,
+      77, 76, 74, 72, 70, 69, 67, 69,
+      65, null, null, null, 72, null, 77, null,
+    ],
+    bass: [
+      41, 48, 45, 48, 46, 53, 50, 53, 41, 48, 45, 48, 36, 43, 40, 43,
+      41, 48, 45, 48, 36, 43, 40, 43, 46, 53, 50, 53, 36, 43, 41, null,
+    ],
+    lead: 'triangle',
+    leadVolume: 0.09,
+    hat: false,
+  },
+} satisfies Record<string, Song>
+
+export type SongName = keyof typeof SONGS
+
 const SOUND_KEY = 'tiny-room-sound'
 const LOOKAHEAD = 0.12
 
@@ -26,6 +66,7 @@ export class Chiptune {
   private step = 0
   private nextTime = 0
   private tempo = 132
+  private song: Song = SONGS.play
   private noise: AudioBuffer | null = null
   /** 배경음악으로 예약해 둔 음들 (멈출 때 바로 끊어요) */
   private readonly voices = new Set<AudioScheduledSourceNode>()
@@ -61,13 +102,14 @@ export class Chiptune {
   }
 
   /** 배경음악 시작 (사용자 클릭 안에서 불러야 소리가 나요). 게임은 조금 빠르게 */
-  start(tempo = 132) {
+  start(tempo = 132, song: SongName = 'play') {
     const ctx = this.ensure()
     if (!ctx) return
     void ctx.resume()
     this.stopLoop()
     this.step = 0
     this.tempo = tempo
+    this.song = SONGS[song]
     this.nextTime = ctx.currentTime + 0.05
     this.timer = window.setInterval(() => this.schedule(), 25)
   }
@@ -200,13 +242,14 @@ export class Chiptune {
     // 타이머가 늦게 돌아 밀린 음은 한꺼번에 치지 않고 건너뛰어요 (겹쳐 들리지 않게)
     if (this.nextTime < ctx.currentTime) this.nextTime = ctx.currentTime + 0.02
     while (this.nextTime < ctx.currentTime + LOOKAHEAD) {
-      const i = this.step % MELODY.length
-      const note = MELODY[i]
-      if (note !== null) this.track(this.tone(this.nextTime, freq(note), eighth * 0.9, 'square', 0.045))
+      const { melody, bass, lead, leadVolume, hat } = this.song
+      const i = this.step % melody.length
+      const note = melody[i]
+      if (note !== null) this.track(this.tone(this.nextTime, freq(note), eighth * (lead === 'square' ? 0.9 : 1.6), lead, leadVolume))
       if (i % 2 === 0) {
-        const bass = BASS[i / 2]
-        if (bass !== null) this.track(this.tone(this.nextTime, freq(bass), eighth * 1.6, 'triangle', 0.11))
-      } else {
+        const low = bass[i / 2]
+        if (low !== null) this.track(this.tone(this.nextTime, freq(low), eighth * 1.6, 'triangle', 0.11))
+      } else if (hat) {
         this.track(this.hat(this.nextTime))
       }
       this.nextTime += eighth

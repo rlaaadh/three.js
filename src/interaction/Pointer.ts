@@ -1,13 +1,19 @@
 import * as THREE from 'three'
 import type { Stage } from '../core/Stage'
 import { STICK_RADIUS, type CameraControls } from './CameraControls'
-import type { Room, Spot } from '../world/Room'
+import type { Spot } from '../world/Room'
 import type { Character } from '../world/Character'
 import type { ClickMarker } from '../world/ClickMarker'
 import { clampTarget } from '../world/Navigation'
 import { Joystick } from '../ui/Joystick'
 
 export const DEFAULT_HINT = '바닥을 누르거나 드래그해서 걸어요'
+
+/** 누를 수 있는 것 · 막는 벽 목록 (집 Room과 게임방 GameRoom이 같은 모양이라 바꿔 끼워요) */
+export interface PointerTarget {
+  clickables: THREE.Object3D[]
+  walls: THREE.Mesh[]
+}
 
 /**
  * 마우스 · 터치 입력 처리.
@@ -16,6 +22,10 @@ export const DEFAULT_HINT = '바닥을 누르거나 드래그해서 걸어요'
  */
 export class Pointer {
   enabled = false
+  /** 마우스를 아무것에도 안 올렸을 때 안내 */
+  defaultHint = DEFAULT_HINT
+  /** Spot이 아닌 물건(게임방의 아직 준비 중인 물건)을 눌렀을 때 */
+  onItem: ((obj: THREE.Object3D) => void) | null = null
   private readonly raycaster = new THREE.Raycaster()
   private readonly ndc = new THREE.Vector2()
   private hovered: THREE.Object3D | null = null
@@ -24,7 +34,7 @@ export class Pointer {
 
   constructor(
     private readonly stage: Stage,
-    private readonly room: Room,
+    public room: PointerTarget,
     private readonly ground: THREE.Object3D,
     private readonly character: Character,
     private readonly marker: ClickMarker,
@@ -46,13 +56,14 @@ export class Pointer {
     // 벽을 누르면 벽 뒤 바닥으로 가지 않도록 무시해요
     if (!hit || this.room.walls.includes(hit.object as THREE.Mesh)) return null
 
-    // 부모를 거슬러 올라가며 침대 · 책상 그룹인지 확인
+    // 부모를 거슬러 올라가며 침대 · 책상 그룹(Spot)이나 게임방 물건(item)인지 확인
     let obj: THREE.Object3D | null = hit.object
     while (obj) {
-      if (obj.userData.spot) return { spot: obj.userData.spot as Spot, group: obj, point: hit.point }
+      if (obj.userData.spot) return { spot: obj.userData.spot as Spot, group: obj, item: null, point: hit.point }
+      if (obj.userData.item) return { spot: null, group: obj, item: obj, point: hit.point }
       obj = obj.parent
     }
-    return { spot: null, group: null, point: hit.point }
+    return { spot: null, group: null, item: null, point: hit.point }
   }
 
   private onClick(e: PointerEvent) {
@@ -62,6 +73,10 @@ export class Pointer {
 
     if (hit.spot) {
       this.character.perform(hit.spot)
+      return
+    }
+    if (hit.item) {
+      this.onItem?.(hit.item)
       return
     }
     const target = clampTarget(hit.point)
@@ -91,7 +106,7 @@ export class Pointer {
     if (this.hovered) setGlow(this.hovered, false)
     this.hovered = group
     if (group) setGlow(group, true)
-    this.hintEl.textContent = hit?.spot ? hit.spot.hint : DEFAULT_HINT
+    this.hintEl.textContent = hit?.spot ? hit.spot.hint : hit?.item ? (hit.item.userData.hint as string) : this.defaultHint
   }
 }
 

@@ -1,10 +1,11 @@
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
+import { handFont } from '../utils/fonts'
 import { BEDROOM, KITCHEN, PARTITION_X, setObstacles } from './Navigation'
 
-export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash' | 'chill'
+export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash' | 'chill' | 'door' | 'read'
 
-/** 캐릭터가 다가가서 특정 동작을 하는 지점 (침대, 책상, 식탁, 주방, 냉장고) */
+/** 캐릭터가 다가가서 특정 동작을 하는 지점 (침대, 책상, 식탁, 주방, 냉장고, 문, 게임방 책꽂이) */
 export interface Spot {
   action: SpotAction
   /** 동작 전에 걸어가서 서는 위치 */
@@ -20,7 +21,7 @@ export interface Spot {
 const FRIDGE_X = 6.73
 
 /** 집 전체 색: 밝은 버터색 벽 · 가구 + 따뜻한 나무 브라운 */
-const C = {
+export const C = {
   wall: '#fdfcf8',
   trim: '#b07e55',
   cream: '#fff8e6',
@@ -49,10 +50,10 @@ const C = {
   glass: '#cfeaf5',
 }
 
-const material = (color: string, roughness = 0.7) =>
+export const material = (color: string, roughness = 0.7) =>
   new THREE.MeshStandardMaterial({ color, roughness })
 
-function box(w: number, h: number, d: number, color: string, radius = 0.05) {
+export function box(w: number, h: number, d: number, color: string, radius = 0.05) {
   const r = Math.min(radius, Math.min(w, h, d) / 2 - 0.001)
   const mesh = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 4, r), material(color))
   mesh.castShadow = true
@@ -60,21 +61,21 @@ function box(w: number, h: number, d: number, color: string, radius = 0.05) {
   return mesh
 }
 
-function cylinder(rTop: number, rBottom: number, h: number, color: string) {
+export function cylinder(rTop: number, rBottom: number, h: number, color: string) {
   const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBottom, h, 32), material(color))
   mesh.castShadow = true
   mesh.receiveShadow = true
   return mesh
 }
 
-function place<T extends THREE.Object3D>(obj: T, x: number, y: number, z: number, parent: THREE.Object3D) {
+export function place<T extends THREE.Object3D>(obj: T, x: number, y: number, z: number, parent: THREE.Object3D) {
   obj.position.set(x, y, z)
   parent.add(obj)
   return obj
 }
 
 /** 마루 무늬 (2.1m마다 반복되게 repeat을 넘겨요) */
-function plankTexture(repeatX: number, repeatY: number) {
+export function plankTexture(repeatX: number, repeatY: number) {
   const canvas = document.createElement('canvas')
   canvas.width = canvas.height = 256
   const ctx = canvas.getContext('2d')!
@@ -186,7 +187,7 @@ function cantileverChair() {
  * 벽은 바닥 판 윗면(y=0)부터 세워요.
  * 바닥 판 옆면과 벽 옆면이 같은 평면에 겹치면 모서리 색이 깜빡여요 (z-fighting)
  */
-const WALL_HEIGHT = 3.15
+export const WALL_HEIGHT = 3.15
 
 /**
  * 기계식 키보드: 아이보리 케이스 위에 키캡을 하나씩 세워요.
@@ -372,6 +373,103 @@ function screenTexture() {
   return texture
 }
 
+/** 문 위 나무 간판: 작은 게임패드 + 손글씨 글자 (폰트가 늦게 오면 다시 그려요) */
+function signTexture(text: string, icon: 'pad' | 'house') {
+  const canvas = document.createElement('canvas')
+  canvas.width = 512
+  canvas.height = 160
+  const ctx = canvas.getContext('2d')!
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 8
+  const draw = () => {
+    ctx.clearRect(0, 0, 512, 160)
+    // 둥근 원목 판 + 진한 테두리
+    ctx.fillStyle = C.caramel
+    ctx.strokeStyle = C.trim
+    ctx.lineWidth = 10
+    ctx.beginPath()
+    ctx.roundRect(8, 8, 496, 144, 40)
+    ctx.fill()
+    ctx.stroke()
+    ctx.strokeStyle = '#7a5640'
+    ctx.fillStyle = '#fff8e6'
+    ctx.lineWidth = 6
+    if (icon === 'pad') {
+      // 게임패드: 크림색 몸통 + 십자키 + 빨강 · 초록 버튼
+      ctx.beginPath()
+      ctx.roundRect(36, 48, 112, 64, 32)
+      ctx.fill()
+      ctx.stroke()
+      ctx.fillStyle = '#7a5640'
+      ctx.fillRect(56, 74, 30, 10)
+      ctx.fillRect(66, 64, 10, 30)
+      ctx.fillStyle = '#e8604c'
+      ctx.beginPath()
+      ctx.arc(114, 72, 8, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = '#7cc46a'
+      ctx.beginPath()
+      ctx.arc(130, 88, 8, 0, Math.PI * 2)
+      ctx.fill()
+    } else {
+      // 지붕 있는 작은 집 (로딩 화면 · 파비콘과 같은 모양)
+      ctx.fillStyle = '#ec6a52'
+      ctx.beginPath()
+      ctx.moveTo(48, 78)
+      ctx.lineTo(92, 36)
+      ctx.lineTo(136, 78)
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+      ctx.fillStyle = '#fff1c2'
+      ctx.fillRect(58, 78, 68, 46)
+      ctx.strokeRect(58, 78, 68, 46)
+      ctx.fillStyle = '#e3b07c'
+      ctx.fillRect(83, 98, 18, 26)
+    }
+    ctx.fillStyle = '#5a3d2b'
+    ctx.font = handFont(76)
+    ctx.textBaseline = 'middle'
+    ctx.fillText(text, 172, 84)
+    texture.needsUpdate = true
+  }
+  draw()
+  document.fonts?.load(handFont(76), text).then(draw).catch(() => {})
+  return texture
+}
+
+/**
+ * 나무 문 (문틀 + 판문 + 놋쇠 손잡이 + 간판 + 발매트).
+ * 그룹 원점은 벽면 위 문 가운데 바닥이고, 앞면은 +z를 봐요. (침실 · 게임방 문에 같이 써요)
+ */
+export function buildDoor(sign: string, kind: 'game' | 'home') {
+  const door = new THREE.Group()
+  const w = 0.85
+  const h = 2.2
+  // 문틀: 집 걸레받이 · 몰딩과 같은 나무색
+  for (const x of [-w / 2 - 0.05, w / 2 + 0.05]) place(box(0.1, h + 0.1, 0.1, C.trim, 0.02), x, (h + 0.1) / 2, 0.05, door)
+  place(box(w + 0.3, 0.12, 0.12, C.trim, 0.03), 0, h + 0.1, 0.06, door)
+  // 판문: 침대 프레임 · 하부장 문과 같은 메이플 우드, 패널 두 장
+  const panel = new THREE.Group()
+  place(box(w, h, 0.06, C.caramel, 0.02), 0, h / 2, 0, panel)
+  place(box(w - 0.3, 0.8, 0.03, C.wood, 0.02), 0, 1.55, 0.04, panel)
+  place(box(w - 0.3, 0.8, 0.03, C.wood, 0.02), 0, 0.58, 0.04, panel)
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 12), new THREE.MeshStandardMaterial({ color: '#e0b44a', metalness: 0.6, roughness: 0.3 }))
+  knob.castShadow = true
+  place(knob, w / 2 - 0.13, 1.05, 0.09, panel)
+  place(panel, 0, 0, 0.04, door)
+  // 문 위 나무 간판
+  const board = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.34), new THREE.MeshStandardMaterial({ map: signTexture(sign, kind === 'game' ? 'pad' : 'house'), transparent: true, roughness: 0.8 }))
+  place(board, 0, h + 0.46, 0.03, door)
+  // 문 앞 동그란 발매트
+  const mat = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.015, 40), material(kind === 'game' ? '#e6b8c6' : C.butter, 0.95))
+  mat.scale.z = 0.62
+  mat.receiveShadow = true
+  place(mat, 0, 0.008, 0.45, door)
+  return door
+}
+
 const yawQuat = (yaw: number) => new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0))
 
 /**
@@ -396,6 +494,9 @@ export class Room {
   readonly tableSpot: Spot
   readonly kitchenSpot: Spot
   readonly fridgeSpot: Spot
+  /** 게임방 문 (침실 뒤쪽 벽, 창문 오른쪽): 누르면 문 앞에 서서 게임방으로 넘어가요 */
+  readonly door: THREE.Group
+  readonly doorSpot: Spot
   /** 아이맥 화면: 평소엔 어둡고, 책상에 앉으면 main에서 밝게 켜요 */
   readonly monitorScreen = new THREE.MeshBasicMaterial({ map: screenTexture(), color: '#4a4d55' })
   /** 드래그로 걸을 때 피해 가는 가구 */
@@ -437,11 +538,23 @@ export class Room {
     place(box(bw + kw + 0.1, 0.1, 0.28, C.trim, 0.03), backX, 3.18, -3.1, g)
     place(box(0.28, 0.1, 1.7, C.trim, 0.03), PARTITION_X, 3.18, -2.4, g)
 
-    // 창문 (뒤쪽 벽)
-    place(box(1.5, 1.2, 0.08, C.woodMid, 0.03), -0.4, 1.9, -2.97, g)
-    place(box(1.3, 1.0, 0.06, C.glass, 0.02), -0.4, 1.9, -2.93, g)
-    place(box(0.35, 1.5, 0.06, C.cream, 0.03), -1.3, 1.85, -2.9, g)
-    place(box(0.35, 1.5, 0.06, C.cream, 0.03), 0.5, 1.85, -2.9, g)
+    // 창문 (뒤쪽 벽): 오른쪽에 게임방 문이 들어갈 자리를 남기고 조금 왼쪽으로
+    place(box(1.5, 1.2, 0.08, C.woodMid, 0.03), -0.6, 1.9, -2.97, g)
+    place(box(1.3, 1.0, 0.06, C.glass, 0.02), -0.6, 1.9, -2.93, g)
+    place(box(0.35, 1.5, 0.06, C.cream, 0.03), -1.5, 1.85, -2.9, g)
+    place(box(0.35, 1.5, 0.06, C.cream, 0.03), 0.3, 1.85, -2.9, g)
+
+    // 게임방 문 (뒤쪽 벽, 창문 오른쪽): 칸막이에 가려지지 않게 칸막이에서 2m쯤 떨어뜨려요
+    const doorX = 1.15
+    this.door = place(buildDoor('game room', 'game'), doorX, 0, -3.0, g)
+    this.doorSpot = {
+      action: 'door',
+      approach: new THREE.Vector3(doorX, 0, -2.0),
+      position: new THREE.Vector3(doorX, 0, -2.55),
+      quaternion: yawQuat(Math.PI),
+      hint: '문 열고 게임방 가기',
+    }
+    this.door.userData.spot = this.doorSpot
 
     // 시계 (왼쪽 벽, 침대와 책상 사이 가운데쯤)
     const clockZ = -0.65
@@ -453,11 +566,11 @@ export class Room {
     place(clockFace, -2.9, 2.2, clockZ, g)
 
     // 화분은 칸막이에 가려지지 않게 창문 아래에
-    const pot = place(cylinder(0.22, 0.17, 0.4, '#e98b5a'), 0.25, 0.2, -2.65, g)
+    const pot = place(cylinder(0.22, 0.17, 0.4, '#e98b5a'), 0.05, 0.2, -2.65, g)
     const leaves = new THREE.Mesh(new THREE.IcosahedronGeometry(0.4, 1), material('#7cc46a'))
     leaves.castShadow = true
     leaves.scale.set(1, 1.3, 1)
-    place(leaves, 0.25, 0.85, -2.65, g)
+    place(leaves, 0.05, 0.85, -2.65, g)
     obstacles.push(pot)
 
     // ---------- 침대 (머리는 왼쪽 벽 쪽) ----------
@@ -979,6 +1092,6 @@ export class Room {
 
   /** 클릭 판정 대상 */
   get clickables(): THREE.Object3D[] {
-    return [this.bed, this.desk, this.table, this.kitchen, this.fridge, ...this.floors]
+    return [this.bed, this.desk, this.table, this.kitchen, this.fridge, this.door, ...this.floors]
   }
 }

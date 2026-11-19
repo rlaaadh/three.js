@@ -2413,3 +2413,70 @@ body.is-app-open .zoom {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+
+/* ---------- 게임방 화면 전환: 베이지색 동그라미가 오므라들었다 벌어져요 (src/ui/Iris.ts) ---------- */
+.iris {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  overflow: hidden;
+  pointer-events: auto; /* 전환하는 동안은 눌러도 아무 일 없게 막아요 */
+}
+
+.iris.is-active {
+  display: block;
+}
+
+.iris__hole {
+  position: absolute;
+  border-radius: 50%;
+  /* 안쪽 테두리는 살짝 진한 베이지, 바깥은 화면을 다 덮을 만큼 큰 그림자 */
+  box-shadow:
+    0 0 0 5px #e6d3b5,
+    0 0 0 300vmax #f3e8d4;
+}
+
+/* ---------- 게임방에서 내 방으로 돌아가는 버튼 ---------- */
+.back-home {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  display: none;
+  padding: 8px 16px 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  color: var(--ink-soft);
+  font-family: var(--font-hand);
+  font-size: 20px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.back-home:hover {
+  background: #fffaf0;
+}
+
+body.is-game-room .back-home {
+  display: block;
+}
+
+/* 앱 창(꼬맨틀)이 떠 있는 동안은 숨겨요 */
+body.is-app-open .back-home {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .back-home {
+    top: calc(10px + env(safe-area-inset-top));
+    right: 12px;
+    font-size: 18px;
+  }
+
+  /* 모바일은 왼쪽 위 안내 문구와 겹치지 않게 문구를 한 줄 아래로 내려요 */
+  body.is-game-room .hud {
+    top: calc(56px + env(safe-area-inset-top));
+  }
+}

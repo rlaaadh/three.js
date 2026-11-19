@@ -122,6 +122,19 @@ export class Character {
     this.leaveSpot(() => this.walk(spot.approach, () => this.enter(spot)))
   }
 
+  /** 하던 걸 다 멈추고 그 자리에 바로 서요 (집 ↔ 게임방으로 넘어갈 때, 화면이 덮여 있는 동안) */
+  placeAt(point: THREE.Vector3, yaw: number) {
+    this.spot = null
+    this.transition = null
+    this.path = []
+    this.onArrive = null
+    this.steerDir = null
+    this.state = 'idle'
+    this.yaw = yaw
+    this.root.position.copy(point)
+    this.root.rotation.set(0, yaw, 0)
+  }
+
   /** 동작 중이면 일어나서 제자리에 서요 */
   standUp() {
     if (this.state === 'transition') return

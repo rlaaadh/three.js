@@ -37,9 +37,10 @@ function headers(extra: Record<string, string> = {}) {
 }
 
 /** 랭킹 테이블에서 위에서부터 limit줄 불러요 (게임마다 테이블 · 칸 · 정렬만 달라요) */
-export async function fetchRanking<T>(table: string, select: string, order: string, limit = RANK_LIMIT): Promise<T[]> {
+export async function fetchRanking<T>(table: string, select: string, order: string, limit = RANK_LIMIT, filter: Record<string, string> = {}): Promise<T[]> {
   if (!rankingEnabled()) return []
-  const params = new URLSearchParams({ select, order, limit: String(limit) })
+  // filter: PostgREST 조건 (예: { day: 'eq.2026-11-19' })
+  const params = new URLSearchParams({ select, order, limit: String(limit), ...filter })
   const res = await fetch(`${URL_BASE}/rest/v1/${table}?${params}`, { headers: headers() })
   if (!res.ok) throw new Error(`랭킹을 불러오지 못했어요 (${res.status})`)
   return res.json()
