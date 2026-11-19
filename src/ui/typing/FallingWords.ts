@@ -45,11 +45,24 @@ const FAST_SPEED = 2
 /**
  * 라운드별 낱말 구성
  * - 라운드 1: 짧은 낱말
- * - 라운드 2~5: 네 글자 사자성어만
- * - 라운드 6~10: 다섯 글자 이상 35% + 햄버거 세트 · 립 색상 이름 2~3개 + 나머지 사자성어 · 네 글자 낱말
+ * - 라운드 2: 네 글자 사자성어만
+ * - 라운드 3~5: 사자성어 + 다섯 글자 이상 낱말 1~2개
+ * - 라운드 6~10: 다섯 글자 이상 낱말 · 햄버거 세트 · 립 색상 이름을 LATE_MIX만큼 + 나머지 사자성어 · 네 글자 낱말
  */
-const LONGER_RATIO_LATE = 0.35
+/**
+ * 라운드 6~10 긴 낱말 개수: 라운드마다 조금씩 늘어서 난이도가 오르는 게 느껴지게
+ * longer = 다섯 글자 이상 낱말(LONGER_WORDS), special = 햄버거 세트 · 립 색상 이름(SPECIAL_WORDS)
+ */
+const LATE_MIX: Record<number, { longer: number; special: number }> = {
+  6: { longer: 3, special: 1 }, // 20개 중 4개 (20%)
+  7: { longer: 4, special: 1 }, // 22개 중 5개 (23%)
+  8: { longer: 5, special: 2 }, // 24개 중 7개 (29%)
+  9: { longer: 6, special: 2 }, // 26개 중 8개 (31%)
+  10: { longer: 7, special: 3 }, // 28개 중 10개 (36%)
+}
 const LATE_FROM_ROUND = 6
+/** 이 라운드부터 사자성어 사이에 다섯 글자 이상 낱말을 1~2개 섞어요 */
+const MID_LONGER_FROM_ROUND = 3
 /** LONG_WORDS에서 사자성어를 뺀 네 글자 이상 낱말 (사자성어는 Supabase에서 불러온 것으로 채워요) */
 const LONG_PLAIN_WORDS = LONG_WORDS.filter((w) => !IDIOMS.includes(w))
 
@@ -318,12 +331,16 @@ export class FallingWords implements TypingView {
   private pickWords(count: number) {
     const round = this.round + 1
     if (round === 1) return shuffle(WORDS).slice(0, count)
-    // 라운드 2~5: 네 글자 사자성어만
-    if (round < LATE_FROM_ROUND) return shuffle(idiomPool()).slice(0, count)
-    // 햄버거 세트 · 립 색상 이름은 2~3개, 한 판에서 겹치지 않게
-    const specials = shuffle(SPECIAL_WORDS.filter((w) => !this.usedSpecials.has(w))).slice(0, 2 + Math.floor(Math.random() * 2))
+    // 라운드 2: 네 글자 사자성어만 · 라운드 3~5: 사자성어 + 다섯 글자 이상 낱말 1~2개
+    if (round < LATE_FROM_ROUND) {
+      const longer = round >= MID_LONGER_FROM_ROUND ? shuffle(LONGER_WORDS).slice(0, 1 + Math.floor(Math.random() * 2)) : []
+      return [...longer, ...shuffle(idiomPool()).slice(0, count - longer.length)]
+    }
+    const mix = LATE_MIX[round] ?? LATE_MIX[10]
+    // 햄버거 세트 · 립 색상 이름은 한 판에서 겹치지 않게
+    const specials = shuffle(SPECIAL_WORDS.filter((w) => !this.usedSpecials.has(w))).slice(0, mix.special)
     specials.forEach((w) => this.usedSpecials.add(w))
-    const longer = shuffle(LONGER_WORDS).slice(0, Math.min(Math.round(count * LONGER_RATIO_LATE), count - specials.length))
+    const longer = shuffle(LONGER_WORDS).slice(0, Math.min(mix.longer, count - specials.length))
     const rest = shuffle([...idiomPool(), ...LONG_PLAIN_WORDS]).slice(0, count - specials.length - longer.length)
     return [...specials, ...longer, ...rest]
   }
