@@ -51,6 +51,7 @@ src/
 │   │   ├── Practice.ts      낱말 · 문장 · 긴글 연습 (키보드 가이드 · 타수 · 정확도)
 │   │   ├── hangul.ts        한글 → 두벌식 키 순서 (다음 키 안내 · 타수 계산)
 │   │   ├── input.ts         한글 조합 중 Enter 처리
+│   │   ├── wordBank.ts      떨어지는 낱말연습 사자성어 (Supabase rain_words 테이블, 못 불러오면 content.ts)
 │   │   └── content.ts       낱말 · 속담 · 긴글 주제(창작 가사 · 잰말놀이 · 일기 · 공유 저작물 명작) · 연습 팁
 │   └── Joystick.ts          드래그하는 동안 뜨는 조이스틱 표시
 └── utils/

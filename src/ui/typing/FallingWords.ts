@@ -4,6 +4,7 @@ import { strokesOf } from './hangul'
 import { IDIOMS, LONGER_WORDS, LONG_WORDS, SPECIAL_WORDS, WORDS, shuffle } from './content'
 import type { TypingView, ViewContext } from './TypingApp'
 import { RAIN_RANK_HEAD, RAIN_RANK_HINT, RANK_LIMIT, fetchTopScores, rankingEnabled } from './ranking'
+import { idiomPool, loadIdioms } from './wordBank'
 
 /**
  * 라운드 설정: 떨어질 낱말 수 · 바닥까지 걸리는 시간(초) · 다음 낱말까지 간격(초) · 통과 점수.
@@ -46,6 +47,8 @@ const FAST_SPEED = 2
  */
 const LONGER_RATIO_LATE = 0.35
 const LATE_FROM_ROUND = 6
+/** LONG_WORDS에서 사자성어를 뺀 네 글자 이상 낱말 (사자성어는 Supabase에서 불러온 것으로 채워요) */
+const LONG_PLAIN_WORDS = LONG_WORDS.filter((w) => !IDIOMS.includes(w))
 
 const escape = (text: string) => text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`)
 
@@ -134,6 +137,8 @@ export class FallingWords implements TypingView {
   private readonly hud: Record<'round' | 'score' | 'left' | 'cpm' | 'warn', HTMLElement>
 
   constructor(private readonly ctx: ViewContext) {
+    // 사자성어는 라운드 2부터 써요: 1라운드 도는 동안 Supabase에서 미리 불러 둬요 (실패하면 기본 낱말)
+    void loadIdioms()
     this.el.className = 'train'
     this.el.innerHTML = `
       <div class="train__top">
@@ -311,12 +316,12 @@ export class FallingWords implements TypingView {
     const round = this.round + 1
     if (round === 1) return shuffle(WORDS).slice(0, count)
     // 라운드 2~5: 네 글자 사자성어만
-    if (round < LATE_FROM_ROUND) return shuffle(IDIOMS).slice(0, count)
+    if (round < LATE_FROM_ROUND) return shuffle(idiomPool()).slice(0, count)
     // 햄버거 세트 · 립 색상 이름은 2~3개, 한 판에서 겹치지 않게
     const specials = shuffle(SPECIAL_WORDS.filter((w) => !this.usedSpecials.has(w))).slice(0, 2 + Math.floor(Math.random() * 2))
     specials.forEach((w) => this.usedSpecials.add(w))
     const longer = shuffle(LONGER_WORDS).slice(0, Math.min(Math.round(count * LONGER_RATIO_LATE), count - specials.length))
-    const rest = shuffle(LONG_WORDS).slice(0, count - specials.length - longer.length)
+    const rest = shuffle([...idiomPool(), ...LONG_PLAIN_WORDS]).slice(0, count - specials.length - longer.length)
     return [...specials, ...longer, ...rest]
   }
 
