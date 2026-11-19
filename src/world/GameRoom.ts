@@ -2,15 +2,18 @@ import * as THREE from 'three'
 import { C, WALL_HEIGHT, box, buildDoor, cylinder, material, place, plankTexture, type Spot } from './Room'
 import { singleRoomLayout, type NavLayout } from './Navigation'
 import { createLabel } from './Labels'
+import { handFont } from '../utils/fonts'
 
 /** 게임방에서 누를 수 있는 것들 */
-export type GameRoomItem = 'door' | 'game' | 'run' | 'ball' | 'book'
+export type GameRoomItem = 'door' | 'game' | 'jelly' | 'tv' | 'run' | 'ball' | 'book'
 
 /** 누르거나 마우스를 올렸을 때 왼쪽 위에 뜨는 안내 */
 export const GAME_ROOM_HINTS: Record<GameRoomItem | 'default', string> = {
-  default: '책꽂이를 누르면 꼬맨틀, 문을 누르면 내 방으로',
+  default: '책꽂이는 꼬맨틀, 게임기는 말랑젤리, 문은 내 방으로',
   door: '문 열고 내 방으로',
   game: '레트로 게임기 (곧 열려요)',
+  jelly: '오락기에서 말랑젤리 쌓기 (젤리 블록 퍼즐)',
+  tv: '레트로 게임기로 말랑젤리 쌓기 (젤리 블록 퍼즐)',
   run: '런닝머신 (곧 열려요)',
   ball: '짐볼 (곧 열려요)',
   book: '책꽂이에서 꼬맨틀 (비밀 단어 맞히기)',
@@ -21,12 +24,16 @@ export const GAME_ROOM_LABELS = {
   title: 'game room',
   book: '1. 책꽂이를 누르면 꼬맨틀',
   door: '2. 문을 누르면 내 방으로',
+  jelly: '3. 각종 게임기를 누르면 다양한 게임 플레이 가능',
 }
 
 /** 방 크기: 침실(6.4)보다 오른쪽으로 1.5배 넓어요. 왼쪽 · 뒤쪽 벽 위치는 침실과 같아요 */
 const ROOM = { minX: -3.2, maxX: 6.4, minZ: -3.2, maxZ: 3.2 }
 const ROOM_W = ROOM.maxX - ROOM.minX
 const ROOM_CX = (ROOM.minX + ROOM.maxX) / 2
+
+/** 말랑젤리 쌓기 오락기 (뒷벽 오락기 셋 중 오른쪽) */
+const ARCADE_X = -0.25
 
 /** 책 색: 집 소품 색에 맞춘 톤 다운 파스텔 */
 const BOOK_COLORS = ['#e8a598', '#a9c4a0', '#f2d48a', '#d98a6a', '#b9c7d9', '#efe3c8', '#c9a27e', '#8fae9e', '#e6b8c6', '#a8754d', '#f6eee0', '#7f9cb5']
@@ -68,6 +75,60 @@ function arcadeScreen(accent: string) {
     ctx.fillRect(62, 84, 4, 4)
     ctx.fillStyle = accent
     ctx.fillRect(10, 6, 30, 4)
+  })
+}
+
+/** 말랑젤리 오락기 화면: 민트 바탕에 얼굴 달린 젤리가 쌓여 있고 하나가 내려와요 */
+function jellyScreen() {
+  return canvasTexture(128, 112, (ctx) => {
+    ctx.fillStyle = '#3d3a52'
+    ctx.fillRect(0, 0, 128, 112)
+    ctx.fillStyle = '#e9f6ef'
+    ctx.fillRect(34, 6, 60, 100)
+    const s = 10
+    const jelly = (x: number, y: number, color: string) => {
+      ctx.fillStyle = color
+      ctx.beginPath()
+      ctx.roundRect(34 + x * s + 1, 6 + y * s + 1, s - 2, s - 2, 3)
+      ctx.fill()
+      ctx.fillStyle = '#3f3a3a'
+      ctx.fillRect(34 + x * s + 3, 6 + y * s + 4, 1, 2)
+      ctx.fillRect(34 + x * s + 6, 6 + y * s + 4, 1, 2)
+    }
+    // 바닥에 쌓인 젤리
+    const stack: [number, number, string][] = [
+      [0, 9, '#f7a8b4'], [1, 9, '#f7a8b4'], [2, 9, '#ffe08a'], [3, 9, '#ffe08a'], [4, 9, '#a8dcc8'], [5, 9, '#b6d6f2'],
+      [0, 8, '#cdb8ec'], [1, 8, '#cdb8ec'], [3, 8, '#ffc39a'], [4, 8, '#a8dcc8'], [5, 8, '#a8dcc8'],
+      [0, 7, '#cdb8ec'], [4, 7, '#c8e0a0'], [5, 7, '#c8e0a0'],
+    ]
+    for (const [x, y, color] of stack) jelly(x, y, color)
+    // 내려오는 젤리
+    for (const [x, y] of [[2, 2], [1, 3], [2, 3], [3, 3]]) jelly(x, y, '#ffe08a')
+    // 옆 점수 줄 · 별
+    ctx.fillStyle = '#f7a8b4'
+    ctx.fillRect(100, 12, 20, 4)
+    ctx.fillStyle = '#fff8e6'
+    ctx.fillRect(100, 22, 14, 4)
+    ctx.fillRect(10, 20, 3, 3)
+    ctx.fillRect(16, 70, 3, 3)
+    ctx.fillRect(110, 80, 3, 3)
+  })
+}
+
+/** 말랑젤리 오락기 간판 */
+function jellyMarquee() {
+  return canvasTexture(256, 60, (ctx) => {
+    ctx.fillStyle = '#fff3c4'
+    ctx.fillRect(0, 0, 256, 60)
+    ctx.font = handFont(40)
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.lineWidth = 6
+    ctx.strokeStyle = '#5a4033'
+    ctx.lineJoin = 'round'
+    ctx.strokeText('말랑젤리', 128, 32)
+    ctx.fillStyle = '#f7a8b4'
+    ctx.fillText('말랑젤리', 128, 32)
   })
 }
 
@@ -126,6 +187,10 @@ export class GameRoom {
   readonly bookSpot: Spot
   /** 문 앞에 서면 내 방으로 */
   readonly doorSpot: Spot
+  /** 오른쪽 오락기 앞에 서서 말랑젤리 쌓기 */
+  readonly arcadeSpot: Spot
+  /** TV 게임기 앞에 서서 말랑젤리 쌓기 */
+  readonly tvSpot: Spot
   /** 드래그로 걸을 때 피해 가는 가구 */
   private readonly obstacles: THREE.Object3D[] = []
   /** 누르면 통 튀는 물건들 */
@@ -140,17 +205,35 @@ export class GameRoom {
     this.bookSpot = {
       action: 'read',
       approach: new THREE.Vector3(-1.55, 0, -0.15),
-      position: new THREE.Vector3(-2.0, 0, -0.15),
+      position: new THREE.Vector3(-1.92, 0, -0.15),
       quaternion: yaw(-Math.PI / 2),
       hint: GAME_ROOM_HINTS.book,
     }
     this.doorSpot = {
       action: 'door',
       approach: this.spawn.clone(),
-      position: new THREE.Vector3(-2.45, 0, this.spawn.z),
+      position: new THREE.Vector3(-2.26, 0, this.spawn.z),
       quaternion: yaw(-Math.PI / 2),
       hint: GAME_ROOM_HINTS.door,
     }
+    // 오른쪽 오락기(뒷벽)를 바라보고 서요
+    this.arcadeSpot = {
+      action: 'play',
+      approach: new THREE.Vector3(ARCADE_X, 0, -1.35),
+      position: new THREE.Vector3(ARCADE_X, 0, -1.72),
+      quaternion: yaw(Math.PI),
+      hint: GAME_ROOM_HINTS.jelly,
+    }
+    this.jellyArcade.userData.spot = this.arcadeSpot
+    // TV 게임기로도 말랑젤리: 빈백 뒤, TV 앞에 서서 TV를 봐요
+    this.tvSpot = {
+      action: 'play',
+      approach: new THREE.Vector3(0.7, 0, -1.95),
+      position: new THREE.Vector3(1.5, 0, -1.95),
+      quaternion: yaw(Math.PI),
+      hint: GAME_ROOM_HINTS.tv,
+    }
+    this.tv.userData.spot = this.tvSpot
     this.bookshelf.userData.spot = this.bookSpot
     this.door.userData.spot = this.doorSpot
     this.group.updateMatrixWorld(true)
@@ -175,6 +258,8 @@ export class GameRoom {
 
   private bookshelf!: THREE.Group
   private door!: THREE.Group
+  private jellyArcade!: THREE.Group
+  private tv!: THREE.Group
 
   /** 누를 수 있게 등록 (item은 문 · 책꽂이 말고 아직 준비 중인 물건 안내용) */
   private clickable(obj: THREE.Object3D, item: GameRoomItem, solid = true) {
@@ -220,7 +305,7 @@ export class GameRoom {
     this.buildBookshelf(g)
     this.buildArcade(g, -2.15, C.caramel, '#e8604c')
     this.buildArcade(g, -1.2, '#a9c4a0', '#e6b8c6')
-    this.buildArcade(g, -0.25, C.butter, '#7f9cb5')
+    this.jellyArcade = this.buildArcade(g, ARCADE_X, C.butter, '#7f9cb5', true)
     this.buildTv(g)
     this.buildTreadmill(g)
     this.buildGym(g)
@@ -268,14 +353,17 @@ export class GameRoom {
   }
 
   /** 레트로 오락기: 나무 몸통 · 비스듬한 화면 · 조이스틱과 버튼 */
-  private buildArcade(g: THREE.Group, x: number, body: string, accent: string) {
+  private buildArcade(g: THREE.Group, x: number, body: string, accent: string, jelly = false) {
     const a = new THREE.Group()
     const w = 0.78
     // 아래 몸통 · 위 몸통 (뒤쪽으로 들어가요) · 지붕 간판
     place(box(w, 1.0, 0.72, body, 0.03), 0, 0.5, 0, a)
     place(box(w, 0.95, 0.5, body, 0.03), 0, 1.47, -0.11, a)
     place(box(w + 0.04, 0.24, 0.6, body, 0.03), 0, 2.02, -0.06, a)
-    const marquee = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.1, 0.16), new THREE.MeshBasicMaterial({ color: '#fff3c4' }))
+    const marquee = new THREE.Mesh(
+      new THREE.PlaneGeometry(w - 0.1, 0.16),
+      jelly ? new THREE.MeshBasicMaterial({ map: jellyMarquee() }) : new THREE.MeshBasicMaterial({ color: '#fff3c4' }),
+    )
     place(marquee, 0, 2.02, 0.245, a)
     // 앞판 크림색 + 동전 투입구
     place(box(w - 0.14, 0.6, 0.02, C.cream, 0.01), 0, 0.45, 0.36, a)
@@ -291,11 +379,12 @@ export class GameRoom {
     // 화면: 테두리 안에 살짝 뒤로 젖혀서
     const bezel = place(box(w - 0.12, 0.6, 0.03, '#3a2e2e', 0.02), 0, 1.5, 0.15, a)
     bezel.rotation.x = -0.12
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.22, 0.48), new THREE.MeshBasicMaterial({ map: arcadeScreen(accent) }))
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.22, 0.48), new THREE.MeshBasicMaterial({ map: jelly ? jellyScreen() : arcadeScreen(accent) }))
     screen.rotation.x = -0.12
     place(screen, 0, 1.5, 0.168, a)
     place(a, x, 0, -3.0 + 0.4, g)
-    this.clickable(a, 'game')
+    this.clickable(a, jelly ? 'jelly' : 'game')
+    return a
   }
 
   /** 낮은 원목 장 위 브라운관 TV + 게임기 + 패드 두 개, 앞에 빈백 */
@@ -322,13 +411,19 @@ export class GameRoom {
       place(pad, px, 0.01, 0.55, tv)
     }
     place(tv, 1.5, 0, -3.0 + 0.27, g)
-    this.clickable(tv, 'game')
+    this.tv = tv
+    this.clickable(tv, 'tv')
 
-    // 빈백: 납작하게 눌린 버터색 공
-    const bean = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 20), material(C.butter, 0.9))
-    bean.scale.set(1.1, 0.62, 1)
-    bean.castShadow = bean.receiveShadow = true
-    this.obstacles.push(place(bean, 1.45, 0.26, -1.25, g))
+    // TV 앞 버터색 짐볼: 동글동글한 공 (가운데 띠)
+    const ball = new THREE.Group()
+    const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.34, 40, 28), new THREE.MeshStandardMaterial({ color: C.butter, roughness: 0.45 }))
+    sphere.castShadow = sphere.receiveShadow = true
+    place(sphere, 0, 0.34, 0, ball)
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.008, 8, 48), material('#f6eee0', 0.5))
+    band.rotation.x = Math.PI / 2 - 0.3
+    place(band, 0, 0.34, 0, ball)
+    place(ball, 1.45, 0, -1.25, g)
+    this.clickable(ball, 'ball')
   }
 
   /** 런닝머신: 벽 쪽에 계기판, 방 안쪽으로 길게 벨트 */
@@ -443,8 +538,10 @@ export class GameRoom {
     title.position.set(0.6, title.position.y, 4.3)
     const hint = createLabel(GAME_ROOM_LABELS.door, { size: 0.4, color: '#e8604c' })
     const book = createLabel(GAME_ROOM_LABELS.book, { size: 0.4, color: '#e8604c' })
+    const jelly = createLabel(GAME_ROOM_LABELS.jelly, { size: 0.4, color: '#e8604c' })
     book.position.set(1.2, book.position.y, 5.4)
     hint.position.set(1.5, hint.position.y, 6.05)
-    this.group.add(title, hint, book)
+    jelly.position.set(3.2, jelly.position.y, 6.7)
+    this.group.add(title, hint, book, jelly)
   }
 }

@@ -151,6 +151,11 @@ export class Character {
     this.busyHandsTime = 0.2
   }
 
+  /** 오락기 버튼을 딸깍딸깍 */
+  pressButtons() {
+    this.busyHandsTime = 0.2
+  }
+
   /** 냉장고 앞에서 잠깐 튜브를 꾹꾹 주물러요 */
   knead() {
     this.busyHandsTime = 0.2
@@ -343,6 +348,13 @@ export class Character {
       const squeeze = fast ? Math.sin(this.time * 24) * 0.18 : Math.sin(this.time * 3) * 0.04
       armL = -1.0 + squeeze
       armR = -1.0 + squeeze
+    }
+
+    if (this.state === 'play') {
+      // 오락기: 왼손은 조이스틱, 오른손은 버튼. 젤리를 움직일 때는 딸깍딸깍 빠르게
+      const fast = this.busyHandsTime > 0
+      armL = -1.05 + Math.sin(this.time * (fast ? 26 : 3)) * (fast ? 0.12 : 0.03)
+      armR = -1.05 - Math.sin(this.time * (fast ? 30 : 3)) * (fast ? 0.14 : 0.03)
     }
 
     hipL.rotation.x = damp(hipL.rotation.x, legL, 14, dt)

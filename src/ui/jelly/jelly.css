@@ -1,0 +1,142 @@
+/* ---------- 말랑젤리.app: 말랑젤리 쌓기 ---------- */
+/* 위 HUD · 인트로 · 멈춤 · 끝 화면은 떨어지는 낱말연습(.train) 조각을 그대로 써요 */
+
+.jelly {
+  gap: 0.55em;
+}
+
+/* 젤리 통이 놓인 곳: 연한 민트 모눈종이 */
+.train__field.jelly__field {
+  background-color: #f3fbf6;
+  background-image:
+    linear-gradient(rgba(168, 220, 200, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 220, 200, 0.4) 1px, transparent 1px);
+}
+
+.jelly__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.train__title.jelly__title {
+  color: #f7a8b4;
+  font-size: 4.4em;
+}
+
+.jelly .train__overlay {
+  background: rgba(255, 250, 240, 0.8);
+}
+
+.jelly .train__intro {
+  max-height: 100%;
+  padding: 0.6em;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.train__chip.jelly__chip--hold {
+  background: #cdb8ec;
+}
+
+.train__chip.jelly__chip--star {
+  background: #fff4c7;
+}
+
+/* 통이 거의 다 차면 위험: 배경이 핑크로 깜박 */
+.jelly.is-danger .train__field {
+  animation: jelly-danger 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes jelly-danger {
+  from {
+    background-color: #f3fbf6;
+  }
+  to {
+    background-color: #ffe3ea;
+  }
+}
+
+/* 휴대폰 조작 버튼: 터치 기기에서만, 게임하는 동안만 */
+.jelly__pad {
+  display: none;
+  grid-template-columns: repeat(3, 1fr) 0.3fr repeat(3, 1fr);
+  gap: 0.45em;
+  width: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.jelly__key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05em;
+  height: 3.6em;
+  line-height: 1;
+  padding: 0;
+  border: 2.5px solid var(--win-line);
+  border-radius: 1em;
+  background: #fff;
+  box-shadow: 0 0.22em 0 var(--win-line);
+  color: var(--win-line);
+  font: inherit;
+  font-size: 1.15em;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.jelly__key:nth-child(4) {
+  grid-column: 5;
+}
+
+.jelly__key--hold {
+  background: #ece2fa;
+}
+
+.jelly__key--spin {
+  background: #d8f0e4;
+}
+
+.jelly__key--drop {
+  background: #ffd9de;
+}
+
+.jelly__key.is-down {
+  translate: 0 0.18em;
+  box-shadow: 0 0.04em 0 var(--win-line);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .jelly.is-playing .jelly__pad {
+    display: grid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jelly.is-danger .train__field {
+    animation: none;
+  }
+}
+
+.jelly__spin {
+  display: inline-block;
+  vertical-align: -0.2em;
+}
+
+/* 버튼 아래 작은 이름표 */
+.jelly__key small {
+  font-size: 0.78em;
+  white-space: nowrap;
+}
+
+.train__chip.jelly__chip--drop {
+  background: #ffd9de;
+}

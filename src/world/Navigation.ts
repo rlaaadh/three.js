@@ -21,10 +21,18 @@ const HOUSE_WALKABLE: [room: Rect, walk: Rect][] = [
 ]
 /** 종이 위에서 걸어갈 수 있는 범위 */
 const WORLD: Rect = { minX: -8.5, maxX: 15, minZ: -8.5, maxZ: 9 }
-/** 캐릭터 몸 두께만큼 벽과 띄우는 여유 */
-const MARGIN = 0.3
-/** 가구와 띄우는 여유 (클릭 · 드래그 모두 가구를 통과하지 않아요) */
-const FURNITURE_MARGIN = 0.25
+/**
+ * 캐릭터 몸 크기: 발 · 몸통은 중심에서 0.3쯤, 머리(머리카락 · 똥머리)는 0.57쯤까지 나와 있어요.
+ * 그래서 머리 높이까지 올라오는 벽 · 키 큰 가구는 머리만큼, 낮은 가구는 몸통만큼 띄워요.
+ */
+/** 벽과 띄우는 여유 (벽 안쪽 면에서 머리가 닿지 않게) */
+const MARGIN = 0.6
+/** 낮은 가구(침대 · 의자 · 매트 등)와 띄우는 여유 */
+const FURNITURE_MARGIN = 0.3
+/** 머리 높이까지 올라오는 가구(책꽂이 · 냉장고 · 오락기 · 나무 등)와 띄우는 여유 */
+const TALL_MARGIN = 0.58
+/** 이보다 높으면 키 큰 가구 (캐릭터 머리는 1.0 ~ 1.8 높이) */
+const TALL_HEIGHT = 1.0
 
 const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, maxX: r.maxX + m, minZ: r.minZ - m, maxZ: r.maxZ + m })
 
@@ -76,7 +84,8 @@ function obstacleRects(objects: THREE.Object3D[]) {
   const box = new THREE.Box3()
   return objects.map((o) => {
     box.setFromObject(o)
-    return grow({ minX: box.min.x, maxX: box.max.x, minZ: box.min.z, maxZ: box.max.z }, FURNITURE_MARGIN)
+    const margin = box.max.y > TALL_HEIGHT ? TALL_MARGIN : FURNITURE_MARGIN
+    return grow({ minX: box.min.x, maxX: box.max.x, minZ: box.min.z, maxZ: box.max.z }, margin)
   })
 }
 

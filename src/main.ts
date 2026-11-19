@@ -19,6 +19,7 @@ import { SleepGame } from './ui/SleepGame'
 import { Chiptune } from './ui/Chiptune'
 import { Iris } from './ui/Iris'
 import { Kkomantle } from './ui/kkomantle/Kkomantle'
+import { JellyGame } from './ui/jelly/JellyGame'
 import { GameRoom, GAME_ROOM_HINTS, GAME_ROOM_LABELS } from './world/GameRoom'
 import { DEFAULT_HINT } from './interaction/Pointer'
 import { loadHandFont } from './utils/fonts'
@@ -132,9 +133,10 @@ const dishes = new DishGame(music)
 const choco = new ChocoGame(music)
 const sleep = new SleepGame(music)
 const kkomantle = new Kkomantle(music)
+const jelly = new JellyGame(music)
 let zoomBeforeApp = 1
-/** 지금 창을 띄운 동작 (sit: 타자 연습, wash: 설거지, chill: 얼초 만들기, lie: 완벽한 잠을 사수하라, read: 꼬맨틀) */
-type Activity = 'sit' | 'wash' | 'chill' | 'lie' | 'read'
+/** 지금 창을 띄운 동작 (sit: 타자 연습, wash: 설거지, chill: 얼초 만들기, lie: 완벽한 잠을 사수하라, read: 꼬맨틀, play: 말랑젤리 쌓기) */
+type Activity = 'sit' | 'wash' | 'chill' | 'lie' | 'read' | 'play'
 let activity: Activity | null = null
 let openTimer = 0
 /** 3D 아이맥 화면: 꺼져 있다가 책상에 앉으면 환하게 켜져요 */
@@ -142,12 +144,12 @@ const SCREEN_OFF = new THREE.Color('#4a4d55')
 const SCREEN_ON = new THREE.Color('#ffffff')
 
 function startActivity(action: string) {
-  if (action !== 'sit' && action !== 'wash' && action !== 'chill' && action !== 'lie' && action !== 'read') return
+  if (action !== 'sit' && action !== 'wash' && action !== 'chill' && action !== 'lie' && action !== 'read' && action !== 'play') return
   activity = action
   zoomBeforeApp = stage.zoomTarget
   stage.zoomTarget = Math.max(stage.zoomTarget, 1.8)
   // 모니터가 먼저 켜지거나 싱크대 · 냉장고 앞에 서거나 침대에 누운 뒤, 창이 TV처럼 켜져요
-  const app = { sit: typing, wash: dishes, chill: choco, lie: sleep, read: kkomantle }[action]
+  const app = { sit: typing, wash: dishes, chill: choco, lie: sleep, read: kkomantle, play: jelly }[action]
   openTimer = window.setTimeout(() => app.open(), 450)
 }
 
@@ -161,6 +163,7 @@ function endActivity() {
   choco.close()
   sleep.close()
   kkomantle.close()
+  jelly.close()
 }
 
 function onAppClose() {
@@ -183,6 +186,10 @@ sleep.onClose = onAppClose
 // 꼬맨틀 정답을 맞히면 방긋
 kkomantle.onSolve = () => character?.smile(2)
 kkomantle.onClose = onAppClose
+// 말랑젤리: 젤리를 움직이면 버튼 딸깍딸깍, 줄을 터뜨리면 방긋
+jelly.onPlay = () => character?.pressButtons()
+jelly.onClear = () => character?.smile(0.8)
+jelly.onClose = onAppClose
 
 // ---------- 게임방: 문을 누르면 베이지색 동그라미가 오므라들었다가 게임방에서 다시 열려요 ----------
 // 게임방은 집과 같은 자리에 겹쳐 있고, 지나갈 때 집 · 게임방 중 하나만 보여요. 카메라 · 걷기 · 클릭은 그대로 같이 써요
@@ -241,7 +248,7 @@ document.getElementById('zoom-out')!.addEventListener('click', () => stage.zoomB
 
 // 개발 중에만 콘솔에서 상태를 확인할 수 있게 열어둬요 (예: __app.stage.camera.zoom)
 if (import.meta.env.DEV) {
-  Object.assign(window, { __app: { stage, room, intro, choco, sleep, enterGameRoom, leaveGameRoom, kkomantle, get gameRoom() { return gameRoom }, get character() { return character }, get pointer() { return pointer } } })
+  Object.assign(window, { __app: { stage, room, intro, choco, sleep, enterGameRoom, leaveGameRoom, kkomantle, jelly, get gameRoom() { return gameRoom }, get character() { return character }, get pointer() { return pointer } } })
 }
 
 // ---------- 렌더 루프 ----------
@@ -256,6 +263,7 @@ stage.renderer.setAnimationLoop((time) => {
   dishes.update(dt)
   choco.update(dt)
   sleep.update(dt)
+  jelly.update(dt)
   room.monitorScreen.color.lerp(activity === 'sit' ? SCREEN_ON : SCREEN_OFF, 1 - Math.exp(-dt * 6))
   footprints.update(dt)
   gameRoom?.update(dt)

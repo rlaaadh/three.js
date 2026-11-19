@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { handFont } from '../utils/fonts'
 import { BEDROOM, KITCHEN, PARTITION_X, setObstacles } from './Navigation'
 
-export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash' | 'chill' | 'door' | 'read'
+export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash' | 'chill' | 'door' | 'read' | 'play'
 
 /** 캐릭터가 다가가서 특정 동작을 하는 지점 (침대, 책상, 식탁, 주방, 냉장고, 문, 게임방 책꽂이) */
 export interface Spot {
@@ -550,7 +550,7 @@ export class Room {
     this.doorSpot = {
       action: 'door',
       approach: new THREE.Vector3(doorX, 0, -2.0),
-      position: new THREE.Vector3(doorX, 0, -2.55),
+      position: new THREE.Vector3(doorX, 0, -2.26),
       quaternion: yawQuat(Math.PI),
       hint: '문 열고 게임방 가기',
     }
@@ -871,7 +871,7 @@ export class Room {
     const spot: Spot = {
       action: 'chill',
       approach: new THREE.Vector3(fridgeX - 0.1, 0, -1.2),
-      position: new THREE.Vector3(fridgeX - 0.1, 0, -1.62),
+      position: new THREE.Vector3(fridgeX - 0.1, 0, -1.5),
       quaternion: yawQuat(Math.PI),
       hint: '냉장고에서 얼초 만들기',
     }

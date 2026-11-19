@@ -28,6 +28,7 @@ interface Song {
  * 곡 목록
  * - play: 통통 튀는 C장조 4마디 (타자 · 설거지 · 얼초 · 잠 게임)
  * - book: 책장 넘기듯 잔잔한 F장조 8마디, 오르골 같은 세모파 (꼬맨틀: 천천히 생각하는 게임)
+ * - jelly: 말랑말랑 통통 튀는 G장조 8마디 (말랑젤리 쌓기: 레벨이 오를수록 빨라져요)
  */
 const SONGS = {
   play: { melody: MELODY, bass: BASS, lead: 'square', leadVolume: 0.045, hat: true },
@@ -49,6 +50,25 @@ const SONGS = {
     lead: 'triangle',
     leadVolume: 0.09,
     hat: false,
+  },
+  jelly: {
+    melody: [
+      67, 71, 74, 71, 72, 71, 69, null,
+      67, null, 64, 67, 69, 67, 66, null,
+      67, 71, 74, 79, 78, 76, 74, null,
+      76, 74, 72, 71, 69, null, 71, null,
+      72, 72, 76, 72, 74, 72, 71, 69,
+      71, null, 67, 71, 74, null, 72, 71,
+      69, 71, 72, 74, 76, 74, 72, 69,
+      67, null, 74, null, 67, null, null, null,
+    ],
+    bass: [
+      43, 50, 43, 50, 40, 47, 40, 47, 43, 50, 47, 50, 45, 52, 50, 47,
+      48, 55, 48, 55, 43, 50, 43, 50, 45, 52, 50, 54, 43, 50, 43, null,
+    ],
+    lead: 'square',
+    leadVolume: 0.04,
+    hat: true,
   },
 } satisfies Record<string, Song>
 
@@ -123,7 +143,7 @@ export class Chiptune {
     this.stopLoop()
   }
 
-  sfx(kind: 'hit' | 'miss' | 'clear' | 'open' | 'click' | 'scrub' | 'drip' | 'freeze' | 'jump' | 'ring' | 'buzz' | 'ding') {
+  sfx(kind: 'hit' | 'miss' | 'clear' | 'open' | 'click' | 'scrub' | 'drip' | 'freeze' | 'jump' | 'ring' | 'buzz' | 'ding' | 'tick' | 'spin' | 'thud' | 'squish') {
     const ctx = this.ensure()
     if (!ctx) return
     void ctx.resume()
@@ -173,6 +193,23 @@ export class Chiptune {
       case 'jump':
         // 꿈속 점프: 퐁 하고 올라가는 소리
         this.tone(t, 380, 0.12, 'sine', 0.1, 820)
+        break
+      case 'tick':
+        // 젤리가 옆으로 한 칸: 아주 짧게 톡
+        this.tone(t, 760, 0.035, 'sine', 0.05, 860)
+        break
+      case 'spin':
+        // 젤리를 돌리면 뾰롱
+        this.tone(t, 640, 0.07, 'triangle', 0.07, 1080)
+        break
+      case 'thud':
+        // 젤리가 바닥에 닿으면 말랑하게 퐁
+        this.tone(t, 240, 0.09, 'sine', 0.12, 150)
+        break
+      case 'squish':
+        // 쿵 내리기: 쭉 미끄러졌다가 말랑
+        this.tone(t, 980, 0.08, 'sine', 0.06, 320)
+        this.tone(t + 0.07, 210, 0.1, 'sine', 0.13, 130)
         break
       case 'click':
         // 버튼을 누르면 톡: 짧게 튀어 오르는 소리
