@@ -63,8 +63,11 @@ export class Kkomantle {
     this.win.onClose = () => {
       window.clearInterval(this.timer)
       // 하던 판을 두고 창을 닫으면 그동안은 시간이 흐르지 않아요
-      if (this.phase === 'playing' && !this.pausedAt) this.pausedAt = performance.now()
-      this.save()
+      if (this.phase === 'playing') {
+        if (!this.pausedAt) this.pausedAt = performance.now()
+        // 풀던 중일 때만 저장 (끝난 날 기록을 '안 끝남'으로 덮어쓰지 않게)
+        this.save()
+      }
       this.onClose?.()
     }
     this.win.onEscape = () => this.onEscape()
@@ -97,7 +100,9 @@ export class Kkomantle {
     window.clearInterval(this.timer)
     const day = todayKey()
     const saved = readSaved(day)
-    const startLabel = saved?.done ? '오늘 결과 보기' : saved?.words.length ? '이어서 하기' : '시작하기'
+    // 오늘 맞혔거나 포기했으면 정답을 이미 아니까 내일까지 다시 못 해요
+    const done = !!saved?.done
+    const startLabel = !done && saved?.words.length ? '이어서 하기' : '시작하기'
     this.win.body.innerHTML = `
       <div class="kkom kkom--intro">
         <div class="kkom__card">
@@ -113,7 +118,10 @@ export class Kkomantle {
           </ul>
           <p class="kkom__note" data-ref="note" aria-live="polite">${escapeHtml(message)}</p>
           <div class="kkom__buttons">
-            <button type="button" class="tbutton tbutton--main" data-action="start">${startLabel}</button>
+            <span class="kkom__start${done ? ' is-done' : ''}">
+              ${done ? '<span class="kkom__tip" role="tooltip" id="kkom-tip">내일 다시 도전해주세요</span>' : ''}
+              <button type="button" class="tbutton tbutton--main" data-action="start"${done ? ' disabled aria-describedby="kkom-tip"' : ''}>${startLabel}</button>
+            </span>
             ${rankingEnabled() ? '<button type="button" class="tbutton" data-action="ranking">🏆 랭킹 보기</button>' : ''}
           </div>
         </div>
@@ -144,6 +152,7 @@ export class Kkomantle {
   }
 
   private async startRound(button?: HTMLButtonElement) {
+    if (readSaved(todayKey())?.done) return
     const note = this.win.body.querySelector<HTMLElement>('[data-ref="note"]')
     if (button) button.disabled = true
     if (note) note.textContent = '단어 책 펼치는 중...'
@@ -169,11 +178,6 @@ export class Kkomantle {
     this.latest = this.guesses.at(-1) ?? null
     this.startedAt = performance.now() - (saved?.elapsed ?? 0) * 1000
     this.pausedAt = 0
-    if (saved?.done) {
-      // 오늘은 이미 끝났어요: 결과만 다시 보여 줘요 (다시 풀 수는 없어요)
-      this.showResult(saved.done === 'solved', saved.elapsed)
-      return
-    }
     this.phase = 'playing'
     this.save()
     // 잔잔한 책장 노래 (시작 · 새 단어 버튼을 누른 순간이라 소리가 나요)

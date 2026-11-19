@@ -454,3 +454,54 @@
 .kkom .trank__row {
   grid-template-columns: 2.2em minmax(0, 1fr) 4.4em 5.6em;
 }
+
+/* 오늘 맞혔거나 포기했으면: 시작하기는 잠기고, 위에 말풍선 */
+.kkom__start {
+  position: relative;
+  display: inline-flex;
+}
+
+.kkom__start.is-done .tbutton {
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.kkom__tip {
+  position: absolute;
+  bottom: calc(100% + 0.7em);
+  left: 50%;
+  z-index: 2;
+  padding: 0.3em 0.9em;
+  border: 2px solid var(--win-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--win-line);
+  font-size: 0.95em;
+  white-space: nowrap;
+  translate: -50% 0;
+  box-shadow: 0.15em 0.15em 0 var(--win-shadow);
+  animation: kkom-tip-bob 2.4s ease-in-out infinite;
+}
+
+/* 말풍선 꼬리 */
+.kkom__tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 0.6em;
+  height: 0.6em;
+  border-right: 2px solid var(--win-line);
+  border-bottom: 2px solid var(--win-line);
+  background: #fff;
+  translate: -50% -50%;
+  rotate: 45deg;
+}
+
+@keyframes kkom-tip-bob {
+  50% {
+    translate: -50% -0.2em;
+  }
+}
