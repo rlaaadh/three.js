@@ -37,6 +37,9 @@ const DANGER_SCORE = -2
 const FAIL_SCORE = -5
 /** 너무 짧은 시간에 친 낱말이 타수를 튀게 하지 않도록 (초) */
 const MIN_TYPING_SEC = 0.25
+/** 배경음악 빠르기(BPM): 라운드마다 조금씩 빨라져요 */
+const MUSIC_TEMPO_START = 132
+const MUSIC_TEMPO_STEP = 4
 /** 핑크 낱말은 두 배 빨리 떨어져요 (비율은 ROUNDS의 fast) */
 const FAST_SPEED = 2
 /**
@@ -307,7 +310,7 @@ export class FallingWords implements TypingView {
     this.queue = []
     this.drops = []
     this.sky.replaceChildren()
-    this.ctx.music.start()
+    this.ctx.music.start(this.musicTempo())
     this.showIntro()
   }
 
@@ -378,14 +381,21 @@ export class FallingWords implements TypingView {
     this.overlay.replaceChildren()
     this.sky.classList.remove('is-paused')
     this.input.disabled = false
-    this.ctx.music.start()
+    this.ctx.music.start(this.musicTempo())
     this.playing = true
     this.renderHud()
     this.input.focus({ preventScroll: true })
   }
 
+  /** 배경음악 빠르기: 라운드 1은 132, 라운드가 오를 때마다 조금씩 빨라져서 라운드 10은 168 */
+  private musicTempo() {
+    return MUSIC_TEMPO_START + this.round * MUSIC_TEMPO_STEP
+  }
+
   private startRound() {
     const config = ROUNDS[this.round]
+    // 낱말이 빨라지는 만큼 배경음악도 같이 빨라져요
+    this.ctx.music.setTempo(this.musicTempo())
     // 정확히 20%(반올림)를 핑크 낱말로 섞어요
     const fastCount = Math.round(config.count * config.fast)
     const words = this.pickWords(config.count)

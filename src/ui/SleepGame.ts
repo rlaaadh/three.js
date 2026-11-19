@@ -27,9 +27,45 @@ const MAX_PILLOWS = 3
 /** 달리는 속도 (화면 높이를 100으로 본 단위 / 초): 아침이 가까울수록 빨라져요 */
 const SPEED_START = 50
 const SPEED_END = 115
+/** 배경음악 빠르기(BPM): 속도가 빨라질수록 같이 빨라져요 */
+const MUSIC_TEMPO_START = 112
+const MUSIC_TEMPO_END = 150
 const GRAVITY = 430
 const JUMP_V = 152
 const DOUBLE_JUMP_V = 132
+/** 한 번 점프의 체공 시간(초) · 높이 */
+const JUMP_AIR = (2 * JUMP_V) / GRAVITY
+/** 꼭대기에서 2단 점프했을 때 가장 높은 곳 */
+const DOUBLE_JUMP_TOP = (JUMP_V * JUMP_V + DOUBLE_JUMP_V * DOUBLE_JUMP_V) / (2 * GRAVITY)
+/** 지금 속도로 한 번 뛰면 가로로 가는 거리 */
+const jumpSpan = (speed: number) => JUMP_AIR * speed
+
+/** 점프 궤적(시간 · 발 높이) 표: 한 번 점프, 또는 꼭대기에서 2단 점프 */
+function jumpPath(double: boolean) {
+  const path: { t: number; h: number }[] = []
+  let t = 0
+  let h = 0
+  let v = JUMP_V
+  let usedDouble = !double
+  const dt = 1 / 240
+  do {
+    path.push({ t, h })
+    if (!usedDouble && v <= 0) {
+      v = DOUBLE_JUMP_V
+      usedDouble = true
+    }
+    h += v * dt
+    v -= GRAVITY * dt
+    t += dt
+  } while (h > 0)
+  path.push({ t, h: 0 })
+  return path
+}
+
+function heightAt(path: { t: number; h: number }[], t: number) {
+  const i = Math.min(Math.floor((t / path[path.length - 1].t) * (path.length - 1)), path.length - 1)
+  return path[i].h
+}
 /** 땅에서 살짝 떨어진 뒤에도 점프를 받아 주는 시간 · 땅에 닿기 직전 누른 점프를 기억하는 시간 */
 const COYOTE_SEC = 0.08
 const BUFFER_SEC = 0.12
@@ -315,8 +351,8 @@ export class SleepGame {
     this.overlay.classList.remove('is-on')
     this.overlay.replaceChildren()
     ;(document.activeElement as HTMLElement | null)?.blur()
-    // 버튼 클릭 안에서 소리를 켜야 브라우저가 막지 않아요. 자장가처럼 조금 느리게
-    this.music.start(112)
+    // 버튼 클릭 안에서 소리를 켜야 브라우저가 막지 않아요. 자장가처럼 조금 느리게 시작해요
+    this.music.start(this.musicTempo())
     this.phase = 'playing'
     this.renderHud()
   }
@@ -364,7 +400,7 @@ export class SleepGame {
     this.overlay.classList.remove('is-on')
     this.overlay.replaceChildren()
     ;(document.activeElement as HTMLElement | null)?.blur()
-    this.music.start(112)
+    this.music.start(this.musicTempo())
     this.phase = 'playing'
     this.renderHud()
   }
@@ -450,6 +486,8 @@ export class SleepGame {
       this.music.sfx('clear')
     }
     const speed = lerp(SPEED_START, SPEED_END, progress)
+    // 달리기가 빨라지는 만큼 배경음악도 같이 빨라져요
+    this.music.setTempo(this.musicTempo())
     const move = speed * dt
     this.distance += move
     this.runPhase += dt * (6 + speed / 10)
@@ -593,11 +631,11 @@ export class SleepGame {
    */
   private spawn(progress: number, speed: number) {
     const x = this.worldW + 12
-    /** 이불 틈 하나 + 그 위로 점프 궤적을 따라 양 무지개 */
-    const holeWithArc = (hx: number, w: number, peak: number, n: number) => {
+    /** 이불 틈 하나 + 그 위로 진짜 점프 궤적을 따라 양 무지개 (지금 속도 기준, 틈 가운데에 맞춰요) */
+    const holeWithArc = (hx: number, w: number, n: number, double = false) => {
       this.holes.push({ x: hx, w })
-      this.arc(hx - 5, w + 10, n, peak)
-      return hx - x + w
+      const span = this.jumpArc(hx + w / 2, speed, n, double)
+      return Math.max(hx - x + w, hx + w / 2 + span / 2 - x)
     }
     const options: [weight: number, make: () => number][] = [
       [2.2, () => this.add('clock', x, GROUND)],
@@ -607,38 +645,69 @@ export class SleepGame {
       [
         1.6,
         () => {
-          this.add('clock', x + 16, GROUND)
-          this.arc(x, 32, 5, 22)
-          return 32
+          const span = jumpSpan(speed)
+          this.add('clock', x + span / 2, GROUND)
+          this.jumpArc(x + span / 2, speed, 5)
+          return span
         },
       ],
       // 이불 위에 길게 줄지은 양
       [
         2,
         () => {
-          const n = 6 + Math.floor(Math.random() * 5)
+          const n = 6 + Math.floor(Math.random() * 9)
           for (let i = 0; i < n; i++) this.add('sheep', x + i * 7, GROUND - 5)
           return n * 7
         },
       ],
-      // 둥실둥실 물결 양
+      // 양 대행진 (양 30마리쯤): 이불 위 줄 → 틈 넘는 무지개 → 줄 → 2단 점프 무지개 → 줄 → 높은 물결로 이어지는 긴 코스
+      [
+        progress > 0.05 ? 1.3 : 0,
+        () => {
+          let cx = x
+          const line = (n: number) => {
+            for (let i = 0; i < n; i++) this.add('sheep', cx + i * 7, GROUND - 5)
+            cx += n * 7 + 4
+          }
+          const single = jumpSpan(speed)
+          const double = this.jumpArc(-1000, speed, 0, true)
+          line(6)
+          // 작은 틈 + 한 번 점프 무지개
+          this.holes.push({ x: cx + single / 2 - 7, w: 14 })
+          this.jumpArc(cx + single / 2, speed, 5)
+          cx += single + 10
+          line(5)
+          // 2단 점프 무지개 (꼭대기에 별)
+          this.jumpArc(cx + double / 2, speed, 7, true)
+          this.add('star', cx + double / 2, GROUND - DOUBLE_JUMP_TOP - 6.5)
+          cx += double + 10
+          line(4)
+          // 마지막은 높은 물결 하나
+          this.jumpArc(cx + double / 2, speed, 7, true)
+          cx += double
+          return cx - x
+        },
+      ],
+      // 둥실둥실 물결 양: 2단 점프 궤적 두 개를 이어 붙인 높은 물결이라, 두 번 눌러야 꼭대기 양까지 먹어요
       [
         1.5,
         () => {
-          const n = 9
-          for (let i = 0; i < n; i++) this.add('sheep', x + i * 7, GROUND - 14 - Math.sin((i / (n - 1)) * Math.PI * 2) * 10)
-          return n * 7
+          const span = this.jumpArc(-1000, speed, 0, true)
+          const gap = 10
+          for (let k = 0; k < 2; k++) this.jumpArc(x + span / 2 + k * (span + gap), speed, 7, true)
+          return span * 2 + gap
         },
       ],
       // 작은 이불 틈: 한 번 점프로 건너요
-      [2.6, () => holeWithArc(x + 8, rand(13, 18), 24, 5)],
+      [2.6, () => holeWithArc(x + 8, rand(13, 18), 5)],
       // 넓은 이불 틈: 2단 점프로 건너고, 꼭대기엔 별
       [
         progress > 0.1 ? 2.2 : 0,
         () => {
           const w = Math.min(Math.max(speed * 0.45, 24), 44)
-          const end = holeWithArc(x + 10, w, 42, 7)
-          this.add('star', x + 10 + w / 2, GROUND - 54)
+          const end = holeWithArc(x + 10, w, 7, true)
+          // 별은 2단 점프 꼭대기에
+          this.add('star', x + 10 + w / 2, GROUND - DOUBLE_JUMP_TOP - 6.5)
           return end
         },
       ],
@@ -646,8 +715,10 @@ export class SleepGame {
       [
         progress > 0.3 ? 1.5 : 0,
         () => {
+          // 틈 사이 거리 = 한 번 점프 거리 + 디딜 자리 (빨라지면 같이 넓어져요)
+          const step = jumpSpan(speed) + 14
           let end = 0
-          for (let i = 0; i < 3; i++) end = holeWithArc(x + 8 + i * 26, 13, 18, 3)
+          for (let i = 0; i < 3; i++) end = holeWithArc(x + 8 + i * step, 13, 3)
           return end
         },
       ],
@@ -655,7 +726,8 @@ export class SleepGame {
       [
         progress > 0.3 ? 1.2 : 0,
         () => {
-          const gap = 30 + speed * 0.32
+          // 첫 번째를 넘어 착지한 뒤 다시 뛸 자리가 있게: 점프 거리 + 여유
+          const gap = jumpSpan(speed) + 20
           this.add(Math.random() < 0.5 ? 'clock' : 'phone', x, GROUND)
           this.add('clock', x + gap, GROUND)
           return gap
@@ -665,7 +737,7 @@ export class SleepGame {
       [
         0.9,
         () => {
-          this.add('star', x + 6, GROUND - 46)
+          this.add('star', x + 6, GROUND - DOUBLE_JUMP_TOP - 4)
           if (progress > 0.4 && Math.random() < 0.5) this.add('phone', x + 6, GROUND)
           return 12
         },
@@ -686,12 +758,21 @@ export class SleepGame {
     return width + rand(40, 66) + speed * 0.3
   }
 
-  /** 점프 궤적처럼 둥근 무지개 모양으로 양을 놓아요 (peak: 가운데 높이) */
-  private arc(x0: number, length: number, n: number, peak: number) {
+  /**
+   * 진짜 점프 궤적 위에 양을 놓아요. 지금 속도로 뛰었을 때 몸이 지나가는 길이라 한 번 뛰면 줄줄이 먹어요.
+   * centerX: 궤적 가운데, double: 꼭대기에서 2단 점프. 궤적의 가로 길이를 돌려줘요.
+   */
+  private jumpArc(centerX: number, speed: number, n: number, double = false) {
+    const path = jumpPath(double)
+    const total = path[path.length - 1].t
+    const span = total * speed
     for (let i = 0; i < n; i++) {
-      const t = n === 1 ? 0.5 : i / (n - 1)
-      this.add('sheep', x0 + t * length, GROUND - 6 - peak * 4 * t * (1 - t))
+      // 양 끝은 땅에 붙어 있어서 조금 안쪽부터 놓아요
+      const t = total * (0.12 + 0.76 * (n === 1 ? 0.5 : i / (n - 1)))
+      const h = heightAt(path, t)
+      this.add('sheep', centerX - span / 2 + t * speed, GROUND - 6.5 - h)
     }
+    return span
   }
 
   private add(kind: Kind, x: number, y: number) {
@@ -714,6 +795,11 @@ export class SleepGame {
 
   private playerBox() {
     return { x: PLAYER_X, y: this.py - 6.5, hw: 3.6, hh: 5.8 }
+  }
+
+  /** 배경음악 빠르기: 밤 11시 112 → 아침 7시 150 (달리기 속도와 같이 올라가요) */
+  private musicTempo() {
+    return lerp(MUSIC_TEMPO_START, MUSIC_TEMPO_END, this.progress())
   }
 
   private progress() {

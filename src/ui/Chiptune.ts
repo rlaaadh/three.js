@@ -72,6 +72,11 @@ export class Chiptune {
     this.timer = window.setInterval(() => this.schedule(), 25)
   }
 
+  /** 배경음악 빠르기만 바꿔요 (다음 음부터 바로 적용돼서 자연스럽게 빨라져요) */
+  setTempo(tempo: number) {
+    this.tempo = tempo
+  }
+
   stop() {
     this.stopLoop()
   }
