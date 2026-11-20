@@ -4,7 +4,7 @@ import type { Chiptune } from './Chiptune'
 import { RetroWindow } from './RetroWindow'
 import { isTouchDevice } from '../utils/device'
 import { NICKNAME_MAX, RANK_LIMIT, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage } from './typing/ranking'
-import { fetchSleepTop, submitSleepScore, type SleepScore } from './sleepRanking'
+import { fetchSleepTop, submitSleepScore, type SleepMode, type SleepScore } from './sleepRanking'
 
 /*
  * 완벽한 잠을 사수하라! (꿈나라.app)
@@ -30,6 +30,11 @@ const SPEED_END = 115
 /** 배경음악 빠르기(BPM): 속도가 빨라질수록 같이 빨라져요 */
 const MUSIC_TEMPO_START = 112
 const MUSIC_TEMPO_END = 150
+/** 모기는 땅보다 이만큼 더 빨리 날아와요 */
+const MOSQUITO_DRIFT = 10
+/** 스피드 게임: 달리기 속도 2배, 배경음악은 1.25배 */
+const SPEED_MODE_MUL = 2
+const SPEED_MODE_TEMPO_MUL = 1.25
 const GRAVITY = 430
 const JUMP_V = 152
 const DOUBLE_JUMP_V = 132
@@ -179,6 +184,8 @@ export class SleepGame {
   private things: Thing[] = []
   private pops: Pop[] = []
   private spawnLeft = 30
+  /** 스피드 게임(속도 2배)으로 하는 중 */
+  private speedMode = false
   /** 이불 틈: 이 구간은 바닥이 없어요 */
   private holes: { x: number; w: number }[] = []
   private combo = 0
@@ -335,17 +342,21 @@ export class SleepGame {
         </ul>
         <div class="train__buttons">
           <button type="button" class="tbutton tbutton--main" data-action="start">게임 시작</button>
+          <button type="button" class="tbutton sleep__speedbtn" data-action="speed"><span class="sleep__new" aria-label="새 모드">NEW</span>⚡ 스피드 게임 <small>속도 2배</small></button>
         </div>
       </div>
     `
     this.overlay.classList.add('is-on')
     const button = this.overlay.querySelector<HTMLButtonElement>('[data-action="start"]')!
-    button.addEventListener('click', () => this.start())
+    button.addEventListener('click', () => this.start(false))
+    this.overlay.querySelector('[data-action="speed"]')!.addEventListener('click', () => this.start(true))
     this.renderHud()
     setTimeout(() => button.isConnected && button.focus({ preventScroll: true }), 450)
   }
 
-  private start() {
+  /** speedMode: 스피드 게임(속도 2배) */
+  private start(speedMode = this.speedMode) {
+    this.speedMode = speedMode
     this.closeRanking()
     this.reset()
     this.overlay.classList.remove('is-on')
@@ -417,7 +428,7 @@ export class SleepGame {
       <div class="train__intro">
         <p class="train__title train__title--fail">깼다!</p>
         <p class="train__desc">${reason ? `${reason} ` : ''}${periodLabel(slept)} <b>${clockLabel(slept)}</b>에 잠에서 깼어요 (${sleptLabel(slept)} 잤어요)</p>
-        <p class="train__rule">양 ${this.sheep}마리 · 별 ${this.stars}개 · 점수 ${this.score()}점</p>
+        <p class="train__rule">${this.speedMode ? '⚡ 스피드 게임 · ' : ''}양 ${this.sheep}마리 · 별 ${this.stars}개 · 점수 ${this.score()}점</p>
         <div class="train__buttons">
           ${hasRank ? '<button type="button" class="tbutton tbutton--main" data-action="submit-rank">🏆 랭킹 등록</button>' : ''}
           <button type="button" class="tbutton${hasRank ? '' : ' tbutton--main'}" data-action="restart">다시 시작하기</button>
@@ -444,7 +455,7 @@ export class SleepGame {
     el.className = 'tresult'
     el.innerHTML = `
       <div class="tresult__card">
-        <p class="tresult__title">${cleared ? '완벽한 잠 성공! ☀️' : '아쉬워요, 깼어요!'}${isBest ? ' <mark>최고 기록 🎉</mark>' : ''}</p>
+        <p class="tresult__title">${this.speedMode ? '⚡ ' : ''}${cleared ? '완벽한 잠 성공! ☀️' : '아쉬워요, 깼어요!'}${isBest ? ' <mark>최고 기록 🎉</mark>' : ''}</p>
         <div class="tresult__lines">
           <div class="tresult__line"><span>잔 시간</span><b>${sleptLabel(slept)}</b></div>
           <div class="tresult__line"><span>모은 양</span><b>${this.sheep}마리</b></div>
@@ -459,7 +470,7 @@ export class SleepGame {
           <button type="button" class="tbutton" data-action="quit">그만하기</button>
         </div>
       </div>
-      ${hasRank ? RANK_CARD : ''}
+      ${hasRank ? rankCard(this.mode) : ''}
     `
     this.win.body.replaceChildren(el)
     el.querySelectorAll('[data-action="again"]').forEach((b) =>
@@ -485,7 +496,7 @@ export class SleepGame {
       this.pop('속도 UP!', this.worldW / 2, 30, '#ec6a52')
       this.music.sfx('clear')
     }
-    const speed = lerp(SPEED_START, SPEED_END, progress)
+    const speed = lerp(SPEED_START, SPEED_END, progress) * (this.speedMode ? SPEED_MODE_MUL : 1)
     // 달리기가 빨라지는 만큼 배경음악도 같이 빨라져요
     this.music.setTempo(this.musicTempo())
     const move = speed * dt
@@ -531,7 +542,7 @@ export class SleepGame {
     const box = this.playerBox()
     for (const thing of this.things) {
       thing.t += dt
-      thing.x -= move + (thing.kind === 'mosquito' ? 10 * dt : 0)
+      thing.x -= move + (thing.kind === 'mosquito' ? MOSQUITO_DRIFT * dt : 0)
       if (thing.baseY !== undefined) thing.y = thing.baseY + Math.sin(thing.t * 3.2) * 6
       if (thing.done) continue
       const cy = thing.kind === 'clock' || thing.kind === 'phone' ? thing.y - thing.hh : thing.y
@@ -640,7 +651,13 @@ export class SleepGame {
     const options: [weight: number, make: () => number][] = [
       [2.2, () => this.add('clock', x, GROUND)],
       [1.4, () => this.add('phone', x, GROUND)],
-      [progress > 0.08 ? 0.8 + 2 * progress : 0, () => this.add('mosquito', x, GROUND - rand(14, 24))],
+      // 모기: 낮게(뛰어 넘기) 또는 높게(그냥 달리면 안전, 뛰면 부딪혀요). 아침이 가까울수록 높은 모기가 늘어요
+      [
+        progress > 0.08 ? 0.8 + 2 * progress : 0,
+        () => this.add('mosquito', x, GROUND - (Math.random() < 0.3 + progress * 0.4 ? rand(30, 46) : rand(14, 24))),
+      ],
+      // 하늘에 뜬금없이 떠 있는 알람시계: 습관처럼 뛰면 부딪혀요
+      [progress > 0.12 ? 0.9 + 1.2 * progress : 0, () => this.skyClock(x)],
       // 알람시계 위로 양 무지개: 점프하면 같이 먹어요
       [
         1.6,
@@ -657,6 +674,12 @@ export class SleepGame {
         () => {
           const n = 6 + Math.floor(Math.random() * 9)
           for (let i = 0; i < n; i++) this.add('sheep', x + i * 7, GROUND - 5)
+          // 가끔 줄 위 하늘에 시계나 모기가 떠 있어요: 땅으로 달리며 먹으면 안전해요
+          if (progress > 0.15 && Math.random() < 0.3 + progress * 0.5) {
+            const hx = x + rand(0.3, 0.8) * n * 7
+            if (Math.random() < 0.55) this.skyClock(hx)
+            else this.add('mosquito', PLAYER_X + ((hx - PLAYER_X) * (speed + MOSQUITO_DRIFT)) / speed, GROUND - rand(30, 44))
+          }
           return n * 7
         },
       ],
@@ -680,22 +703,51 @@ export class SleepGame {
           // 2단 점프 무지개 (꼭대기에 별)
           this.jumpArc(cx + double / 2, speed, 7, true)
           this.add('star', cx + double / 2, GROUND - DOUBLE_JUMP_TOP - 6.5)
+          // 2단 점프 무지개 아래엔 휴대폰
+          this.add('phone', cx + double / 2, GROUND)
           cx += double + 10
           line(4)
-          // 마지막은 높은 물결 하나
+          // 마지막은 높은 물결 하나 (아래에 알람시계)
           this.jumpArc(cx + double / 2, speed, 7, true)
+          this.add('clock', cx + double / 2, GROUND)
           cx += double
           return cx - x
         },
       ],
-      // 둥실둥실 물결 양: 2단 점프 궤적 두 개를 이어 붙인 높은 물결이라, 두 번 눌러야 꼭대기 양까지 먹어요
+      // 끝없는 물결 양: 2단 점프 궤적을 여러 개 이어 붙여 길게 (두 번 눌러야 꼭대기까지 먹어요).
+      // 물결 사이 땅에는 알람시계 · 휴대폰, 물결 아래엔 모기가 끼어 있어서 박자를 놓치면 부딪혀요
       [
-        1.5,
+        1.6,
         () => {
           const span = this.jumpArc(-1000, speed, 0, true)
-          const gap = 10
-          for (let k = 0; k < 2; k++) this.jumpArc(x + span / 2 + k * (span + gap), speed, 7, true)
-          return span * 2 + gap
+          // 물결 사이는 거의 붙여요: 착지하자마자 다시 뛰면 다음 물결에 딱 맞아요
+          const gap = 3
+          const humps = 4 + Math.floor(Math.random() * 3) + (progress > 0.5 ? 1 : 0)
+          for (let k = 0; k < humps; k++) {
+            const cx = x + span / 2 + k * (span + gap)
+            const first = this.things.length
+            this.jumpArc(cx, speed, 7, true)
+            // 꼭대기 함정: 물결 꼭대기 양 대신 모기나 시계가 떠 있어요.
+            // 이 물결은 2단 점프하면 부딪히고, 한 번만 뛰면 아래로 지나가요
+            if (k > 0 && Math.random() < 0.22 + progress * 0.3) {
+              const apex = this.things.splice(first + 3, 1)[0]
+              if (Math.random() < 0.5) {
+                this.add('mosquito', PLAYER_X + ((apex.x - PLAYER_X) * (speed + MOSQUITO_DRIFT)) / speed, apex.y)
+              } else {
+                this.add('clock', apex.x, apex.y + 5.2)
+              }
+              continue
+            }
+            // 방해물: 물결 가운데 땅(뛰어서 넘어요)에 시계 · 휴대폰, 가끔은 낮게 뜬 모기
+            if (k > 0 && Math.random() < 0.35 + progress * 0.4) {
+              const r = Math.random()
+              if (r < 0.4) this.add('clock', cx, GROUND)
+              else if (r < 0.75) this.add('phone', cx, GROUND)
+              // 모기는 땅보다 조금 빨리 날아와서, 물결 가운데에 같이 도착하게 그만큼 뒤에 놓아요
+              else this.add('mosquito', PLAYER_X + ((cx - PLAYER_X) * (speed + MOSQUITO_DRIFT)) / speed, GROUND - 13)
+            }
+          }
+          return humps * (span + gap)
         },
       ],
       // 작은 이불 틈: 한 번 점프로 건너요
@@ -775,6 +827,16 @@ export class SleepGame {
     return span
   }
 
+  /**
+   * 하늘에 떠서 위아래로 흔들리는 알람시계. 높이는 한 번 점프 ~ 2단 점프 사이라
+   * 땅으로 달리면 아래로 지나가고, 뛰는 타이밍에 따라 부딪혀요.
+   */
+  private skyClock(x: number) {
+    this.add('clock', x, GROUND - rand(28, 46) + 5.2)
+    this.things[this.things.length - 1].baseY = this.things[this.things.length - 1].y
+    return 10
+  }
+
   private add(kind: Kind, x: number, y: number) {
     const size: Record<Kind, [number, number]> = {
       clock: [4.2, 5.2],
@@ -799,7 +861,7 @@ export class SleepGame {
 
   /** 배경음악 빠르기: 밤 11시 112 → 아침 7시 150 (달리기 속도와 같이 올라가요) */
   private musicTempo() {
-    return lerp(MUSIC_TEMPO_START, MUSIC_TEMPO_END, this.progress())
+    return lerp(MUSIC_TEMPO_START, MUSIC_TEMPO_END, this.progress()) * (this.speedMode ? SPEED_MODE_TEMPO_MUL : 1)
   }
 
   private progress() {
@@ -825,7 +887,7 @@ export class SleepGame {
     if (key === this.lastHud) return
     this.lastHud = key
     const morning = this.progress() >= 0.9
-    this.hud.clock.textContent = `${morning ? '☀️' : '🌙'} ${clockLabel(slept)}`
+    this.hud.clock.textContent = `${morning ? '☀️' : '🌙'} ${clockLabel(slept)}${this.speedMode ? ' ⚡' : ''}`
     this.hud.pillows.innerHTML = Array.from({ length: MAX_PILLOWS }, (_, i) => `<i class="${i < this.pillows ? '' : 'is-lost'}">${PILLOW_ICON}</i>`).join('')
     this.hud.sheep.textContent = String(this.sheep)
     this.hud.score.textContent = String(this.score())
@@ -1495,6 +1557,8 @@ export class SleepGame {
     limitNickname(input)
     let mine: SleepScore | null = null
     let loaded = false
+    // 끝난 판의 모드 랭킹에 올려요 (일반 · 스피드는 랭킹이 따로)
+    const mode = this.mode
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault()
@@ -1509,11 +1573,11 @@ export class SleepGame {
       note.textContent = '올리는 중...'
       try {
         mine = { ...record, nickname }
-        const result = await submitSleepScore(mine)
+        const result = await submitSleepScore(mode, mine)
         rememberNickname(nickname)
         note.textContent = submitMessage(result)
         form.classList.add('is-done')
-        await renderRanking(list, mine)
+        await renderRanking(list, mine, mode)
       } catch (error) {
         mine = null
         note.textContent = (error as Error).message
@@ -1526,7 +1590,7 @@ export class SleepGame {
       card.hidden = false
       if (!loaded) {
         loaded = true
-        void renderRanking(list, mine)
+        void renderRanking(list, mine, mode)
       }
       input.focus({ preventScroll: true })
     }
@@ -1542,6 +1606,10 @@ export class SleepGame {
     popup.innerHTML = `
       <section class="trank" aria-label="랭킹">
         <p class="trank__title">🏆 랭킹 TOP ${RANK_LIMIT}</p>
+        <div class="sleep__ranktabs" role="tablist">
+          <button type="button" class="sleep__ranktab" role="tab" data-mode="normal">🌙 일반</button>
+          <button type="button" class="sleep__ranktab" role="tab" data-mode="speed">⚡ 스피드</button>
+        </div>
         <ol class="trank__list"><li class="trank__empty">불러오는 중...</li></ol>
         <div class="tresult__buttons">
           <button type="button" class="tbutton" data-action="close-ranking">닫기</button>
@@ -1555,7 +1623,26 @@ export class SleepGame {
     const close = popup.querySelector<HTMLButtonElement>('[data-action="close-ranking"]')!
     close.addEventListener('click', () => this.closeRanking())
     close.focus({ preventScroll: true })
-    void renderRanking(popup.querySelector<HTMLElement>('.trank__list')!, null)
+    // 일반 · 스피드 탭: 처음엔 마지막으로 한 모드 랭킹을 보여줘요
+    const list = popup.querySelector<HTMLElement>('.trank__list')!
+    const tabs = popup.querySelectorAll<HTMLButtonElement>('[data-mode]')
+    const show = (mode: SleepMode) => {
+      tabs.forEach((tab) => {
+        const on = tab.dataset.mode === mode
+        tab.classList.toggle('is-on', on)
+        tab.setAttribute('aria-selected', String(on))
+      })
+      list.innerHTML = '<li class="trank__empty">불러오는 중...</li>'
+      list.dataset.mode = mode
+      void renderRanking(list, null, mode)
+    }
+    tabs.forEach((tab) => tab.addEventListener('click', () => show(tab.dataset.mode as SleepMode)))
+    show(this.mode)
+  }
+
+  /** 지금 모드: 일반 · 스피드 (랭킹 · 최고 점수가 따로예요) */
+  private get mode(): SleepMode {
+    return this.speedMode ? 'speed' : 'normal'
   }
 
   private closeRanking() {
@@ -1572,8 +1659,10 @@ export class SleepGame {
   private saveBest(score: number) {
     let best = 0
     try {
-      best = Number(localStorage.getItem(BEST_KEY)) || 0
-      if (score > best) localStorage.setItem(BEST_KEY, String(score))
+      // 스피드 게임 최고 점수는 따로 저장해요
+      const key = this.speedMode ? `${BEST_KEY}-speed` : BEST_KEY
+      best = Number(localStorage.getItem(key)) || 0
+      if (score > best) localStorage.setItem(key, String(score))
     } catch {
       // 저장소를 못 쓰면 이번 기록만
     }
@@ -1582,10 +1671,11 @@ export class SleepGame {
 }
 
 /** TOP 10 그리기: 순위 · 닉네임 · 잔 시간(아침까지 자면 👑) · 점수 · 모은 양 */
-async function renderRanking(list: HTMLElement, mine: SleepScore | null) {
+async function renderRanking(list: HTMLElement, mine: SleepScore | null, mode: SleepMode) {
   try {
-    const top = await fetchSleepTop()
-    if (!list.isConnected) return
+    const top = await fetchSleepTop(mode)
+    // 그새 탭을 바꿨으면 늦게 온 결과는 버려요
+    if (!list.isConnected || list.dataset.mode !== undefined && list.dataset.mode !== mode) return
     list.innerHTML = top.length
       ? top
           .map((row, i) => {
@@ -1677,10 +1767,10 @@ const PILLOW_ICON = `<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M5 3 Q
 /** 다시 하기: 되돌리는 화살표 아이콘 (타자연습.app 결과 화면과 같아요) */
 const RETRY_ICON = `<svg viewBox="0 0 24 24" width="1.1em" height="1.1em" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v4.6h4.6"/></svg>`
 
-/** 결과 화면 랭킹 카드: 닉네임 등록 + TOP 10 */
-const RANK_CARD = `
+/** 결과 화면 랭킹 카드: 닉네임 등록 + TOP 10 (스피드 게임은 스피드 랭킹) */
+const rankCard = (mode: SleepMode) => `
   <section class="trank" aria-label="랭킹" hidden>
-    <p class="trank__title">🏆 랭킹 TOP ${RANK_LIMIT}</p>
+    <p class="trank__title">${mode === 'speed' ? '⚡ 스피드 ' : '🏆 '}랭킹 TOP ${RANK_LIMIT}</p>
     <form class="trank__form" data-ref="rankForm" autocomplete="off">
       <input data-ref="nickname" type="text" maxlength="${NICKNAME_MAX}" placeholder="닉네임 (${NICKNAME_MAX}자까지)" aria-label="닉네임" spellcheck="false" />
       <button type="submit" class="tprac__enter">등록</button>

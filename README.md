@@ -45,7 +45,7 @@ src/
 │   ├── ChocoGame.ts         냉장고 얼초 만들기 게임 (녹이기 → 틀에 붓기 → 토핑 → 얼리기)
 │   ├── SleepGame.ts         침대 꿈나라.app: 완벽한 잠을 사수하라! (클릭 점프 달리기, 캔버스로 그려요)
 │   ├── SleepGame.css        꿈나라.app 스타일 (인트로 · 멈춤 · 깼다! 팝업은 떨어지는 낱말연습 조각을 같이 써요)
-│   ├── sleepRanking.ts      완벽한 잠을 사수하라 랭킹 (Supabase sleep_scores 테이블)
+│   ├── sleepRanking.ts      완벽한 잠을 사수하라 랭킹 (Supabase sleep_scores · 스피드 게임은 sleep_speed_scores 테이블)
 │   ├── typing/
 │   │   ├── TypingApp.ts     타자연습.app 메뉴 · 결과 화면
 │   │   ├── Practice.ts      낱말 · 문장 · 긴글 연습 (키보드 가이드 · 타수 · 정확도)
