@@ -140,3 +140,14 @@
 .train__chip.jelly__chip--drop {
   background: #ffd9de;
 }
+
+/* 끝 화면 버튼 셋(랭킹 등록 · 결과 보기 · 다시 시작하기): 좁은 화면에서는 글자를 쪼개지 않고 다음 줄로 넘겨요 */
+.jelly .train__buttons {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.jelly .train__buttons .tbutton {
+  white-space: nowrap;
+}
