@@ -222,7 +222,7 @@ export class JellyGame {
       <div class="jelly__pad" aria-label="조작 버튼">
         <button type="button" class="jelly__key" data-key="left" data-silent aria-label="왼쪽으로">◀<small>왼쪽</small></button>
         <button type="button" class="jelly__key" data-key="right" data-silent aria-label="오른쪽으로">▶<small>오른쪽</small></button>
-        <button type="button" class="jelly__key" data-key="down" data-silent aria-label="살살 내리기">▼<small>살살</small></button>
+        <button type="button" class="jelly__key" data-key="down" data-silent aria-label="빨리 내리기">▼<small>빨리</small></button>
         <button type="button" class="jelly__key jelly__key--hold" data-key="hold" data-silent aria-label="주머니에 넣기 · 꺼내기">${POUCH_ICON}<small>주머니</small></button>
         <button type="button" class="jelly__key jelly__key--spin" data-key="spin" data-silent aria-label="돌리기">${SPIN_ICON}<small>돌리기</small></button>
         <button type="button" class="jelly__key jelly__key--drop" data-key="drop" data-silent aria-label="한번에 내리기">${DROP_ICON}<small>한번에</small></button>
@@ -419,10 +419,10 @@ export class JellyGame {
           ${
             touch
               ? `<li><span class="train__chip">◀ ▶</span>옮기기 · <span class="train__chip">${SPIN_ICON}</span>돌리기</li>
-                 <li><span class="train__chip">▼ 살살</span>꾹 누르는 동안 천천히 내려가요</li>
+                 <li><span class="train__chip">▼ 빨리</span>꾹 누르는 동안 빨리 내려가요</li>
                  <li><span class="train__chip jelly__chip--drop">${DROP_ICON} 한번에</span>점선 자리까지 바로 쿵! 내려가요</li>`
               : `<li><span class="train__chip">← →</span>옮기기 · <span class="train__chip">↑</span>돌리기<span class="train__more"> (Z는 반대로)</span></li>
-                 <li><span class="train__chip">↓</span>꾹 누르는 동안 천천히 내려가요</li>
+                 <li><span class="train__chip">↓</span>꾹 누르는 동안 빨리 내려가요</li>
                  <li><span class="train__chip jelly__chip--drop">스페이스</span>점선 자리까지 바로 쿵! 내려가요</li>`
           }
           <li><span class="train__chip jelly__chip--hold">${touch ? `${POUCH_ICON} 주머니` : 'C 주머니'}</span>지금 젤리를 넣어 두고 다음 젤리를 받아요. 다시 누르면 꺼내서 바꿔요<span class="train__more"> (젤리 하나에 한 번)</span></li>
