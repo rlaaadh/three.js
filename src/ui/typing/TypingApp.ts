@@ -3,6 +3,7 @@ import { RetroWindow } from '../RetroWindow'
 import { Practice, type PracticeMode } from './Practice'
 import { FallingWords } from './FallingWords'
 import { LONG_TOPICS } from './content'
+import { celebrateChampion, championBefore, showChampionNote } from '../champion'
 import { NICKNAME_MAX, RAIN_RANK_HEAD, RAIN_RANK_HINT, RANK_LIMIT, fetchTopScores, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage, submitScore, type RainScore } from './ranking'
 
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
@@ -242,6 +243,7 @@ export class TypingApp {
               })
               .join('')
           : '<li class="trank__empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+        void showChampionNote(list, 'rain')
       } catch (error) {
         list.innerHTML = `<li class="trank__empty">${escapeHtml((error as Error).message)}</li>`
       }
@@ -260,11 +262,13 @@ export class TypingApp {
       note.textContent = '올리는 중...'
       try {
         mine = { ...record, nickname }
+        const previous = await championBefore(fetchTopScores)
         const result = await submitScore(mine)
         rememberNickname(nickname)
         note.textContent = submitMessage(result)
         form.classList.add('is-done')
         await render()
+        celebrateChampion(list, 'rain', nickname, previous)
       } catch (error) {
         mine = null
         note.textContent = (error as Error).message

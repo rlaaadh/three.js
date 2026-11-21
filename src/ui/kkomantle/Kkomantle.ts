@@ -3,6 +3,7 @@ import type { Chiptune } from '../Chiptune'
 import { RetroWindow } from '../RetroWindow'
 import { NICKNAME_MAX, RANK_LIMIT, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage } from '../typing/ranking'
 import { fetchKkomantleTop, submitKkomantleScore, type KkomantleScore } from './ranking'
+import { celebrateChampion, championBefore, showChampionNote } from '../champion'
 import { RANK_SHOWN, dailyAnswer, dayNumber, loadWords, makeRound, msUntilNextDay, simScore, todayKey, type Round, type WordData } from './data'
 
 type Phase = 'intro' | 'playing' | 'result'
@@ -464,11 +465,14 @@ export class Kkomantle {
       note.textContent = '올리는 중...'
       try {
         mine = { ...record, nickname }
+        const day = record.day
+        const previous = await championBefore((limit) => fetchKkomantleTop(day, limit))
         const result = await submitKkomantleScore(mine)
         rememberNickname(nickname)
         note.textContent = submitMessage(result)
         form.classList.add('is-done')
         await this.renderRanking(list, mine)
+        celebrateChampion(list, `kkomantle:${day}`, nickname, previous)
       } catch (error) {
         mine = null
         note.textContent = (error as Error).message
@@ -518,7 +522,8 @@ export class Kkomantle {
   /** 오늘의 TOP 10: 순위 · 닉네임 · 추측 횟수 · 걸린 시간 (비밀 단어는 보여 주지 않아요) */
   private async renderRanking(list: HTMLElement, mine: KkomantleScore | null) {
     try {
-      const top = await fetchKkomantleTop(this.phase === 'result' && this.day ? this.day : todayKey())
+      const day = this.phase === 'result' && this.day ? this.day : todayKey()
+      const top = await fetchKkomantleTop(day)
       if (!list.isConnected) return
       list.innerHTML = top.length
         ? top
@@ -533,6 +538,7 @@ export class Kkomantle {
             })
             .join('')
         : '<li class="trank__empty">오늘은 아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+      void showChampionNote(list, `kkomantle:${day}`)
     } catch (error) {
       if (list.isConnected) list.innerHTML = `<li class="trank__empty">${escapeHtml((error as Error).message)}</li>`
     }

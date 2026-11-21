@@ -4,7 +4,8 @@ import type { Chiptune } from './Chiptune'
 import { RetroWindow } from './RetroWindow'
 import { isTouchDevice } from '../utils/device'
 import { NICKNAME_MAX, RANK_LIMIT, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage } from './typing/ranking'
-import { fetchSleepTop, submitSleepScore, type SleepMode, type SleepScore } from './sleepRanking'
+import { fetchSleepTop, sleepBoard, submitSleepScore, type SleepMode, type SleepScore } from './sleepRanking'
+import { celebrateChampion, championBefore, showChampionNote } from './champion'
 
 /*
  * 완벽한 잠을 사수하라! (꿈나라.app)
@@ -1573,11 +1574,13 @@ export class SleepGame {
       note.textContent = '올리는 중...'
       try {
         mine = { ...record, nickname }
+        const previous = await championBefore((limit) => fetchSleepTop(mode, limit))
         const result = await submitSleepScore(mode, mine)
         rememberNickname(nickname)
         note.textContent = submitMessage(result)
         form.classList.add('is-done')
         await renderRanking(list, mine, mode)
+        celebrateChampion(list, sleepBoard(mode), nickname, previous)
       } catch (error) {
         mine = null
         note.textContent = (error as Error).message
@@ -1690,6 +1693,7 @@ async function renderRanking(list: HTMLElement, mine: SleepScore | null, mode: S
           })
           .join('')
       : '<li class="trank__empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+    void showChampionNote(list, sleepBoard(mode))
   } catch (error) {
     if (list.isConnected) list.innerHTML = `<li class="trank__empty">${escapeHtml((error as Error).message)}</li>`
   }

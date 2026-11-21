@@ -87,10 +87,10 @@ export function submitScore(score: Omit<RainScore, 'created_at'>) {
   return submitRanking('submit_rain_score', { ...score })
 }
 
-/** 닉네임 칸: 한글 조합 중에는 maxlength가 넘칠 수 있어서, 조합이 끝나면 한 번 더 잘라요 */
-export function limitNickname(input: HTMLInputElement) {
+/** 닉네임 칸: 한글 조합 중에는 maxlength가 넘칠 수 있어서, 조합이 끝나면 한 번 더 잘라요 (max: 글자 수) */
+export function limitNickname(input: HTMLInputElement, max = NICKNAME_MAX) {
   const clamp = () => {
-    if (input.value.length > NICKNAME_MAX) input.value = input.value.slice(0, NICKNAME_MAX)
+    if (input.value.length > max) input.value = input.value.slice(0, max)
   }
   input.addEventListener('compositionend', clamp)
   input.addEventListener('input', (e) => {

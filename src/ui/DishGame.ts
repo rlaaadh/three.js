@@ -3,6 +3,7 @@ import { RetroWindow } from './RetroWindow'
 import { isTouchDevice } from '../utils/device'
 import { NICKNAME_MAX, RANK_LIMIT, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage } from './typing/ranking'
 import { fetchDishTop, submitDishScore, type DishScore } from './dishRanking'
+import { celebrateChampion, championBefore, showChampionNote } from './champion'
 
 /** 미션: 제한시간 안에 접시 몇 장 */
 const TIME_LIMIT = 20
@@ -241,11 +242,13 @@ export class DishGame {
       note.textContent = '올리는 중...'
       try {
         mine = { ...record, nickname }
+        const previous = await championBefore(fetchDishTop)
         const result = await submitDishScore(mine)
         rememberNickname(nickname)
         note.textContent = submitMessage(result)
         form.classList.add('is-done')
         await this.renderRanking(list, mine)
+        celebrateChampion(list, 'dish', nickname, previous)
       } catch (error) {
         mine = null
         note.textContent = (error as Error).message
@@ -309,6 +312,7 @@ export class DishGame {
             })
             .join('')
         : '<li class="trank__empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+      void showChampionNote(list, 'dish')
     } catch (error) {
       if (list.isConnected) list.innerHTML = `<li class="trank__empty">${escapeHtml((error as Error).message)}</li>`
     }

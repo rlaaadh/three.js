@@ -13,6 +13,9 @@ const SUBMIT_FNS = { normal: 'submit_sleep_score', speed: 'submit_sleep_speed_sc
 /** normal: 일반 게임, speed: 스피드 게임(속도 2배) */
 export type SleepMode = keyof typeof TABLES
 
+/** 1등 한마디(champion.ts)에서 쓰는 랭킹 이름 */
+export const sleepBoard = (mode: SleepMode) => (mode === 'speed' ? 'sleep_speed' : 'sleep')
+
 export interface SleepScore {
   nickname: string
   /** 아침 7시까지 안 깨고 잤어요 */

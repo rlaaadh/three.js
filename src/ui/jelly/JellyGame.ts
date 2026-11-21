@@ -6,6 +6,7 @@ import { isTouchDevice } from '../../utils/device'
 import { handFont } from '../../utils/fonts'
 import { NICKNAME_MAX, RANK_LIMIT, limitNickname, rankingEnabled, rememberNickname, savedNickname, submitMessage } from '../typing/ranking'
 import { fetchJellyTop, submitJellyScore, type JellyScore } from './ranking'
+import { celebrateChampion, championBefore, showChampionNote } from '../champion'
 
 /*
  * 말랑젤리 쌓기 (말랑젤리.app)
@@ -1194,11 +1195,13 @@ export class JellyGame {
       note.textContent = '올리는 중...'
       try {
         mine = { ...record, nickname }
+        const previous = await championBefore(fetchJellyTop)
         const result = await submitJellyScore(mine)
         rememberNickname(nickname)
         note.textContent = submitMessage(result)
         form.classList.add('is-done')
         await renderRanking(list, mine)
+        celebrateChampion(list, 'jelly', nickname, previous)
       } catch (error) {
         mine = null
         note.textContent = (error as Error).message
@@ -1286,6 +1289,7 @@ async function renderRanking(list: HTMLElement, mine: JellyScore | null) {
           })
           .join('')
       : '<li class="trank__empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+    void showChampionNote(list, 'jelly')
   } catch (error) {
     if (list.isConnected) list.innerHTML = `<li class="trank__empty">${escapeHtml((error as Error).message)}</li>`
   }

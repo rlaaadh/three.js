@@ -3,6 +3,7 @@ import { bindKoreanInput } from './input'
 import { strokesOf } from './hangul'
 import { IDIOMS, LONGER_WORDS, LONG_WORDS, SPECIAL_WORDS, WORDS, shuffle } from './content'
 import type { TypingView, ViewContext } from './TypingApp'
+import { showChampionNote } from '../champion'
 import { RAIN_RANK_HEAD, RAIN_RANK_HINT, RANK_LIMIT, fetchTopScores, rankingEnabled } from './ranking'
 import { idiomPool, loadIdioms } from './wordBank'
 
@@ -600,6 +601,7 @@ export class FallingWords implements TypingView {
               )
               .join('')
           : '<li class="trank__empty">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</li>'
+        void showChampionNote(list, 'rain')
       })
       .catch((error: Error) => {
         if (this.rankPopup === popup) list.innerHTML = `<li class="trank__empty">${escapeHtml(error.message)}</li>`
