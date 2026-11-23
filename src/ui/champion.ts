@@ -55,9 +55,10 @@ export async function showChampionNote(list: HTMLElement, board: string) {
   const bubble = document.createElement('li')
   bubble.className = 'trank__brag'
   bubble.setAttribute('aria-label', `1등 ${champion}님의 한마디: ${note.message} (이전 1등 ${note.to_nickname}님에게)`)
+  // "to. 이전 1등" 먼저, 그 뒤에 한마디
   bubble.innerHTML = `
-    <span class="trank__brag-msg">💬 ${escapeHtml(note.message)}</span>
-    <span class="trank__brag-to">to. ${escapeHtml(note.to_nickname)}</span>`
+    <span class="trank__brag-to">to. ${escapeHtml(note.to_nickname)}</span>
+    <span class="trank__brag-msg">${escapeHtml(note.message)}</span>`
   row.before(bubble)
 }
 
