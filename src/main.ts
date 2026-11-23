@@ -92,6 +92,7 @@ function updateIntro(dt: number) {
 const sceneReady = fontsReady
   .catch(() => {})
   .then(async () => {
+    houseLabels.add(createLabels())
     character = new Character()
     character.root.position.set(0.4, 4, 0.8)
     // 게임방도 같은 자리에 미리 만들어 두고 (숨겨 둠) 셰이더까지 같이 준비해요
@@ -194,7 +195,8 @@ jelly.onClose = onAppClose
 // ---------- 게임방: 문을 누르면 베이지색 동그라미가 오므라들었다가 게임방에서 다시 열려요 ----------
 // 게임방은 집과 같은 자리에 겹쳐 있고, 지나갈 때 집 · 게임방 중 하나만 보여요. 카메라 · 걷기 · 클릭은 그대로 같이 써요
 const iris = new Iris()
-const houseLabels = createLabels()
+// 바닥 글씨는 폰트가 온 뒤에 채워요 (먼저 그리면 기본 글꼴로 굳어 버려요)
+const houseLabels = new THREE.Group()
 /** 지금 있는 곳 (moving: 화면 전환 중) */
 let place: 'house' | 'moving' | 'game' = 'house'
 let gameRoom: GameRoom | null = null
