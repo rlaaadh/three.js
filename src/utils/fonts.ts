@@ -6,8 +6,8 @@
  * 지금 폰트(나눔손글씨 힘내라는 말보단)는 굵기가 하나뿐이라 굵게(700)를 쓰지 않아요.
  * 없는 굵기로 그리면 브라우저가 억지로 두껍게 만들어서 글씨가 뭉개져요.
  *
- * 원본은 한글 전체가 들어 있어 3MB가 넘어요. 그래서 첫 화면에 쓰는 글자만 남긴 작은 파일(HandSubset, style.css)을 먼저 쓰고,
- * 거기 없는 글자만 원본(HAND_FONT_FULL)으로 그려요. 바닥 글씨 · 말풍선 문구를 바꾸면 scripts/subset-hand-font.sh를 다시 돌려주세요.
+ * 원본은 한글 전체가 들어 있어 3MB가 넘어요. 그래서 화면 문구에 쓰는 글자만 남긴 작은 파일(HandSubset, style.css)을 먼저 쓰고,
+ * 거기 없는 글자만 원본(HAND_FONT_FULL)으로 그려요. 화면 문구를 바꾸면 scripts/subset-hand-font.sh를 다시 돌려주세요.
  */
 export const HAND_FONT = 'HandSubset'
 export const HAND_FONT_FULL = 'NanumHimNaeRaNeunMarBoDan'
