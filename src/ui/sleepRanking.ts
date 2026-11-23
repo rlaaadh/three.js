@@ -29,9 +29,9 @@ export interface SleepScore {
   created_at?: string
 }
 
-/** 순위: 오래 잔 시간 → 점수 → 먼저 등록한 사람 */
+/** 순위: 오래 잔 시간 → 점수 → 모은 양 → 먼저 등록한 사람 */
 export function fetchSleepTop(mode: SleepMode, limit = RANK_LIMIT) {
-  return fetchRanking<SleepScore>(TABLES[mode], 'nickname,cleared,slept_min,sheep,score,created_at', 'slept_min.desc,score.desc,created_at.asc', limit)
+  return fetchRanking<SleepScore>(TABLES[mode], 'nickname,cleared,slept_min,sheep,score,created_at', 'slept_min.desc,score.desc,sheep.desc,created_at.asc', limit)
 }
 
 /** 같은 닉네임이 이미 있으면 더 좋은 기록일 때만 바뀌어요 */

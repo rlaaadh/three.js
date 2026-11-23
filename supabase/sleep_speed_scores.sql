@@ -13,8 +13,9 @@ create table if not exists public.sleep_speed_scores (
 );
 
 -- 순위 정렬용
+drop index if exists public.sleep_speed_scores_rank_idx;
 create index if not exists sleep_speed_scores_rank_idx
-  on public.sleep_speed_scores (slept_min desc, score desc, created_at);
+  on public.sleep_speed_scores (slept_min desc, score desc, sheep desc, created_at);
 
 -- 같은 닉네임은 한 줄만
 create unique index if not exists sleep_speed_scores_nickname_key on public.sleep_speed_scores (nickname);
@@ -29,7 +30,7 @@ create policy "누구나 스피드 랭킹 보기"
   using (true);
 
 -- 등록: 처음이면 추가, 더 좋으면 갱신, 아니면 그대로 ('inserted' · 'updated' · 'kept')
--- 순위와 같은 기준이에요: 오래 잔 시간 → 점수
+-- 순위와 같은 기준이에요: 오래 잔 시간 → 점수 → 모은 양
 create or replace function public.submit_sleep_speed_score(
   p_nickname text,
   p_cleared boolean,
@@ -57,7 +58,7 @@ begin
       score = p_score,
       created_at = now()
   where nickname = p_nickname
-    and (p_slept_min > slept_min or (p_slept_min = slept_min and p_score > score));
+    and (p_slept_min > slept_min or (p_slept_min = slept_min and p_score > score) or (p_slept_min = slept_min and p_score = score and p_sheep > sheep));
   if found then
     return 'updated';
   end if;

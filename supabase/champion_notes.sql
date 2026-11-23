@@ -40,9 +40,9 @@ as $$
     when p_board = 'dish' then
       (select nickname from dish_scores order by percent desc, time_sec asc, created_at limit 1)
     when p_board = 'sleep' then
-      (select nickname from sleep_scores order by slept_min desc, score desc, created_at limit 1)
+      (select nickname from sleep_scores order by slept_min desc, score desc, sheep desc, created_at limit 1)
     when p_board = 'sleep_speed' then
-      (select nickname from sleep_speed_scores order by slept_min desc, score desc, created_at limit 1)
+      (select nickname from sleep_speed_scores order by slept_min desc, score desc, sheep desc, created_at limit 1)
     when p_board = 'jelly' then
       (select nickname from jelly_scores order by score desc, lines desc, created_at limit 1)
     when p_board ~ '^kkomantle:\d{4}-\d{2}-\d{2}$' then
