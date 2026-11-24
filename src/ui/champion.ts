@@ -15,6 +15,7 @@ export const NOTE_MAX = 10
 
 const TABLE = 'champion_notes'
 const SUBMIT_FN = 'submit_champion_note'
+const CLEAR_FN = 'clear_champion_note'
 
 interface ChampionNote {
   message: string
@@ -49,8 +50,8 @@ export async function showChampionNote(list: HTMLElement, board: string) {
   } catch {
     return // 한마디는 없어도 랭킹은 그대로
   }
-  // 그새 목록을 다시 그렸으면 버려요
-  if (!note || !row.isConnected || firstRow(list) !== row) return
+  // 그새 목록을 다시 그렸거나, 옛 한마디를 지우는 중이면 버려요
+  if (!note || !row.isConnected || firstRow(list) !== row || list.dataset.bragOff) return
   list.querySelector('.trank__brag')?.remove()
   const bubble = document.createElement('li')
   bubble.className = 'trank__brag'
@@ -65,6 +66,8 @@ export async function showChampionNote(list: HTMLElement, board: string) {
 /**
  * 등록하고 목록을 다시 그린 뒤 불러요.
  * 내가 새 1등이고 이전 1등이 다른 사람이면 한마디 팝업을 띄워요.
+ * 예전에 1등일 때 남긴 한마디는 이번 1등과 상관없어서 팝업을 띄울 때 지워요
+ * (건너뛰기 · Esc · 창 닫기로 안 남겨도 옛 한마디가 남지 않게).
  */
 export function celebrateChampion(list: HTMLElement, board: string, nickname: string, previous: string | undefined) {
   if (!previous || previous === nickname || nameOf(firstRow(list)) !== nickname) return
@@ -89,6 +92,11 @@ export function celebrateChampion(list: HTMLElement, board: string, nickname: st
       </div>
     </form>`
   host.append(root)
+
+  // 옛 한마디 지우기: 화면에서 바로 빼고, 서버에서도 지워요 (새 한마디 등록은 지운 뒤에)
+  list.dataset.bragOff = '1'
+  list.querySelector('.trank__brag')?.remove()
+  const cleared = submitRanking(CLEAR_FN, { board, nickname }).catch(() => undefined)
 
   const form = root.querySelector<HTMLFormElement>('form')!
   const input = root.querySelector<HTMLInputElement>('input')!
@@ -126,8 +134,10 @@ export function celebrateChampion(list: HTMLElement, board: string, nickname: st
     input.disabled = true
     note.textContent = '남기는 중...'
     try {
+      await cleared
       await submitRanking(SUBMIT_FN, { board, nickname, to_nickname: previous, message })
       close()
+      delete list.dataset.bragOff
       await showChampionNote(list, board)
     } catch (error) {
       note.textContent = (error as Error).message

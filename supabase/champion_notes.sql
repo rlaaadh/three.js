@@ -87,11 +87,32 @@ begin
 end;
 $$;
 
+-- 지우기: 새로 1등이 되고 한마디를 안 남기면, 예전에 1등일 때 남긴 한마디를 지워요 (지금 1등인 닉네임만)
+create or replace function public.clear_champion_note(
+  p_board text,
+  p_nickname text
+) returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  p_nickname := btrim(p_nickname);
+  if champion_of(p_board) is distinct from p_nickname then
+    raise exception '지금 1등만 한마디를 지울 수 있어요';
+  end if;
+  delete from champion_notes where board = p_board and nickname = p_nickname;
+  return 'ok';
+end;
+$$;
+
 grant select on public.champion_notes to anon, authenticated;
 revoke insert, update, delete on public.champion_notes from anon, authenticated;
 revoke execute on function public.champion_of(text) from public;
 revoke execute on function public.submit_champion_note(text, text, text, text) from public;
 grant execute on function public.submit_champion_note(text, text, text, text) to anon, authenticated;
+revoke execute on function public.clear_champion_note(text, text) from public;
+grant execute on function public.clear_champion_note(text, text) to anon, authenticated;
 
 -- API가 새 함수를 바로 알아보게
 notify pgrst, 'reload schema';
