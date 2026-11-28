@@ -842,7 +842,7 @@ export class Room {
     return spot
   }
 
-  /** 가스레인지: 앞에 서면 꼬들라면.app 창이 열려요 (하부장 · 상판은 주방 쪽이라 주방을 눌러도 설거지) */
+  /** 가스레인지: 앞에 서면 꼬들라면 끓이기.app 창이 열려요 (하부장 · 상판은 주방 쪽이라 주방을 눌러도 설거지) */
   private buildStove(): Spot {
     const s = this.stove
     const backZ = -2.6
@@ -871,7 +871,7 @@ export class Room {
       approach: new THREE.Vector3(stoveX, 0, -1.3),
       position: new THREE.Vector3(stoveX, 0, -1.72),
       quaternion: yawQuat(Math.PI),
-      hint: '가스레인지에서 라면 끓이기',
+      hint: '가스레인지에서 꼬들라면 끓이기',
     }
     s.userData.spot = spot
     return spot

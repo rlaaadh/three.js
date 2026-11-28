@@ -198,7 +198,7 @@ function potSvg(p: Partial<Pot>, stage: Stage, vb = '-240 -140 480 400') {
 const kettleSvg = (face: A.KettleFace) => `<svg viewBox="-280 -320 520 590" aria-hidden="true">${A.kettle(face)}</svg>`
 
 /**
- * 가스레인지에서 여는 라면 끓이기 게임 (꼬들라면.app).
+ * 가스레인지에서 여는 라면 끓이기 게임 (꼬들라면 끓이기.app).
  * 주전자로 냄비에 물 붓기 → 물이 끓으면 라면 · 스프 → 파 · 계란 → 꼬들꼬들(반짝)할 때 쟁반으로.
  * 5분 안에 10,000원을 모으면 성공 (걸린 시간으로 빨리 끓이기 랭킹), 못 모으면 설거지 당번.
  * 너무 오래 끓이면 면이 퍼지고 → 냄비가 빨개지고 → 덜덜 떨다가 → 까맣게 타서 불이 꺼져요 (여분 냄비로 바꿔요).
@@ -232,7 +232,7 @@ export class RamenGame {
   private trayTimer = 0
 
   constructor(private readonly music: Chiptune) {
-    this.win = new RetroWindow(music, '꼬들라면.app', '라면 끓이기 게임')
+    this.win = new RetroWindow(music, '꼬들라면 끓이기.app', '꼬들라면 끓이기 게임')
     this.win.onClose = () => {
       this.stopTimers()
       this.resizeObserver?.disconnect()
