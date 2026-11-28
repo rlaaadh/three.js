@@ -9,11 +9,11 @@ export type GameRoomItem = 'door' | 'game' | 'jelly' | 'tv' | 'run' | 'ball' | '
 
 /** 누르거나 마우스를 올렸을 때 왼쪽 위에 뜨는 안내 */
 export const GAME_ROOM_HINTS: Record<GameRoomItem | 'default', string> = {
-  default: '책꽂이는 꼬맨틀, 게임기는 말랑젤리, 문은 내 방으로',
+  default: '책꽂이는 꼬맨틀, 노란 오락기는 말랑젤리, 문은 내 방으로',
   door: '문 열고 내 방으로',
   game: '레트로 게임기 (곧 열려요)',
   jelly: '오락기에서 말랑젤리 쌓기 (젤리 블록 퍼즐)',
-  tv: '레트로 게임기로 말랑젤리 쌓기 (젤리 블록 퍼즐)',
+  tv: '브라운관 TV 게임기 (곧 열려요)',
   run: '런닝머신 (곧 열려요)',
   ball: '짐볼 (곧 열려요)',
   book: '책꽂이에서 꼬맨틀 (비밀 단어 맞히기)',
@@ -189,8 +189,6 @@ export class GameRoom {
   readonly doorSpot: Spot
   /** 오른쪽 오락기 앞에 서서 말랑젤리 쌓기 */
   readonly arcadeSpot: Spot
-  /** TV 게임기 앞에 서서 말랑젤리 쌓기 */
-  readonly tvSpot: Spot
   /** 드래그로 걸을 때 피해 가는 가구 */
   private readonly obstacles: THREE.Object3D[] = []
   /** 누르면 통 튀는 물건들 */
@@ -224,16 +222,8 @@ export class GameRoom {
       quaternion: yaw(Math.PI),
       hint: GAME_ROOM_HINTS.jelly,
     }
+    // 말랑젤리 쌓기는 노란 오락기에서만. TV 게임기는 아직 준비 중이라 누르면 통 튀어요
     this.jellyArcade.userData.spot = this.arcadeSpot
-    // TV 게임기로도 말랑젤리: 빈백 뒤, TV 앞에 서서 TV를 봐요
-    this.tvSpot = {
-      action: 'play',
-      approach: new THREE.Vector3(0.7, 0, -1.95),
-      position: new THREE.Vector3(1.5, 0, -1.95),
-      quaternion: yaw(Math.PI),
-      hint: GAME_ROOM_HINTS.tv,
-    }
-    this.tv.userData.spot = this.tvSpot
     this.bookshelf.userData.spot = this.bookSpot
     this.door.userData.spot = this.doorSpot
     this.group.updateMatrixWorld(true)
@@ -259,7 +249,6 @@ export class GameRoom {
   private bookshelf!: THREE.Group
   private door!: THREE.Group
   private jellyArcade!: THREE.Group
-  private tv!: THREE.Group
 
   /** 누를 수 있게 등록 (item은 문 · 책꽂이 말고 아직 준비 중인 물건 안내용) */
   private clickable(obj: THREE.Object3D, item: GameRoomItem, solid = true) {
@@ -411,7 +400,6 @@ export class GameRoom {
       place(pad, px, 0.01, 0.55, tv)
     }
     place(tv, 1.5, 0, -3.0 + 0.27, g)
-    this.tv = tv
     this.clickable(tv, 'tv')
 
     // TV 앞 버터색 짐볼: 동글동글한 공 (가운데 띠)
