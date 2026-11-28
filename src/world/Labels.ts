@@ -60,7 +60,8 @@ export const LABEL_TEXTS = {
   table: '3. 식탁을 누르면 냠냠',
   kitchen: '4. 주방을 누르면 뽀득뽀득 설거지',
   fridge: '5. 냉장고를 누르면 얼초 만들기',
-  door: '6. 문을 누르면 게임방으로',
+  stove: '6. 가스레인지를 누르면 꼬들라면',
+  door: '7. 문을 누르면 게임방으로',
   drag: '드래그하면 그쪽으로 걸어가요',
 }
 
@@ -92,12 +93,16 @@ export function createLabels() {
   fridgeHint.position.set(1.5, fridgeHint.position.y, 8.2)
   group.add(fridgeHint)
 
+  const stoveHint = createLabel(LABEL_TEXTS.stove, { size: 0.4, color: '#e8604c' })
+  stoveHint.position.set(1.6, stoveHint.position.y, 8.85)
+  group.add(stoveHint)
+
   const doorHint = createLabel(LABEL_TEXTS.door, { size: 0.4, color: '#e8604c' })
-  doorHint.position.set(1.4, doorHint.position.y, 8.85)
+  doorHint.position.set(1.4, doorHint.position.y, 9.5)
   group.add(doorHint)
 
   const dragHint = createLabel(LABEL_TEXTS.drag, { size: 0.36, color: '#8a6a52' })
-  dragHint.position.set(1.6, dragHint.position.y, 9.55)
+  dragHint.position.set(1.6, dragHint.position.y, 10.2)
   group.add(dragHint)
 
   return group

@@ -3,9 +3,9 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { handFont } from '../utils/fonts'
 import { BEDROOM, KITCHEN, PARTITION_X, setObstacles } from './Navigation'
 
-export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash' | 'chill' | 'door' | 'read' | 'play'
+export type SpotAction = 'lie' | 'sit' | 'eat' | 'wash' | 'chill' | 'cook' | 'door' | 'read' | 'play'
 
-/** 캐릭터가 다가가서 특정 동작을 하는 지점 (침대, 책상, 식탁, 주방, 냉장고, 문, 게임방 책꽂이) */
+/** 캐릭터가 다가가서 특정 동작을 하는 지점 (침대, 책상, 식탁, 주방, 가스레인지, 냉장고, 문, 게임방 책꽂이) */
 export interface Spot {
   action: SpotAction
   /** 동작 전에 걸어가서 서는 위치 */
@@ -16,6 +16,9 @@ export interface Spot {
   quaternion: THREE.Quaternion
   hint: string
 }
+
+/** 가스레인지 가운데 x */
+const STOVE_X = 5.7
 
 /** 냉장고 가운데 x (주방 오른쪽 끝) */
 const FRIDGE_X = 6.73
@@ -489,11 +492,14 @@ export class Room {
   readonly kitchen = new THREE.Group()
   /** 냉장고: 주방과 따로 눌러요 (얼초 만들기) */
   readonly fridge = new THREE.Group()
+  /** 가스레인지 · 냄비 · 후드: 주방과 따로 눌러요 (꼬들라면 끓이기) */
+  readonly stove = new THREE.Group()
   readonly bedSpot: Spot
   readonly deskSpot: Spot
   readonly tableSpot: Spot
   readonly kitchenSpot: Spot
   readonly fridgeSpot: Spot
+  readonly stoveSpot: Spot
   /** 게임방 문 (침실 뒤쪽 벽, 창문 오른쪽): 누르면 문 앞에 서서 게임방으로 넘어가요 */
   readonly door: THREE.Group
   readonly doorSpot: Spot
@@ -756,16 +762,17 @@ export class Room {
 
     this.kitchenSpot = this.buildKitchen()
     this.fridgeSpot = this.buildFridge()
+    this.stoveSpot = this.buildStove()
     this.tableSpot = this.buildTable()
     this.buildCoffeeShelf()
-    g.add(this.kitchen, this.fridge, this.table)
+    g.add(this.kitchen, this.stove, this.fridge, this.table)
 
-    obstacles.push(bed, desk, this.kitchen, this.fridge, this.table)
+    obstacles.push(bed, desk, this.kitchen, this.stove, this.fridge, this.table)
     g.updateMatrixWorld(true)
     setObstacles(obstacles)
   }
 
-  /** 뒤쪽 벽을 따라 싱크대 · 도마 · 가스레인지 · 밥솥 (냉장고는 buildFridge에서 따로) */
+  /** 뒤쪽 벽을 따라 싱크대 · 도마 · 밥솥 (가스레인지는 buildStove, 냉장고는 buildFridge에서 따로) */
   private buildKitchen(): Spot {
     const g = this.group
     const k = this.kitchen
@@ -775,7 +782,6 @@ export class Room {
     const cx = (counter.minX + counter.maxX) / 2
     const sinkX = 4.0
     const boardX = 4.85
-    const stoveX = 5.7
     const fridgeX = FRIDGE_X
 
     // 벽 장식은 클릭 대상(그룹) 밖에 둬요: 타일 벽, 창문, 선반, 칸막이 액자
@@ -820,24 +826,6 @@ export class Room {
     carrot.rotation.z = Math.PI / 2
     place(new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), material('#8cc06e')), boardX - 0.22, 1.07, backZ + 0.05, k)
 
-    // 가스레인지: 오븐 문, 화구, 냄비 · 프라이팬(계란후라이)
-    place(box(0.8, 0.55, 0.04, '#7a5640', 0.03), stoveX, 0.45, -2.19, k)
-    place(box(0.5, 0.05, 0.05, C.cream, 0.02), stoveX, 0.66, -2.15, k)
-    place(box(0.88, 0.03, 0.6, '#5a463b', 0.01), stoveX, 0.995, backZ, k)
-    place(cylinder(0.14, 0.14, 0.02, '#7d675a'), stoveX - 0.22, 1.015, backZ, k)
-    place(cylinder(0.14, 0.14, 0.02, '#7d675a'), stoveX + 0.22, 1.015, backZ, k)
-    place(cylinder(0.2, 0.18, 0.24, '#f6b26b'), stoveX - 0.22, 1.14, backZ, k)
-    place(cylinder(0.21, 0.21, 0.03, '#ffd59a'), stoveX - 0.22, 1.27, backZ, k)
-    place(new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 8), material(C.woodDark)), stoveX - 0.22, 1.3, backZ, k)
-    place(cylinder(0.16, 0.14, 0.04, '#5a5048'), stoveX + 0.22, 1.045, backZ, k)
-    place(box(0.05, 0.03, 0.28, C.woodDark, 0.015), stoveX + 0.22, 1.06, backZ + 0.3, k)
-    place(cylinder(0.1, 0.1, 0.012, '#ffffff'), stoveX + 0.2, 1.07, backZ - 0.02, k)
-    place(new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 8), material('#ffc93c')), stoveX + 0.2, 1.08, backZ - 0.02, k)
-
-    // 후드
-    place(box(0.95, 0.32, 0.55, C.cream, 0.05), stoveX, 2.55, -2.75, k)
-    place(box(0.36, 0.45, 0.3, C.cream, 0.03), stoveX, 2.9, -2.88, k)
-
     // 밥솥 (냉장고 위)
     place(cylinder(0.17, 0.17, 0.24, C.cream), fridgeX + 0.1, 2.22, backZ, k)
     place(cylinder(0.18, 0.18, 0.05, C.caramel), fridgeX + 0.1, 2.36, backZ, k)
@@ -851,6 +839,41 @@ export class Room {
       hint: '싱크대에서 설거지하기',
     }
     k.userData.spot = spot
+    return spot
+  }
+
+  /** 가스레인지: 앞에 서면 꼬들라면.app 창이 열려요 (하부장 · 상판은 주방 쪽이라 주방을 눌러도 설거지) */
+  private buildStove(): Spot {
+    const s = this.stove
+    const backZ = -2.6
+    const stoveX = STOVE_X
+    // 가스레인지: 오븐 문, 화구, 냄비 · 프라이팬(계란후라이)
+    place(box(0.8, 0.55, 0.04, '#7a5640', 0.03), stoveX, 0.45, -2.19, s)
+    place(box(0.5, 0.05, 0.05, C.cream, 0.02), stoveX, 0.66, -2.15, s)
+    place(box(0.88, 0.03, 0.6, '#5a463b', 0.01), stoveX, 0.995, backZ, s)
+    place(cylinder(0.14, 0.14, 0.02, '#7d675a'), stoveX - 0.22, 1.015, backZ, s)
+    place(cylinder(0.14, 0.14, 0.02, '#7d675a'), stoveX + 0.22, 1.015, backZ, s)
+    place(cylinder(0.2, 0.18, 0.24, '#f6b26b'), stoveX - 0.22, 1.14, backZ, s)
+    place(cylinder(0.21, 0.21, 0.03, '#ffd59a'), stoveX - 0.22, 1.27, backZ, s)
+    place(new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 8), material(C.woodDark)), stoveX - 0.22, 1.3, backZ, s)
+    place(cylinder(0.16, 0.14, 0.04, '#5a5048'), stoveX + 0.22, 1.045, backZ, s)
+    place(box(0.05, 0.03, 0.28, C.woodDark, 0.015), stoveX + 0.22, 1.06, backZ + 0.3, s)
+    place(cylinder(0.1, 0.1, 0.012, '#ffffff'), stoveX + 0.2, 1.07, backZ - 0.02, s)
+    place(new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 8), material('#ffc93c')), stoveX + 0.2, 1.08, backZ - 0.02, s)
+
+    // 후드
+    place(box(0.95, 0.32, 0.55, C.cream, 0.05), stoveX, 2.55, -2.75, s)
+    place(box(0.36, 0.45, 0.3, C.cream, 0.03), stoveX, 2.9, -2.88, s)
+
+    // 가스레인지 앞에 서서 벽(-z)을 보고 라면을 끓여요
+    const spot: Spot = {
+      action: 'cook',
+      approach: new THREE.Vector3(stoveX, 0, -1.3),
+      position: new THREE.Vector3(stoveX, 0, -1.72),
+      quaternion: yawQuat(Math.PI),
+      hint: '가스레인지에서 라면 끓이기',
+    }
+    s.userData.spot = spot
     return spot
   }
 
@@ -1092,6 +1115,6 @@ export class Room {
 
   /** 클릭 판정 대상 */
   get clickables(): THREE.Object3D[] {
-    return [this.bed, this.desk, this.table, this.kitchen, this.fridge, this.door, ...this.floors]
+    return [this.bed, this.desk, this.table, this.kitchen, this.stove, this.fridge, this.door, ...this.floors]
   }
 }

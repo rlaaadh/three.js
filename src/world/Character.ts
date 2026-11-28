@@ -30,7 +30,7 @@ const material = (color: string, roughness = 0.6) => new THREE.MeshStandardMater
 /**
  * 임시 캐릭터 (일자 앞머리 아이).
  * 나중에 GLB 모델 + 애니메이션으로 교체할 때는 build()와 pose 부분만 바꾸면 돼요.
- * 상태: idle → walk(클릭) / steer(드래그) → transition → lie / sit / eat / wash / chill
+ * 상태: idle → walk(클릭) / steer(드래그) → transition → lie / sit / eat / wash / chill / cook
  */
 export class Character {
   readonly root = new THREE.Group()
@@ -149,6 +149,11 @@ export class Character {
   /** 싱크대 앞에서 잠깐 박박 접시를 문질러요 */
   scrub() {
     this.busyHandsTime = 0.2
+  }
+
+  /** 가스레인지 앞에서 잠깐 냄비에 재료를 넣거나 휘휘 저어요 */
+  stir() {
+    this.busyHandsTime = 0.3
   }
 
   /** 오락기 버튼을 딸깍딸깍 */
@@ -348,6 +353,14 @@ export class Character {
       const squeeze = fast ? Math.sin(this.time * 24) * 0.18 : Math.sin(this.time * 3) * 0.04
       armL = -1.0 + squeeze
       armR = -1.0 + squeeze
+    }
+
+    if (this.state === 'cook') {
+      // 라면 끓이기: 왼손은 냄비 손잡이, 오른손은 젓가락. 재료를 넣거나 옮길 때는 휘휘 빠르게
+      const fast = this.busyHandsTime > 0
+      armL = -1.1
+      armR = -1.2 + Math.sin(this.time * (fast ? 18 : 3)) * (fast ? 0.15 : 0.04)
+      stirZ = fast ? Math.sin(this.time * 18) * 0.3 : 0
     }
 
     if (this.state === 'play') {

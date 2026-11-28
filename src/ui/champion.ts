@@ -7,7 +7,7 @@ import { fetchRanking, limitNickname, rankingEnabled, submitRanking } from './ty
  * 남긴 한마디는 랭킹 목록 1등 줄 위에 말풍선으로 보여요.
  * 테이블 · 권한은 supabase/champion_notes.sql을 Supabase SQL Editor에서 한 번 실행하면 만들어져요.
  *
- * board: 어느 랭킹인지 — rain · dish · sleep · sleep_speed · jelly · kkomantle:YYYY-MM-DD
+ * board: 어느 랭킹인지 — rain · dish · sleep · sleep_speed · jelly · ramen · kkomantle:YYYY-MM-DD
  */
 
 /** 한마디는 10자까지 */

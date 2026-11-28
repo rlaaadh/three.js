@@ -73,6 +73,10 @@ export function ensureRamenDefs() {
           <stop offset="0" stop-color="#ffd978" />
           <stop offset="1" stop-color="#f6a08a" />
         </linearGradient>
+        <radialGradient id="rm-foam" cx="0.4" cy="0.35" r="0.7">
+          <stop offset="0" stop-color="#ffffff" />
+          <stop offset="1" stop-color="#e6f4fa" />
+        </radialGradient>
         <pattern id="rm-wall" width="90" height="40" patternUnits="userSpaceOnUse">
           <rect width="90" height="40" fill="#fffaf0" />
           <rect width="2" height="40" fill="#f6ead2" />
@@ -243,7 +247,8 @@ const FLAME_X = [-104, -78, -50, -18, 18, 50, 78, 104]
 export function flames() {
   return FLAME_X.map((x, i) => {
     const h = 34 + ((i * 7) % 3) * 6
-    return `<path class="rm-flame" style="animation-delay:${(i * -0.13).toFixed(2)}s" transform="translate(${x} ${238 + Math.abs(x) * 0.04})" d="M0 0 C-12 -5 -12 -${h * 0.55} 0 -${h} C12 -${h * 0.55} 12 -5 0 0Z" fill="url(#rm-flame)" />`
+    // CSS 애니메이션(transform)이 위치를 덮지 않게 위치는 바깥 g에
+    return `<g transform="translate(${x} ${238 + Math.abs(x) * 0.04})"><path class="rm-flame" style="animation-delay:${(i * -0.13).toFixed(2)}s" d="M0 0 C-12 -5 -12 -${h * 0.55} 0 -${h} C12 -${h * 0.55} 12 -5 0 0Z" fill="url(#rm-flame)" /></g>`
   }).join('')
 }
 
@@ -256,7 +261,7 @@ export function bubbles() {
     const x = Math.cos(a) * r * 138
     const y = Math.sin(a) * r * 40
     const size = 5 + rand() * 11
-    return `<circle class="rm-bubble" style="animation-delay:${(-rand() * 1.2).toFixed(2)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${size.toFixed(1)}" fill="#fff" stroke="#bfe0ef" stroke-width="2" opacity="${i % 3 ? 0.9 : 0.7}" />`
+    return `<circle class="rm-boil" style="animation-delay:${(-rand() * 1.2).toFixed(2)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${size.toFixed(1)}" fill="#fff" stroke="#bfe0ef" stroke-width="2" opacity="${i % 3 ? 0.9 : 0.7}" />`
   }).join('')
 }
 
@@ -280,7 +285,7 @@ export function sparkles() {
   ]
     .map(
       ([x, y, s], i) =>
-        `<path class="rm-sparkle" style="animation-delay:${(i * -0.35).toFixed(2)}s" transform="translate(${x} ${y}) scale(${s})" d="M0 -22 Q0 0 22 0 Q0 0 0 22 Q0 0 -22 0 Q0 0 0 -22Z" fill="#fff6c2" stroke="#f4c54d" stroke-width="2.5" />`,
+        `<g transform="translate(${x} ${y}) scale(${s})"><path class="rm-sparkle" style="animation-delay:${(i * -0.35).toFixed(2)}s" d="M0 -22 Q0 0 22 0 Q0 0 0 22 Q0 0 -22 0 Q0 0 0 -22Z" fill="#fff6c2" stroke="#f4c54d" stroke-width="2.5" /></g>`,
     )
     .join('')
 }

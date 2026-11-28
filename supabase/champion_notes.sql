@@ -1,11 +1,11 @@
 -- 1등 한마디: 새로 1등이 된 사람이 이전 1등에게 남기는 한마디 (모든 게임 랭킹 공용)
 -- Supabase 대시보드 → SQL Editor → New query 에 붙여 넣고 Run 하면 돼요. (여러 번 실행해도 괜찮아요)
--- ※ 게임 랭킹 표(rain · dish · sleep · sleep_speed · jelly · kkomantle _scores)를 먼저 만든 뒤에 실행하세요.
+-- ※ 게임 랭킹 표(rain · dish · sleep · sleep_speed · jelly · ramen · kkomantle _scores)를 먼저 만든 뒤에 실행하세요.
 -- 누구나 "읽기"와 submit_champion_note 함수로 "등록"만 할 수 있어요. 지금 그 랭킹 1등인 닉네임만 남길 수 있어요.
 
 create table if not exists public.champion_notes (
   id bigint generated always as identity primary key,
-  -- 어느 랭킹인지: rain · dish · sleep · sleep_speed · jelly · kkomantle:YYYY-MM-DD
+  -- 어느 랭킹인지: rain · dish · sleep · sleep_speed · jelly · ramen · kkomantle:YYYY-MM-DD
   board text not null check (char_length(board) between 1 and 40),
   -- 한마디를 남긴 새 1등
   nickname text not null check (char_length(btrim(nickname)) between 1 and 12),
@@ -45,6 +45,8 @@ as $$
       (select nickname from sleep_speed_scores order by slept_min desc, score desc, sheep desc, created_at limit 1)
     when p_board = 'jelly' then
       (select nickname from jelly_scores order by score desc, lines desc, created_at limit 1)
+    when p_board = 'ramen' then
+      (select nickname from ramen_scores order by time_sec asc, bowls asc, created_at limit 1)
     when p_board ~ '^kkomantle:\d{4}-\d{2}-\d{2}$' then
       (select nickname from kkomantle_scores where day = split_part(p_board, ':', 2)::date order by tries, time_sec, created_at limit 1)
   end;
