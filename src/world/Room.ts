@@ -865,6 +865,11 @@ export class Room {
     place(box(0.95, 0.32, 0.55, C.cream, 0.05), stoveX, 2.55, -2.75, s)
     place(box(0.36, 0.45, 0.3, C.cream, 0.03), stoveX, 2.9, -2.88, s)
 
+    // 보이지 않는 클릭 상자: 화구 위 냄비 · 프라이팬 사이 빈자리까지 눌러도 가스레인지로 잡혀요
+    // (얇은 상판 · 프라이팬만으로는 누를 자리가 작고, 옆 상판은 설거지라서 헷갈려요)
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.42, 0.66), new THREE.MeshBasicMaterial({ visible: false }))
+    place(hit, stoveX, 1.2, backZ, s)
+
     // 가스레인지 앞에 서서 벽(-z)을 보고 라면을 끓여요
     const spot: Spot = {
       action: 'cook',
