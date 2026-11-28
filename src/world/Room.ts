@@ -19,6 +19,8 @@ export interface Spot {
 
 /** 가스레인지 가운데 x */
 const STOVE_X = 5.7
+/** 주방 상판이 끝나고 가스레인지 칸이 시작하는 x (도마 칸 문 오른쪽 끝) */
+const STOVE_SPLIT = 5.26
 
 /** 냉장고 가운데 x (주방 오른쪽 끝) */
 const FRIDGE_X = 6.73
@@ -803,9 +805,12 @@ export class Room {
     place(box(0.04, 0.7, 0.8, C.woodMid, 0.02), PARTITION_X + 0.12, 2.1, -2.4, g)
     place(box(0.03, 0.52, 0.62, '#ffd9b0', 0.02), PARTITION_X + 0.14, 2.1, -2.4, g)
 
-    // 하부장 + 나무 상판
-    place(box(cw, 0.9, 0.8, C.cream, 0.04), cx, 0.45, backZ, k)
-    place(box(cw + 0.1, 0.08, 0.88, C.wood, 0.03), cx, 0.94, backZ + 0.02, k)
+    // 하부장 + 나무 상판: 가스레인지 칸(STOVE_SPLIT부터 오른쪽)은 buildStove에서 따로 만들어요
+    // (한 덩어리면 싱크대에 마우스를 올렸을 때 가스레인지 아래까지 같이 빛나서 같은 곳처럼 보여요)
+    const kw = STOVE_SPLIT - counter.minX
+    const kx = (counter.minX + STOVE_SPLIT) / 2
+    place(box(kw, 0.9, 0.8, C.cream, 0.04), kx, 0.45, backZ, k)
+    place(box(kw + 0.05, 0.08, 0.88, C.wood, 0.03), kx - 0.025, 0.94, backZ + 0.02, k)
     for (const [x, w] of [
       [sinkX, 0.8],
       [boardX, 0.8],
@@ -847,6 +852,12 @@ export class Room {
     const s = this.stove
     const backZ = -2.6
     const stoveX = STOVE_X
+    // 가스레인지 칸 하부장 + 나무 상판 (주방 상판과 이어 붙여요)
+    const right = 6.2
+    const sw = right - STOVE_SPLIT
+    const sx = (STOVE_SPLIT + right) / 2
+    place(box(sw, 0.9, 0.8, C.cream, 0.04), sx, 0.45, backZ, s)
+    place(box(sw + 0.05, 0.08, 0.88, C.wood, 0.03), sx + 0.025, 0.94, backZ + 0.02, s)
     // 가스레인지: 오븐 문, 화구, 냄비 · 프라이팬(계란후라이)
     place(box(0.8, 0.55, 0.04, '#7a5640', 0.03), stoveX, 0.45, -2.19, s)
     place(box(0.5, 0.05, 0.05, C.cream, 0.02), stoveX, 0.66, -2.15, s)
