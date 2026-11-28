@@ -367,17 +367,38 @@ export function shelfEggs() {
 }
 
 /** 주전자 (가운데 기준, 폭 약 470) */
-export function kettle(face: '' | 'calm' | 'happy' = '') {
+/**
+ * 주전자 표정: calm 눈 감고 끄덕 · happy 웃음 · frown 찌푸림(땀 한 방울) · shock 깜짝(동그란 눈 + 화난 김)
+ */
+export type KettleFace = '' | 'calm' | 'happy' | 'frown' | 'shock'
+
+const KETTLE_EYES: Record<Exclude<KettleFace, ''>, string> = {
+  calm: '<path d="M-74 36 Q-56 50 -38 36" /><path d="M38 36 Q56 50 74 36" />',
+  happy: '<path d="M-74 40 Q-56 22 -38 40" /><path d="M38 40 Q56 22 74 40" />',
+  // 찌푸린 눈썹 + 실눈
+  frown: '<path d="M-80 14 L-40 26" /><path d="M80 14 L40 26" /><path d="M-72 44 L-42 44" /><path d="M42 44 L72 44" />',
+  // 치켜 올라간 눈썹
+  shock: '<path d="M-78 4 Q-58 -6 -40 6" /><path d="M78 4 Q58 -6 40 6" />',
+}
+
+export function kettle(face: KettleFace = '') {
+  const extra =
+    face === 'shock'
+      ? `<circle cx="-56" cy="38" r="14" fill="#5a4033" /><circle cx="56" cy="38" r="14" fill="#5a4033" />
+         <circle cx="-51" cy="33" r="4.5" fill="#fff" /><circle cx="61" cy="33" r="4.5" fill="#fff" />
+         <ellipse cx="0" cy="116" rx="14" ry="17" fill="#5a4033" />
+         <path d="M118 -40 q14 -22 0 -44 M150 -30 q18 -26 0 -54" fill="none" stroke="#e8604c" stroke-width="8" stroke-linecap="round" />`
+      : face === 'frown'
+        ? `<path d="M-14 112 q14 -12 28 0" fill="none" stroke="#5a4033" stroke-width="6" stroke-linecap="round" />
+           <path d="M126 -36 C116 -16 112 -4 124 6 C136 -4 134 -16 126 -36Z" fill="#a9daf2" />`
+        : ''
   const faceSvg = !face
     ? ''
-    : `<g stroke="#5a4033" stroke-width="7" fill="none" stroke-linecap="round">
-        ${face === 'happy'
-          ? '<path d="M-74 40 Q-56 22 -38 40" /><path d="M38 40 Q56 22 74 40" />'
-          : '<path d="M-74 36 Q-56 50 -38 36" /><path d="M38 36 Q56 50 74 36" />'}
-      </g>
-      <ellipse cx="-96" cy="78" rx="20" ry="11" fill="#f7a9a0" opacity="0.8" />
-      <ellipse cx="96" cy="78" rx="20" ry="11" fill="#f7a9a0" opacity="0.8" />
-      <path d="M0 70 C-14 58 -44 60 -66 80 C-46 96 -18 92 0 80 C18 92 46 96 66 80 C44 60 14 58 0 70Z" fill="#6a4532" />`
+    : `<g stroke="#5a4033" stroke-width="7" fill="none" stroke-linecap="round">${KETTLE_EYES[face]}</g>
+      <ellipse cx="-96" cy="78" rx="20" ry="11" fill="#f7a9a0" opacity="${face === 'frown' ? 0.4 : 0.8}" />
+      <ellipse cx="96" cy="78" rx="20" ry="11" fill="#f7a9a0" opacity="${face === 'frown' ? 0.4 : 0.8}" />
+      <path d="M0 70 C-14 58 -44 60 -66 80 C-46 96 -18 92 0 80 C18 92 46 96 66 80 C44 60 14 58 0 70Z" fill="#6a4532" />
+      ${extra}`
   return `<g>
     <ellipse cx="0" cy="226" rx="236" ry="30" fill="#e9cf9b" opacity="0.6" />
     <path d="M-150 70 L-262 -104 Q-272 -124 -250 -126 L-214 -118 L-110 -10 Z" fill="url(#rm-kettle)" />
@@ -422,7 +443,8 @@ export function pickles() {
 
 // ---------- 캐릭터 (방 안 아이: 주황 똥머리 · 줄무늬 티 · 멜빵바지) ----------
 
-export type Mood = 'smile' | 'happy' | 'cry'
+/** sulky: 설거지 벌칙 (반쯤 감은 눈 · 땀 · 삐죽 입 · 고무장갑 + 수세미) */
+export type Mood = 'smile' | 'happy' | 'cry' | 'sulky'
 
 export function girl(mood: Mood) {
   const eyes = {
@@ -430,6 +452,9 @@ export function girl(mood: Mood) {
       <circle cx="95" cy="136" r="3" fill="#fff" /><circle cx="151" cy="136" r="3" fill="#fff" />
       <path d="M80 128 L84 132 M160 128 L156 132" stroke="#3a2a2a" stroke-width="3" stroke-linecap="round" />`,
     happy: `<g fill="none" stroke="#3a2a2a" stroke-width="5.5" stroke-linecap="round"><path d="M78 142 Q92 126 106 142" /><path d="M134 142 Q148 126 162 142" /></g>`,
+    sulky: `<g fill="#3a2a2a"><path d="M82 136 h20 a10 10 0 0 1 -20 0Z" /><path d="M138 136 h20 a10 10 0 0 1 -20 0Z" /></g>
+      <g fill="none" stroke="#3a2a2a" stroke-width="5" stroke-linecap="round"><path d="M80 136 L104 136" /><path d="M136 136 L160 136" /><path d="M80 118 L102 124" /><path d="M160 118 L138 124" /></g>
+      <path d="M176 76 C168 92 166 102 176 108 C186 102 184 92 176 76Z" fill="#a9daf2" />`,
     cry: `<g fill="none" stroke="#3a2a2a" stroke-width="5.5" stroke-linecap="round"><path d="M78 134 Q92 146 106 134" /><path d="M134 134 Q148 146 162 134" /></g>
       <rect x="84" y="142" width="13" height="66" rx="6.5" fill="#a9daf2" opacity="0.95" />
       <rect x="143" y="142" width="13" height="66" rx="6.5" fill="#a9daf2" opacity="0.95" />`,
@@ -438,9 +463,16 @@ export function girl(mood: Mood) {
     smile: '<path d="M110 168 Q120 176 130 168" fill="none" stroke="#c4424f" stroke-width="4" stroke-linecap="round" />',
     happy: '<path d="M106 164 Q120 166 134 164 Q132 184 120 184 Q108 184 106 164Z" fill="#d94e5f" /><path d="M112 177 Q120 172 128 177 Q124 184 120 184 Q116 184 112 177Z" fill="#ff9aa6" />',
     cry: '<ellipse cx="120" cy="174" rx="12" ry="10" fill="#c4424f" />',
+    sulky: '<path d="M108 174 q6 -6 12 0 q6 6 12 0" fill="none" stroke="#c4424f" stroke-width="4" stroke-linecap="round" />',
   }[mood]
   const arms =
-    mood === 'happy'
+    mood === 'sulky'
+      ? `<path d="M70 220 Q50 236 64 254" stroke="url(#rm-stripe)" stroke-width="26" stroke-linecap="round" fill="none" />
+         <path d="M170 220 Q192 236 178 254" stroke="url(#rm-stripe)" stroke-width="26" stroke-linecap="round" fill="none" />
+         <rect x="160" y="246" width="54" height="34" rx="7" fill="#8fd16a" /><rect x="160" y="246" width="54" height="12" rx="6" fill="#ffe17a" />
+         <circle cx="66" cy="262" r="16" fill="#f58fb0" /><rect x="54" y="244" width="26" height="12" rx="5" fill="#f9a9c2" />
+         <circle cx="176" cy="262" r="16" fill="#f58fb0" /><rect x="164" y="244" width="26" height="12" rx="5" fill="#f9a9c2" />`
+      : mood === 'happy'
       ? `<path d="M70 222 Q44 210 38 186" stroke="url(#rm-stripe)" stroke-width="26" stroke-linecap="round" fill="none" /><circle cx="38" cy="180" r="13" fill="#ffe2cf" />
          <path d="M170 222 Q196 210 202 186" stroke="url(#rm-stripe)" stroke-width="26" stroke-linecap="round" fill="none" /><circle cx="202" cy="180" r="13" fill="#ffe2cf" />`
       : `<path d="M70 220 Q58 244 62 262" stroke="url(#rm-stripe)" stroke-width="26" stroke-linecap="round" fill="none" /><circle cx="63" cy="268" r="12" fill="#ffe2cf" />
