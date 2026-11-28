@@ -8,7 +8,7 @@ create table if not exists public.ramen_scores (
   nickname text not null check (char_length(btrim(nickname)) between 1 and 12),
   bowls smallint not null check (bowls between 1 and 200),
   money int not null check (money between 10000 and 1000000),
-  time_sec numeric(5, 1) not null check (time_sec between 1 and 300),
+  time_sec numeric(5, 1) not null check (time_sec between 1 and 300), -- 제한 시간 2분 (예전 5분 기록도 들어가게 300까지)
   created_at timestamptz not null default now()
 );
 

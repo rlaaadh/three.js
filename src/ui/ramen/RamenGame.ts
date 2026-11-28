@@ -7,7 +7,7 @@ import { celebrateChampion, championBefore, showChampionNote } from '../champion
 import { RAMEN_BOARD, fetchRamenTop, ramenBetter, submitRamenScore, type RamenScore } from './ranking'
 
 /** 제한 시간(초) */
-const TIME_LIMIT = 300
+const TIME_LIMIT = 120
 /** 모아야 하는 돈 */
 const GOAL = 10000
 /** 탄 냄비를 바꿀 여분 냄비 수 */
@@ -17,10 +17,10 @@ const BOIL_TIME = 6
 /** 끓는 물에 면을 넣고 꼬들꼬들해지기까지 */
 const COOK_TIME = 10
 /** 꼬들꼬들(반짝) → 퍼짐 → 빨갛게 → 덜덜 → 까맣게 (각 단계 길이, 초) */
-const PERFECT_TIME = 6
-const SOGGY_TIME = 6
-const RED_TIME = 4
-const SHAKE_TIME = 4
+const PERFECT_TIME = 4
+const SOGGY_TIME = 4
+const RED_TIME = 2.5
+const SHAKE_TIME = 2.5
 /** 한 그릇 값: 면 300 + 스프 300 + 파 200 + 계란 200 = 1,000원 */
 const PRICE = { noodle: 300, soup: 300, onion: 200, egg: 200 }
 /** 쟁반에 올린 뒤 리액션 카드가 떠 있는 시간(ms) */
@@ -200,7 +200,7 @@ const kettleSvg = (face: A.KettleFace) => `<svg viewBox="-280 -320 520 590" aria
 /**
  * 가스레인지에서 여는 라면 끓이기 게임 (꼬들라면 끓이기.app).
  * 주전자로 냄비에 물 붓기 → 물이 끓으면 라면 · 스프 → 파 · 계란 → 꼬들꼬들(반짝)할 때 쟁반으로.
- * 5분 안에 10,000원을 모으면 성공 (걸린 시간으로 빨리 끓이기 랭킹), 못 모으면 설거지 당번.
+ * 2분 안에 10,000원을 모으면 성공 (걸린 시간으로 빨리 끓이기 랭킹), 못 모으면 설거지 당번.
  * 너무 오래 끓이면 면이 퍼지고 → 냄비가 빨개지고 → 덜덜 떨다가 → 까맣게 타서 불이 꺼져요 (여분 냄비로 바꿔요).
  * 재료는 끌어다 놓거나, 톡 눌러 집은 뒤 냄비를 톡 눌러도 돼요.
  */
@@ -305,7 +305,7 @@ export class RamenGame {
       </div>
       <div class="rm-card rm-intro__card" role="dialog" aria-label="꼬들라면 게임 방법">
         <p class="rm-intro__title">꼬들라면 가게 오픈!</p>
-        <p class="rm-intro__goal"><b>5분</b> 안에 라면을 팔아 <b>10,000원</b> 모으기</p>
+        <p class="rm-intro__goal"><b>${TIME_LIMIT / 60}분</b> 안에 라면을 팔아 <b>10,000원</b> 모으기</p>
         <ol class="rm-steps">
           <li><span>1</span>주전자를 끌어다 냄비에 물 붓기</li>
           <li><span>2</span>물이 보글보글 끓으면 라면 · 스프</li>
@@ -519,7 +519,7 @@ export class RamenGame {
         <g class="rm-hud">
           <rect x="${h.x}" y="${h.y}" width="${h.w}" height="${h.h}" rx="30" fill="#fff" stroke="#eadcc6" stroke-width="3" />
           <text x="${h.x + 26}" y="${r1 + 9}" font-size="27" fill="#5a4033">남은 시간</text>${bar(r1, h.timeEnd, 'time-bar', 'url(#rm-bar-time)')}
-          <text data-ref="time" x="${h.x + h.w - 24}" y="${r1 + 10}" text-anchor="end" font-size="30" fill="#5a4033">5:00</text>
+          <text data-ref="time" x="${h.x + h.w - 24}" y="${r1 + 10}" text-anchor="end" font-size="30" fill="#5a4033">${clock(TIME_LIMIT)}</text>
           <text x="${h.x + 26}" y="${r2 + 9}" font-size="27" fill="#5a4033">모은 돈</text>${bar(r2, h.moneyEnd, 'money-bar', 'url(#rm-bar-money)')}
           <text data-ref="money" x="${h.x + h.w - 24}" y="${r2 + 10}" text-anchor="end" font-size="30" fill="#e8604c">0 / 10,000원</text>
         </g>
